@@ -96,19 +96,12 @@ THRESHOLD = 1.2
 
 def configure(trials=TRIALS):
     """Override k03's module globals so run_arm/_per_trial read the brief-volley
-    schedule instead of K0.3's. K0.3's default protocol constants are now the
-    weak-current window (PULSE_OFFSETS (0,), PULSE_AMP_MV 0.2, PULSE_TICKS
-    ON_TICKS); this diagnostic's own record is the old imposed 30 mV x 1-tick
-    pulse, so PULSE_AMP_MV and PULSE_TICKS are set back to that here explicitly
-    (PULSE_OFFSETS is irrelevant: this module's ``run_experiment`` passes offsets
-    explicitly to ``run_arm`` for both arms, never reading the module default)."""
+    schedule instead of K0.3's; PULSE_AMP_MV and PULSE_TICKS are left as-is."""
     k03.TRIALS = trials
     k03.ON_TICKS = ON_TICKS
     k03.OFF_TICKS = OFF_TICKS
     k03.TRIAL_TICKS = TRIAL_TICKS
     k03.TOTAL_TICKS = trials * TRIAL_TICKS
-    k03.PULSE_AMP_MV = 30.0
-    k03.PULSE_TICKS = 1
 
 
 @contextlib.contextmanager
@@ -116,13 +109,11 @@ def _restore_k03_globals():
     """configure() overrides k03's module globals for the duration of one
     run_experiment call; restore the originals afterward so importers of
     k03_pairing see it unchanged once this diagnostic returns."""
-    saved = (k03.TRIALS, k03.ON_TICKS, k03.OFF_TICKS, k03.TRIAL_TICKS, k03.TOTAL_TICKS,
-             k03.PULSE_AMP_MV, k03.PULSE_TICKS)
+    saved = (k03.TRIALS, k03.ON_TICKS, k03.OFF_TICKS, k03.TRIAL_TICKS, k03.TOTAL_TICKS)
     try:
         yield
     finally:
-        (k03.TRIALS, k03.ON_TICKS, k03.OFF_TICKS, k03.TRIAL_TICKS, k03.TOTAL_TICKS,
-         k03.PULSE_AMP_MV, k03.PULSE_TICKS) = saved
+        k03.TRIALS, k03.ON_TICKS, k03.OFF_TICKS, k03.TRIAL_TICKS, k03.TOTAL_TICKS = saved
 
 
 def brief_control_schedule(rng, trials):
@@ -279,8 +270,8 @@ def main():
           "result of record unchanged)")
     print("=" * 76)
     print(f"amp {params.PATTERN_AMP_MV} mV/tick, ON_TICKS {ON_TICKS}, OFF_TICKS {OFF_TICKS}, "
-          f"trials {trials}, pulse offset {PULSE_OFFSET}, pulse amp 30.0 mV "
-          f"x 1 tick (set by configure(); k03 module values are restored afterwards)")
+          f"trials {trials}, pulse offset {PULSE_OFFSET}, pulse amp {k03.PULSE_AMP_MV} mV "
+          f"x {k03.PULSE_TICKS} tick")
     print(f"run_experiment wall time: {wall:.1f} s")
     print(f"simulated training time: {trials * TRIAL_TICKS / 1000:.3f} s")
     print(f"control offsets: {out['control_offsets']}")

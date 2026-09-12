@@ -314,6 +314,12 @@ def _run_experiment_inner(trials):
     inject_log = []
     eng, spk = k03.warm_engine(SEED)
     net = eng.net
+    warmup_ctx_e = net.region_slice["ctx"]
+    warmup_ctx_e_ids = warmup_ctx_e.start + np.flatnonzero(net.is_exc[warmup_ctx_e])
+    warmup_theta_h = {
+        "mean": float(net.theta_h[warmup_ctx_e_ids].mean()),
+        "sat_frac": float((np.abs(net.theta_h[warmup_ctx_e_ids]) >= params.H_MAX).mean()),
+    }
     A, B = eng.patterns[PATTERN_A], eng.patterns[PATTERN_B]
     ctx_a = k03.select_ctx_a(net, A)
     ctx_b = k03.select_ctx_a(net, B)
@@ -436,6 +442,8 @@ def _run_experiment_inner(trials):
     return {
         "expected_inject_calls": expected_inject_calls,
         "trials": trials, "ctx_a": ctx_a, "ctx_b": ctx_b, "overlap": overlap,
+        "homeostat": params.HOMEOSTAT,
+        "warmup_ctx_e_theta_h": warmup_theta_h,
         "arms": {k: v["res"] for k, v in arms.items()}, "exposures": exposures,
         "descriptive": descriptive, "probe_table": probe_table, "probes_by_state": states,
         "weight_pass": weight_pass, "f1_pass": f1_pass, "f1_vs_none": f1_vs_none,
@@ -451,10 +459,21 @@ def _run_experiment_inner(trials):
 # --------------------------------------------------------------------------- #
 
 def main():
-    trials = int(sys.argv[1]) if len(sys.argv) > 1 else TRIALS
-    t0 = time.time()
-    out = run_experiment(trials)
-    wall = time.time() - t0
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("trials", nargs="?", type=int, default=TRIALS)
+    ap.add_argument("--mode", choices=("intrinsic", "scaling"), default=None)
+    args = ap.parse_args()
+    trials = args.trials
+    prev_mode = params.HOMEOSTAT
+    if args.mode is not None:
+        params.HOMEOSTAT = args.mode
+    try:
+        t0 = time.time()
+        out = run_experiment(trials)
+        wall = time.time() - t0
+    finally:
+        params.HOMEOSTAT = prev_mode
 
     print("=" * 76)
     print("K0.13 baseline: autonomous onset learning (no postsynaptic injection; "
@@ -462,6 +481,9 @@ def main():
     print("=" * 76)
     print(f"SEED {SEED}  TRIALS {trials}  ON_TICKS {ON_TICKS}  OFF_TICKS {OFF_TICKS}  "
           f"TRIAL_TICKS {TRIAL_TICKS}")
+    print(f"homeostat: {out['homeostat']}   warm-up ctx E theta_h mean "
+          f"{out['warmup_ctx_e_theta_h']['mean']:+.4f} mV, sat_frac "
+          f"{out['warmup_ctx_e_theta_h']['sat_frac']:.3f}")
     print("deviation: rest interval shortened from the proposed 333-tick period to 300 "
           "(10% shorter) so the after-training probe (1,500 ticks) fits inside wake; "
           "trial count and presentation duration are unchanged.")

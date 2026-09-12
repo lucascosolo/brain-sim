@@ -2,10 +2,7 @@ from collections import deque
 
 import numpy as np
 
-from . import encode
-from . import hetero
 from . import params as default_params
-from . import triplet
 from . import telemetry
 from .net import Network
 
@@ -26,34 +23,6 @@ class Engine:
         self.rng = np.random.default_rng(seed)
         self.net = net if net is not None else Network.build(params, self.rng)
         n = self.net.n
-        # Runtime per-cell mask set only by an experiment driver (SPEC 8.5); while
-        # True for a cell its excitatory inputs are exempt from synaptic scaling
-        # and from the rate-driven excitatory prune; all False is today's plant.
-        self.encode_mask = np.zeros(n, bool)
-        # Encode-mode (SPEC 8.12): one labelled plant schedule, off by default. With
-        # the mode off nothing below is read or written and the plant is today's.
-        self.encode_mode = False
-        self.encode_W = np.empty(0, np.int64)
-        self._encode = None
-        self.encode_record = None
-        # SPEC 8.16 sweep-level heterosynaptic write on hpc afferents (labelled proxy).
-        self.hetero_write = bool(getattr(params, "HETERO_WRITE", False))
-        self.hetero_additive = bool(getattr(params, "HETERO_ADDITIVE", False))
-        self.hetero_recurrent = bool(getattr(params, "HETERO_RECURRENT", False))
-        self.hetero_last = None
-        # SPEC 8.21 triplet rule on excitatory synapses (labelled proxy); runtime-switchable.
-        self.triplet_stdp = bool(getattr(params, "TRIPLET_STDP", False))
-        self._tri_k = None
-        self._tri_decay = tuple(np.float32(np.exp(-params.DT_MS / t)) for t in
-                                (triplet.TAU_PLUS_MS, triplet.TAU_MINUS_MS, triplet.TAU_Y_MS))
-        # SPEC 8.29 pending pair plasticity (labelled proxy); runtime-switchable. The tag exists
-        # only while the flag is on and starts at the weights; with the flag off nothing is read.
-        self.pending_stdp = bool(getattr(params, "PENDING_STDP", False))
-        # SPEC 8.30: with pending on, transmission uses the tag (the labile strength) instead of the weight.
-        self.pending_express = bool(getattr(params, "PENDING_EXPRESS", False))
-        self.w_tag = None
-        self.pending_last = dict(sweeps=0, strong_ctx=0, strong_hpc=0, committed=0, dropped=0)
-        self._encode_w_hist = deque(maxlen=50)
         self.t = 0
         self.phase = "wake"
         self.g = params.G_WAKE
@@ -65,9 +34,7 @@ class Engine:
         self.set_noise(noise_sigma)
         self.stats = dict(spike_total=0, syn_born_total=0, syn_died_total=0,
                           syn_touched_last=0, syn_touched_sum=0, ticks=0,
-                          stall_halt_sweeps=0, store_clamp_sweeps=0,
-                          hetero_cells_last=0, hetero_syn_last=0, hetero_up_last=0,
-                          hetero_down_last=0, hetero_cells_total=0, hetero_sweeps=0)
+                          stall_halt_sweeps=0, store_clamp_sweeps=0)
         self.ring = [[] for _ in range(params.D_MAX + 1)]
         self.i_inj = np.zeros(n, np.float32)
         self._inj = []
@@ -105,6 +72,19 @@ class Engine:
                 self._k_target[self.net.region_slice[dst]] += k_in
         self.syn_sample = self._sample_synapses()
         self._init_windup(params)
+        self._init_homeostat(params)
+
+    def _init_homeostat(self, p):
+        if p.HOMEOSTAT not in ("scaling", "intrinsic"):
+            raise ValueError(f"unknown HOMEOSTAT: {p.HOMEOSTAT!r}")
+        net = self.net
+        elig = np.zeros(net.n, bool)
+        for name in ("ctx", "hpc"):
+            if name in net.region_slice:
+                sl = net.region_slice[name]
+                elig[sl] = True
+        elig &= net.r_target > 0
+        self._theta_h_elig = elig
 
     def _init_windup(self, p):
         net = self.net
@@ -240,73 +220,9 @@ class Engine:
             return rec
         return None
 
-    @property
-    def encode_stage(self):
-        """The live schedule first: turning the mode off mid-schedule must not read
-        "off" while W is still masked."""
-        if self._encode is not None:
-            return self._encode["stage"]
-        return "idle" if self.encode_mode else "off"
-
-    def encode_view(self):
-        """Engine truth for the frame's `encode` key (SPEC 8.12). Read-only: consumes
-        no RNG and does not clear the per-tick W spike history."""
-        hist = list(self._encode_w_hist)
-        lit = self.encode_W[np.any(np.stack(hist), 0)] if hist else np.empty(0, np.int64)
-        sched = self._encode
-        return dict(mode=bool(self.encode_mode), stage=self.encode_stage,
-                    W=[int(x) for x in self.encode_W],
-                    spiked_last_50=[int(x) for x in lit],
-                    window_ticks=self._encode_w_hist.maxlen,
-                    t_present_end=int(sched["t_present_end"]) if sched else None,
-                    t_grace_end=int(sched["t_grace_end"]) if sched else None)
-
     def present(self, pattern_id, ticks, amp_mv=None):
         amp = self.p.PATTERN_AMP_MV if amp_mv is None else amp_mv
-        if not self.encode_mode or self._encode is not None or self.sense_gated or ticks <= 0:
-            return self.inject(self.patterns[int(pattern_id)], amp, ticks)
-        return self._present_encoding(int(pattern_id), int(ticks), amp)
-
-    def _present_encoding(self, pattern_id, ticks, amp):
-        """Arm the encode-mode schedule, then present as usual (SPEC 8.12)."""
-        p, net = self.p, self.net
-        W, id_rec = encode.identify_W(self, pattern_id, ticks, p.ENCODE_K)
-        saved = net.a_minus_n[W].copy()
-        net.a_minus_n[W] = 0.0
-        self.encode_mask[W] = True
-        self.encode_W = W
-        self._encode_w_hist.clear()
-        self._encode = dict(stage="present", W=W, pattern_id=pattern_id, t_start=self.t,
-                            t_present_end=self.t + ticks,
-                            t_grace_end=self.t + ticks + p.ENCODE_GRACE_TICKS,
-                            count0=net.spike_count.copy(), a_minus_saved=saved)
-        self.encode_record = dict(
-            id_pass=id_rec, W=[int(x) for x in W], pattern_id=pattern_id,
-            t_start=int(self.t), t_present_end=int(self.t + ticks),
-            t_grace_end=int(self.t + ticks + p.ENCODE_GRACE_TICKS),
-            sparse_write=None, recurrent_write=None, done=False)
-        return self.inject(self.patterns[pattern_id], amp, ticks)
-
-    def _encode_tick(self):
-        """End-of-tick schedule step: the writes and the LTD restore land at the
-        end of the tick that brings t to t_present_end (after that tick's slow
-        sweep, so a sweep on the boundary still sees the mask), and the mask
-        comes off at the end of the tick that brings t to t_grace_end."""
-        net, sc = self.net, self._encode
-        W = sc["W"]
-        if self.t == sc["t_present_end"]:
-            counts = net.spike_count.astype(np.int64) - sc["count0"].astype(np.int64)
-            self.encode_record["sparse_write"] = encode.sparse_cofire_write(
-                net, counts, encode.hpc_e_ids(net), encode.ctx_e_ids(net),
-                self.p.ENCODE_K, self.p.ENCODE_DELTA_FRAC, W)
-            self.encode_record["recurrent_write"] = encode.recurrent_cofire_write(
-                net, W, self.p.ENCODE_RECURRENT_DELTA_FRAC)
-            net.a_minus_n[W] = sc["a_minus_saved"]
-            sc["stage"] = "grace"
-        elif self.t == sc["t_grace_end"]:
-            self.encode_mask[W] = False
-            self.encode_record["done"] = True
-            self._encode = None
+        return self.inject(self.patterns[int(pattern_id)], amp, ticks)
 
     def stims_active(self):
         return [dict(entry[3]) for entry in self._inj]
@@ -360,20 +276,6 @@ class Engine:
         bucket = self.ring[slot]
         self.ring[slot] = []
         touched = 0
-        tri = self.triplet_stdp
-        wt = wx = net.w
-        if self.pending_stdp:
-            if tri:
-                raise RuntimeError("pending_stdp and triplet_stdp are mutually exclusive")
-            if self.w_tag is None:
-                self.w_tag = net.w.copy()
-            wt = self.w_tag
-            if self.pending_express:
-                wx = wt
-        elif self.w_tag is not None:
-            self.w_tag = None
-        if tri and self._tri_k is None:
-            self._tri_k = self._triplet_k_vec()
         v = net.v
         np.multiply(v, self._m_decay, out=v)
         v += self._v_c
@@ -383,17 +285,12 @@ class Engine:
             d = d[net.alive[d]]
             if d.size:
                 post = net.post[d]
-                v += np.bincount(post, weights=wx[d], minlength=net.n)
+                v += np.bincount(post, weights=net.w[d], minlength=net.n)
                 de = d[net.is_exc[net.pre[d]]]
                 if de.size:
                     pd = net.post[de]
-                    if tri:
-                        m = net.a_plus_n[pd] > 0
-                        net.w[de[m]] = triplet.on_pre(net.w[de[m]], net.o1[pd[m]], net.w_max_n[pd[m]],
-                                                      self._tri_k[pd[m]], self.g)
-                        de, pd = de[~m], pd[~m]
-                    wt[de] = np.maximum(
-                        wt[de] * (1.0 - self.g * net.a_minus_n[pd] * net.y_post[pd]), 0.0)
+                    net.w[de] = np.maximum(
+                        net.w[de] * (1.0 - self.g * net.a_minus_n[pd] * net.y_post[pd]), 0.0)
 
         if self._inj or self._inj_on:
             self._refresh_inj()
@@ -414,12 +311,8 @@ class Engine:
                 v[hit] = np.maximum(v[hit], th[hit] + np.float32(1.0))
         net.x_pre *= self._tr_decay
         net.y_post *= self._tr_decay
-        if tri:
-            net.r1 *= self._tri_decay[0]
-            net.o1 *= self._tri_decay[1]
-            net.o2 *= self._tri_decay[2]
 
-        s = np.flatnonzero(v >= th)
+        s = np.flatnonzero(v >= th + net.theta_h)
         if s.size:
             s = s[self.t - net.t_last_spike[s] > p.T_REF_MS]
         if s.size:
@@ -428,12 +321,7 @@ class Engine:
             inc = inc[net.alive[inc] & net.is_exc[net.pre[inc]]]
             if inc.size:
                 pp, qq = net.post[inc], net.pre[inc]
-                if tri:
-                    m = net.a_plus_n[pp] > 0
-                    net.w[inc[m]] = triplet.on_post(net.w[inc[m]], net.r1[qq[m]], net.o2[pp[m]],
-                                                    net.w_max_n[pp[m]], self._tri_k[pp[m]], self.g)
-                    inc, pp, qq = inc[~m], pp[~m], qq[~m]
-                wt[inc] += self.g * net.a_plus_n[pp] * net.x_pre[qq] * (net.w_max_n[pp] - wt[inc])
+                net.w[inc] += self.g * net.a_plus_n[pp] * net.x_pre[qq] * (net.w_max_n[pp] - net.w[inc])
 
             out = _gather(net.out_ptr, net.out_ids, s)
             if out.size:
@@ -452,10 +340,6 @@ class Engine:
             net.theta[s] += p.D_THETA_MV
             net.x_pre[s] += 1.0
             net.y_post[s] += 1.0
-            if tri:
-                net.r1[s] += 1.0
-                net.o1[s] += 1.0
-                net.o2[s] += 1.0
             net.t_last_spike[s] = self.t
             net.spike_count[s] += 1
             self.stats["spike_total"] += int(s.size)
@@ -480,10 +364,6 @@ class Engine:
             self.set_sleep(self.phase == "wake")
         if self.t % p.SWEEP_TICKS == 0:
             self._slow_sweep()
-        if self.encode_W.size:
-            self._encode_w_hist.append(np.isin(self.encode_W, s))
-        if self._encode is not None:
-            self._encode_tick()
 
     def _refresh_inj(self):
         if not self._inj:
@@ -509,10 +389,6 @@ class Engine:
         net.act[:] = (1 - a) * net.act + a * np.minimum(hz / p.ACT_REF_HZ, 1.0)
 
         if not net.homeostasis:
-            if self.pending_stdp:
-                alive = np.flatnonzero(net.alive)
-                self._pending_commit(counts, alive[net.is_exc[net.pre[alive]]])
-                self.w_tag[:] = net.w
             net.rebuild_index(self.t)
             return
         rt = np.maximum(net.r_target, 1e-6)
@@ -520,18 +396,18 @@ class Engine:
         err[net.r_target <= 0] = 0.0
         alive = np.flatnonzero(net.alive)
         exc_syn = alive[net.is_exc[net.pre[alive]]]
-        if self.pending_stdp:
-            self._pending_commit(counts, exc_syn)
-        if self.hetero_write and self.phase != "sleep":
-            self._hetero_sweep(counts, exc_syn)
-        used = exc_syn[counts[net.pre[exc_syn]] > 0]
-        if self.encode_mask.any():
-            used = used[~self.encode_mask[net.post[used]]]
-        if used.size and self.phase != "sleep":
-            factor = 1.0 + np.clip(p.ETA_SCALING * (net.r_target - net.rate) / rt, -p.SCALING_CLIP, p.SCALING_CLIP)
-            factor[net.r_target <= 0] = 1.0
-            ps = net.post[used]
-            net.w[used] = np.clip(net.w[used] * factor[ps], 0.0, net.w_max_n[ps])
+        if p.HOMEOSTAT == "scaling":
+            used = exc_syn[counts[net.pre[exc_syn]] > 0]
+            if used.size and self.phase != "sleep":
+                factor = 1.0 + np.clip(p.ETA_SCALING * (net.r_target - net.rate) / rt, -p.SCALING_CLIP, p.SCALING_CLIP)
+                factor[net.r_target <= 0] = 1.0
+                ps = net.post[used]
+                net.w[used] = np.clip(net.w[used] * factor[ps], 0.0, net.w_max_n[ps])
+        else:
+            if self.phase != "sleep":
+                elig = self._theta_h_elig
+                delta = np.clip(-p.ETA_H * err, -p.STEP_H, p.STEP_H)
+                net.theta_h[elig] = np.clip(net.theta_h[elig] + delta[elig], -p.H_MAX, p.H_MAX)
 
         died = []
         weak = exc_syn[net.w[exc_syn] < p.W_PRUNE_FRAC * net.w_max_n[net.post[exc_syn]]]
@@ -551,112 +427,6 @@ class Engine:
         if room > 0:
             self._buf_died.extend(zip(weak_pre[:room].tolist(), weak_post[:room].tolist()))
         self.syn_sample = self._sample_synapses()
-        if self.pending_stdp:
-            self.w_tag[:] = net.w
-
-    def _pending_commit(self, counts, exc_syn):
-        """SPEC 8.29, first step of a sweep. Waking: an E cell of ctx or hpc with at least
-        PENDING_TRIGGER_SPIKES spikes is strong; the alive E synapses onto every other cell
-        take the tag, those onto a strong cell keep their weight (tag dropped). Sleep: all commit."""
-        net = self.net
-        strong = np.zeros(net.n, bool)
-        if self.phase != "sleep":
-            for r in ("ctx", "hpc"):
-                if r in net.region_slice:
-                    sl = net.region_slice[r]
-                    strong[sl] = net.is_exc[sl] & (counts[sl] >= self.p.PENDING_TRIGGER_SPIKES)
-        keep = strong[net.post[exc_syn]]
-        take = exc_syn[~keep]
-        net.w[take] = self.w_tag[take]
-        pl = self.pending_last
-        pl["sweeps"] += 1
-        pl["strong_ctx"] = int(strong[net.region_slice["ctx"]].sum()) if "ctx" in net.region_slice else 0
-        pl["strong_hpc"] = int(strong[net.region_slice["hpc"]].sum()) if "hpc" in net.region_slice else 0
-        pl["committed"], pl["dropped"] = int(take.size), int(keep.sum())
-
-    def pending_view(self):
-        """Engine truth for drivers (SPEC 8.29). Read-only, no RNG."""
-        pl = self.pending_last
-        return dict(on=bool(self.pending_stdp), express=bool(self.pending_stdp and self.pending_express), sweeps=pl["sweeps"],
-                    strong_ctx_last=pl["strong_ctx"], strong_hpc_last=pl["strong_hpc"],
-                    syn_committed_last=pl["committed"], syn_dropped_last=pl["dropped"])
-
-    def _hetero_sweep(self, counts, exc_syn):
-        """SPEC 8.16, in a wake sweep before scaling and the prunes. Every hpc E cell that
-        fired at least HETERO_TRIGGER_SPIKES times in this sweep redistributes weight among
-        its alive ctx E inputs: each input moves by HETERO_ETA * w_max * z, z the input's
-        presynaptic spike count this sweep as a z-score over that cell's inputs (clipped),
-        minus the cell's mean move so the cell's summed weight is unchanged up to the
-        clamps [HETERO_FLOOR_FRAC * w_max, w_max]. No RNG, no new or killed synapses.
-        With hetero_additive (SPEC 8.40) the mean move is not subtracted and only positive z
-        adds weight, clamped at w_max; no weight is lowered.
-        With hetero_recurrent (SPEC 8.41) the written set also includes the cell's alive
-        excitatory inputs from hpc."""
-        net = self.net
-        trigger, eta, z_clip, floor_frac = hetero.constants(self.p)
-        st = self.stats
-        st["hetero_sweeps"] += 1
-        st["hetero_cells_last"] = st["hetero_syn_last"] = st["hetero_up_last"] = st["hetero_down_last"] = 0
-        self.hetero_last = None
-        if "hpc" not in net.region_slice or "ctx" not in net.region_slice:
-            return
-        hp, cx = net.region_slice["hpc"], net.region_slice["ctx"]
-        trig = np.zeros(net.n, bool)
-        trig[hp] = net.is_exc[hp] & (counts[hp] >= trigger)
-        trig &= ~self.encode_mask  # an encode schedule owns its masked cells
-        if not trig.any():
-            return
-        pre, post = net.pre[exc_syn], net.post[exc_syn]
-        src = (pre >= cx.start) & (pre < cx.stop)
-        if self.hetero_recurrent:
-            src |= (pre >= hp.start) & (pre < hp.stop)
-        idx = exc_syn[trig[post] & src]
-        if idx.size == 0:
-            return
-        ps = net.post[idx]
-        x = counts[net.pre[idx]].astype(np.float64)
-        wm = net.w_max_n[ps].astype(np.float64)
-        w0 = net.w[idx].astype(np.float64)
-        w1 = hetero.redistribute(x, ps, w0, wm, net.n, eta, z_clip, floor_frac,
-                                   additive=self.hetero_additive)
-        net.w[idx] = w1.astype(np.float32)
-        dw = net.w[idx].astype(np.float64) - w0
-        cells = np.flatnonzero(trig)
-        st["hetero_cells_last"] = int(cells.size)
-        st["hetero_cells_total"] += int(cells.size)
-        st["hetero_syn_last"] = int(idx.size)
-        st["hetero_up_last"] = int((dw > 0).sum())
-        st["hetero_down_last"] = int((dw < 0).sum())
-        self.hetero_last = dict(t=int(self.t), cells=cells.astype(np.int32), syn_ids=idx.astype(np.int32),
-                                pre=net.pre[idx].copy(), post=ps.copy(), born=net.born[idx].copy(),
-                                dw=dw.astype(np.float32), w_max=wm.astype(np.float32))
-
-    def _triplet_k_vec(self):
-        net, k = self.net, triplet.k_of(self.p)
-        out = np.zeros(net.n, np.float32)
-        for i, name in enumerate(net.region_names):
-            out[net.region == i] = k.get(name, 0.0)
-        return out
-
-    def triplet_view(self):
-        """Engine truth for drivers (SPEC 8.21). Read-only, no RNG."""
-        return dict(on=bool(self.triplet_stdp), k=triplet.k_of(self.p), mean_o2=float(self.net.o2.mean()))
-
-    def hetero_view(self):
-        """Engine truth for the frame's `hetero` key (SPEC 8.16). Read-only, no RNG."""
-        st, h = self.stats, self.hetero_last
-        out = dict(on=bool(self.hetero_write), sweeps=int(st["hetero_sweeps"]),
-                   cells_last=int(st["hetero_cells_last"]), syn_last=int(st["hetero_syn_last"]),
-                   up_last=int(st["hetero_up_last"]), down_last=int(st["hetero_down_last"]),
-                   cells_total=int(st["hetero_cells_total"]),
-                   t_last=None, cell_ids_last=[], cell_ids_truncated=False, mean_abs_dw_last=None, net_dw_last=None)
-        if h is not None:
-            out["t_last"] = int(h["t"])
-            out["cell_ids_last"] = [int(c) for c in h["cells"][:hetero.FRAME_CELL_CAP]]
-            out["cell_ids_truncated"] = bool(len(h["cells"]) > hetero.FRAME_CELL_CAP)
-            out["mean_abs_dw_last"] = float(np.abs(h["dw"] / h["w_max"]).mean())
-            out["net_dw_last"] = float((h["dw"] / h["w_max"]).sum())
-        return out
 
     def structural_update(self, e):
         p, net = self.p, self.net
@@ -673,7 +443,7 @@ class Engine:
         lo, hi = e > 0, e < 0
         ae = np.abs(e)
 
-        die = [self._prune_incoming(np.where(hi & grow_ok & ~self.encode_mask, G * ae * kE, 0.0), kE, True),
+        die = [self._prune_incoming(np.where(hi & grow_ok, G * ae * kE, 0.0), kE, True),
                self._prune_incoming(np.where(lo & grow_ok, G * e * excess, 0.0), excess, False)]
         died = np.concatenate(die)
         die_pre, die_post = net.pre[died].copy(), net.post[died].copy()

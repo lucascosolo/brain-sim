@@ -1,46 +1,29 @@
-"""K0.3 population test: weak-current pairing on a warmed network.
+"""K0.3 population test: imposed pre-before-post pairing on a warmed network.
 
 Question
 --------
-Does a weak sustained postsynaptic current, injected into ctx_A for the whole
-presentation window at the same tick pattern A is presented, produce pathway
-selectivity of pattern-A sense inputs onto a fixed ctx target set, under the
-*unchanged* pair-STDP rule, unchanged scaling, structure, noise, spontaneous
-activity and phase schedule?
+Does deliberately imposed pre-before-post pairing produce pathway selectivity of
+pattern-A sense inputs onto a fixed ctx target set, under the *unchanged* pair-STDP
+rule, unchanged scaling, structure, noise, spontaneous activity and phase schedule?
 
 Postsynaptic current injection is an **experimental intervention**. A pass here
 demonstrates that the population responds to imposed pairing; it does not
 demonstrate autonomous sensory learning.
 
-Protocol: present patch A (``eng.present(pattern, ON_TICKS)``) and, in the same
-300-tick window, inject the weak current into ctx_A (``eng.inject(ctx_a,
-WEAK_AMP_MV, ON_TICKS)`` issued at the same tick as the presentation) so post
-spikes follow the pre input. Ratio: mean w of sense_A -> ctx_A over mean w of
-off-patch sense -> the same ctx_A cells, at the end; threshold >= 1.2. Control =
-the same current schedule, no presentation.
-
-``WEAK_AMP_MV = 0.2`` mV, added to v per tick for every ctx_A cell during the
-presentation window (steady-state depolarisation amp x 20.5 = 4.1 mV). Chosen by
-the predeclared rule W in ``~/.cache/scratch/brainsim-k03-weak/protocol.md`` from
-spike statistics only: the largest ladder value whose current-alone ctx_A E
-window rate is <= 2x the no-current rate (measured 6.55 vs 3.49 Hz) and whose
-largest single-tick ctx fraction is <= 0.20; calibration log at
-``~/.cache/scratch/brainsim-k03-weak/calibrate.log``.
-
-History
--------
-The previous protocol imposed three 1-tick, 30 mV pulses per trial, at 39, 69 and
-101 ticks after presentation onset -- the three synchronous A volleys measured on
-the warmed seed-1 network peak 29, 59 and 91 ticks after onset, and each pulse was
-placed 10 ticks after a volley peak, longer than every A->ctx_A delay (1..4
-ticks). That protocol reproduced ratio_final 0.927 (pairing) / 0.870 (control) at
-3060f23, reproduced again 2026-09-12. It remains reachable by overriding
-``PULSE_OFFSETS``/``PULSE_AMP_MV``/``PULSE_TICKS`` back to
-``(39, 69, 101)``/``30.0``/``1``.
+Pulse schedule rationale
+------------------------
+The three synchronous A volleys measured on the warmed seed-1 network peak 29, 59
+and 91 ticks after presentation onset (after ~110 ticks the A spikes are spread
+uniformly at ~25 Hz). Each pulse is placed 10 ticks after a volley peak -- the same
+lag the two-neuron K0.3 test uses, and longer than every A->ctx_A delay (1..4
+ticks), so the paired pre spikes are delivered before the induced post spike.
+3 pulses x 20 trials = 60 pairings, the two-neuron test's count. 30 mV x 1 tick is
+the two-neuron test's pulse; measured on the warmed network it fires 89 % of ctx_A
+in the pulse tick. The schedule is fixed here and is not tuned to the outcome.
 
 Nothing in this module changes engine behaviour. The engine RNG is never drawn
-from by test-side code, and no test-side RNG is used (the control arm is the same
-current schedule without the presentation). No spike
+from by test-side code; the only RNG created here is
+``np.random.default_rng(CONTROL_RNG_SEED)`` for the control schedule. No spike
 flags are forced, no state is reset, turnover is not frozen, ``set_sleep`` and
 ``frame`` are never called, and the phase schedule runs as it is.
 """
@@ -64,10 +47,11 @@ WARMUP_TICKS = 120_000
 TRIALS = 20
 ON_TICKS = 300
 OFF_TICKS = 700
-WEAK_AMP_MV = 0.2
-PULSE_OFFSETS = (0,)            # ticks after presentation onset
-PULSE_AMP_MV = WEAK_AMP_MV
-PULSE_TICKS = ON_TICKS
+PULSE_OFFSETS = (39, 69, 101)   # ticks after presentation onset
+PULSE_AMP_MV = 30.0
+PULSE_TICKS = 1
+CONTROL_RNG_SEED = 20260911
+CONTROL_MIN_SPACING = 5         # ticks
 LAG_WINDOW = 50                 # ms, pair-count window
 
 D_MAX = params.D_MAX
@@ -128,6 +112,16 @@ def select_ctx_a(net, A):
     return np.flatnonzero((tot > 0) & (n_a * 2 > tot)).astype(np.int64)
 
 
+def control_schedule(rng):
+    """TRIALS triples of pulse offsets, uniform in [0, ON_TICKS), spacing >= CONTROL_MIN_SPACING."""
+    out = []
+    for _ in range(TRIALS):
+        while True:
+            o = np.sort(rng.integers(0, ON_TICKS, 3))
+            if np.all(np.diff(o) >= CONTROL_MIN_SPACING):
+                break
+        out.append(tuple(int(v) for v in o))
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -199,6 +193,9 @@ def run_arm(eng, spk, ctx_a, A, offsets, base, pattern=0, present=True):
     ctx_a_inh = ctx_a[~net.is_exc[ctx_a]]
     nona_sense = np.setdiff1d(np.arange(sense.start, sense.stop), np.asarray(A))
 
+    mode = getattr(eng.p, "HOMEOSTAT", "scaling")
+    theta_h_ctx_a_trace = []
+
     tr_decay = eng._tr_decay
     T = preT = postT = bornT = excT = am0 = ap0 = wmax0 = None
 
@@ -214,21 +211,15 @@ def run_arm(eng, spk, ctx_a, A, offsets, base, pattern=0, present=True):
 
     k_global = 0
     for trial in range(TRIALS):
-        trial_offsets = [int(o) for o in offsets[trial]]
+        offs = set(int(o) for o in offsets[trial])
         if present:
             eng.present(pattern, ON_TICKS)
-        open_windows = []   # list of {"end": trial-relative tick (exclusive), "seen": bool[ctx_a]}
         for k in range(TRIAL_TICKS):
             t = eng.t
-            if k in trial_offsets:
-                # the delivered current and the window bookkeeping are clipped alike at
-                # the trial's end (the engine itself would run the injection on)
-                end = min(k + PULSE_TICKS, TRIAL_TICKS)
-                if end > k:
-                    eng.inject(ctx_a, PULSE_AMP_MV, end - k)
-                    open_windows.append({"end": end, "seen": np.zeros(ctx_a.size, bool)})
-            if open_windows:
-                pulse_ticks.append(t)      # a current-active tick, listed once even if windows overlap
+            is_pulse = k in offs
+            if is_pulse:
+                eng.inject(ctx_a, PULSE_AMP_MV, PULSE_TICKS)
+                pulse_ticks.append(t)
 
             phases_seen.add(eng.phase)
             g = eng.g
@@ -314,15 +305,21 @@ def run_arm(eng, spk, ctx_a, A, offsets, base, pattern=0, present=True):
                     params.ETA_SCALING * (net.r_target - net.rate) / rt,
                     -params.SCALING_CLIP, params.SCALING_CLIP).astype(np.float32)
                 factor[net.r_target <= 0] = np.float32(1.0)
-                used = pre_win[preT] & excT & (eng.phase != "sleep")
-                scaled = np.clip(w_pred * factor[postT], np.float32(0.0), wmax0)
-                scal_pred = np.where(used, scaled, w_pred).astype(np.float32) - w_pred
+                if mode == "intrinsic":
+                    scal_pred = np.zeros_like(w_pred)
+                else:
+                    used = pre_win[preT] & excT & (eng.phase != "sleep")
+                    scaled = np.clip(w_pred * factor[postT], np.float32(0.0), wmax0)
+                    scal_pred = np.where(used, scaled, w_pred).astype(np.float32) - w_pred
                 scal_pred_acc[T[keep]] += scal_pred[keep].astype(np.float64)
                 if keep.any():
                     scal_pred_max = max(scal_pred_max,
                                         float(np.abs(scal_pred[keep].astype(np.float64)
                                                      - resid[keep]).max()))
                 pre_win[:] = False
+                th_a = net.theta_h[ctx_a]
+                theta_h_ctx_a_trace.append((int(t + 1), float(th_a.mean()),
+                                            float(th_a.min()), float(th_a.max())))
             else:
                 if resid.size:
                     max_resid = max(max_resid, float(np.abs(resid).max()))
@@ -358,27 +355,13 @@ def run_arm(eng, spk, ctx_a, A, offsets, base, pattern=0, present=True):
                 cai_off += n_cai
                 ctx_off += int(in_ctx.sum())
 
-            if open_windows:
-                closed = []
-                for w in open_windows:
-                    w["seen"][cm] = True
-                    if k == w["end"] - 1:
-                        pulse_frac.append(
-                            float(np.count_nonzero(w["seen"])) / max(1, ctx_a.size))
-                        closed.append(w)
-                for w in closed:
-                    open_windows.remove(w)
+            if is_pulse:
+                pulse_frac.append(n_ca / max(1, ctx_a.size))
 
             if swept:
                 refresh()
 
             k_global += 1
-
-    a_rows_win = np.asarray(A, np.int64) - sense.start
-    a_win = pre_spk[a_rows_win].reshape(a_rows_win.size, TRIALS, TRIAL_TICKS)[:, :, :ON_TICKS]
-    a_volley_frac_mean = float(a_win.any(axis=2).mean()) if a_rows_win.size else 0.0
-    ctxa_win = ctxa_spk.reshape(ctx_a.size, TRIALS, TRIAL_TICKS)[:, :, :ON_TICKS]
-    ctx_a_window_frac_mean = float(ctxa_win.any(axis=2).mean()) if ctx_a.size else 0.0
 
     t_end = eng.t
     res = {
@@ -390,9 +373,6 @@ def run_arm(eng, spk, ctx_a, A, offsets, base, pattern=0, present=True):
         "n_ctx_a_exc": int(ctx_a_exc.size), "n_ctx_a_inh": int(ctx_a_inh.size),
         "pattern_presented": pattern if present else None,
         "pulse_ticks_total": len(pulse_ticks),
-        "current_window_ticks": int(PULSE_TICKS),
-        "a_volley_frac_mean": a_volley_frac_mean,
-        "ctx_a_window_frac_mean": ctx_a_window_frac_mean,
         "pulse_spike_frac_mean": float(np.mean(pulse_frac)) if pulse_frac else 0.0,
         "pulse_spike_frac_min": float(np.min(pulse_frac)) if pulse_frac else 0.0,
         "instrument_max_residual_nonsweep": float(max_resid),
@@ -401,6 +381,10 @@ def run_arm(eng, spk, ctx_a, A, offsets, base, pattern=0, present=True):
         "ring_vs_spk_disagreements": int(ring_vs_spk_disagreements),
         "ring_vs_spk_disagreement_slots": int(ring_vs_spk_disagreement_slots),
         "ring_vs_spk_events": ring_vs_spk_events,
+        "homeostat": mode,
+        "theta_h_ctx_a_trace": theta_h_ctx_a_trace,
+        "theta_h_ctx_a_final": (theta_h_ctx_a_trace[-1][1:] if theta_h_ctx_a_trace
+                                else (0.0, 0.0, 0.0)),
     }
 
     b = int(np.argmax(ctx_count))
@@ -696,11 +680,12 @@ def run_experiment(seed=SEED):
 
     ctrl = copy.deepcopy(eng)
     ctrl_spk = spk.copy()
+    ctrl_offsets = control_schedule(np.random.default_rng(CONTROL_RNG_SEED))
 
     pairing = run_arm(eng, spk, ctx_a, A, [PULSE_OFFSETS] * TRIALS, base)
-    control = run_arm(ctrl, ctrl_spk, ctx_a, A, [PULSE_OFFSETS] * TRIALS, base, present=False)
+    control = run_arm(ctrl, ctrl_spk, ctx_a, A, ctrl_offsets, base)
     return {"ctx_a": ctx_a.tolist(), "pairing": pairing, "control": control,
-            "control_offsets": [PULSE_OFFSETS] * TRIALS}
+            "control_offsets": ctrl_offsets}
 
 
 # --------------------------------------------------------------------------- #
@@ -716,25 +701,33 @@ def _row(label, a, b, fmt="{: .6g}"):
 
 
 def main():
-    t0 = time.time()
-    out = run_experiment()
-    wall = time.time() - t0
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--mode", choices=("intrinsic", "scaling"), default=None)
+    args, _ = ap.parse_known_args()
+    prev_mode = params.HOMEOSTAT
+    if args.mode is not None:
+        params.HOMEOSTAT = args.mode
+    try:
+        t0 = time.time()
+        out = run_experiment()
+        wall = time.time() - t0
+    finally:
+        params.HOMEOSTAT = prev_mode
     p, c = out["pairing"], out["control"]
 
     print("=" * 76)
-    print("K0.3 population weak-current pairing report")
+    print("K0.3 population imposed-pairing report")
+    print(f"homeostat: {p['homeostat']}")
     print("=" * 76)
     print(f"run_experiment wall time: {wall:.1f} s")
-    print(f"WEAK_AMP_MV: {WEAK_AMP_MV}   window ticks: {PULSE_TICKS}")
     print(f"pulse offsets (pairing): {PULSE_OFFSETS}   amp {PULSE_AMP_MV} mV x {PULSE_TICKS} tick")
     print(f"control offsets: {out['control_offsets']}")
     print(f"ctx_a size: {p['n_ctx_a']} (exc {p['n_ctx_a_exc']}, inh {p['n_ctx_a_inh']})")
     print()
-    print(f"  {'':<34}{'PAIRING':>20}{'CONTROL (current only, no presentation)':>40}")
+    print(f"  {'':<34}{'PAIRING':>20}{'CONTROL':>20}")
     for k in ("t_start", "t_end", "phase_start", "phase_end", "sense_gated_end", "g_end",
-              "n_sweeps", "pulse_ticks_total", "current_window_ticks",
-              "a_volley_frac_mean", "ctx_a_window_frac_mean",
-              "pulse_spike_frac_mean", "pulse_spike_frac_min",
+              "n_sweeps", "pulse_ticks_total", "pulse_spike_frac_mean", "pulse_spike_frac_min",
               "ctx_burst_max_frac", "ctx_burst_max_t", "ctx_burst_max_at_pulse",
               "instrument_max_residual_nonsweep", "scaling_pred_vs_resid_max_abs",
               "pair_count_crosscheck_ok", "pair_count_crosscheck_n",
@@ -789,9 +782,6 @@ def main():
 
     print()
     print("  note: lags are somatic spike times; LTD delivery adds the synapse delay (1..4 ticks).")
-    print("  note: ctx_burst_max_at_pulse means the burst tick lies inside a current window; with")
-    print("        a 300-tick window covering the presentation it separates nothing and is kept")
-    print("        only for continuity with the 1-tick pulse protocol.")
     print("  note: closure_residual is, by construction, the signed sum of the NON-sweep")
     print("        residuals over survivors -- every sweep-tick residual is booked to")
     print("        scaling_mean, so closure cannot detect an error in the scaling step.")
