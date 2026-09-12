@@ -283,53 +283,6 @@ ol.rules li b{color:var(--text)}
 ol.recon{padding-left:18px;margin:6px 0 0;max-width:78ch}
 ol.recon li{margin-bottom:7px;color:var(--dim)}
 ol.recon li b{color:var(--text)}
-/* ---- "What am I looking at?" explainers ----------------------------------
-   Same visual register as the inspector's `measure` glosses, so a reader sees
-   at once that both are descriptions of a readout, not readouts. */
-.explainhost{margin-top:8px}
-#explainbar{padding:0 16px 7px;background:var(--bg2);border-bottom:1px solid var(--line)}
-#explainbar .explainhost{margin-top:0}
-details.explain{border-left:2px solid var(--line2);padding-left:9px}
-details.explain summary{
-  cursor:pointer;list-style:none;font-size:var(--fs-xs);color:var(--dim);
-  display:inline-flex;align-items:center;gap:6px;padding:1px 0;
-}
-details.explain summary::-webkit-details-marker{display:none}
-details.explain summary::before{content:"?";
-  display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;flex:none;
-  border:1px solid var(--line2);border-radius:50%;font-size:10px;font-weight:700;line-height:1}
-details.explain[open] summary::before{content:"\2212";border-color:var(--amber);color:var(--amber)}
-details.explain summary:hover{color:var(--text)}
-details.explain .explainbody{max-width:78ch;margin-top:3px}
-details.explain .explainbody .measure{margin:0 0 7px}
-details.explain .explainbody .measure:last-child{margin-bottom:2px}
-
-/* ---- header additions ---- */
-.hstat.units{color:var(--dimmer);font-size:var(--fs-xs)}
-#warnchip .t{white-space:nowrap;max-width:44ch;overflow:hidden;text-overflow:ellipsis}
-
-/* ---- Diagnostics: nothing may move while frames arrive ------------------
-   Rows are created once (ui/app.js buildKeyRows) and the table is
-   fixed-layout with fixed column widths in ch, so a value gaining a digit
-   cannot widen a column, reflow the table or shift any section below it. */
-#framekeys{table-layout:fixed;width:100%}
-#framekeys td,#framekeys th{font-variant-numeric:tabular-nums;vertical-align:top}
-#framekeys .kcell{width:23ch;color:var(--dim)}
-#framekeys .vcell{width:34ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#framekeys tr.json .vcell{white-space:normal;word-break:break-all;height:4.5em;max-height:4.5em;overflow:auto}
-#framekeys .gcell{white-space:normal;color:var(--dimmer);font-size:var(--fs-xs);line-height:1.45}
-pre.fixedpre{height:220px;max-height:220px;min-height:220px}
-#cmdfull{height:320px;overflow-y:auto;margin-top:8px;border:1px solid var(--line);border-radius:var(--r)}
-#log{height:260px;max-height:260px}
-.rasters{grid-auto-rows:64px}
-
-/* ---- recorded results ---- */
-.chip.reject{background:rgba(255,180,84,.15);color:#ffd79a;border:1px solid #6a5320}
-#recgroups h4,#recgroups1 h4{font-size:var(--fs-m);font-weight:600;margin:16px 0 0}
-td.evcell{white-space:normal;color:var(--dim);min-width:32ch}
-ol.rules .keys{font-size:var(--fs-xs);color:var(--dimmer);margin-top:4px;line-height:1.5}
-ol.rules .keys .mono{color:var(--dim)}
-
 @media (max-width:900px){
   #observe{grid-template-columns:minmax(0,1fr)}
   #controlbar{position:fixed;top:auto;left:0;right:0;bottom:0;border-top:1px solid var(--line2);
@@ -348,13 +301,3 @@ ol.rules .keys .mono{color:var(--dim)}
 @media (prefers-reduced-motion:reduce){
   *{transition-duration:0s !important;animation-duration:0s !important}
 }
-
-/* anchors scrolled into view land below the sticky control bar */
-.card, section, details.explain, h2, h3 { scroll-margin-top: 120px; }
-
-/* Encode-mode (SPEC 8.12): one chip per W cell, lit when the engine's frame says
-   that cell spiked inside the reported window. */
-#wcard{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-.wchip{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.5;
-  color:var(--dim);border:1px solid #2a3240;border-radius:3px;padding:1px 5px}
-.wchip.lit{border-color:var(--amber);color:#ffd79a;background:#241c0e}

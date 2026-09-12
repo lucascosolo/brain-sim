@@ -1,162 +1,162 @@
 {
  "schema": "stage0-results/1",
  "updated": "2026-09-12",
- "updated_commit": "8353bee",
- "note": "Pass of 2026-09-12 (8353bee): the K0.3 population contrast clause is retired as a Stage 0 kill test (owner decision; not a Stage 0 requirement) and its entry is removed from this record; the two-neuron STDP tests are the Stage 0 claim about the pair rule. The population driver and its pytest wrapper are kept as a record, deselected unless pytest is given --record; result of record ratio 0.861 (control 0.994) at deedcc8, SPEC.md section 7. brainsim/, server/, the worker and the UI are byte-identical to a140bc0/12cdcdc. Rerun at 8353bee: the non-kill suite (78 passed). K0.2 and K0.11 are carried forward from deedcc8 and the other kill tests from the 7cd6dc5 run of 2026-09-11 (same engine). K0.1 and K0.4 are red; Stage 0 is not complete.",
+ "updated_commit": "12cdcdc",
+ "note": "Corrective pass on 2026-09-12 (12cdcdc) changed only tests/test_server_clients.py, ui/app.js and ui/index.html; brainsim/, server/ and the worker are byte-identical to 7cd6dc5. Only the server, UI-truth, client-evidence and results-record tests were rerun at 12cdcdc; every other entry is carried forward from the 7cd6dc5 run of 2026-09-11 and was not rerun. K0.1, K0.3 and K0.4 are red; Stage 0 is not complete.",
  "entries": [
   {
    "test": "tests/test_client_evidence.py::test_evidence_js_suite_passes",
    "label": "test evidence js suite passes",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_results_record.py::test_stage0_results_json_parses",
    "label": "test stage0 results json parses",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_results_record.py::test_every_entry_has_schema_fields",
    "label": "test every entry has schema fields",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_results_record.py::test_every_entry_test_node_names_existing_file_and_function",
    "label": "test every entry test node names existing file and function",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_results_record.py::test_carried_forward_entries_differ_from_current_run_commit",
    "label": "test carried forward entries differ from current run commit",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
-   "test": "tests/test_results_record.py::test_at_least_one_entry_fails",
-   "label": "test at least one entry fails",
+   "test": "tests/test_results_record.py::test_at_least_one_entry_fails_k0_3",
+   "label": "test at least one entry fails k0 3",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_server_clients.py::test_each_socket_gets_distinct_hello_client_id",
    "label": "test each socket gets distinct hello client id",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_server_clients.py::test_req_namespaced_by_client_id_and_differs_per_socket",
    "label": "test req namespaced by client id and differs per socket",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)",
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)",
    "note": "At 7cd6dc5 this test returned before its assertions ran (a stray return None outside the _find helper), so its earlier green was not evidence of client isolation. Repaired at 12cdcdc with a bounded condition-variable wait; in an isolated copy with the server's req prefix removed it fails, on this tree it passes."
   },
   {
    "test": "tests/test_server_clients.py::test_non_object_payload_gets_error_and_is_not_enqueued",
    "label": "test non object payload gets error and is not enqueued",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_ui_truth.py::test_app_js_reads_only_declared_keys",
    "label": "test app js reads only declared keys",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_ui_truth.py::test_evidence_js_exists_and_reads_only_declared_keys",
    "label": "test evidence js exists and reads only declared keys",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_ui_truth.py::test_frame_keys_are_the_declaration",
    "label": "test frame keys are the declaration",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_ui_truth.py::test_frame_fields_equal_engine_state",
    "label": "test frame fields equal engine state",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_ui_truth.py::test_k0_10c_frame_anti_windup_fields_equal_engine_state",
    "label": "test k0 10c frame anti windup fields equal engine state",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_ui_truth.py::test_frame_stim_fields_equal_engine_state_at_emission",
    "label": "test frame stim fields equal engine state at emission",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_ui_truth.py::test_no_phase_literals_in_js",
    "label": "test no phase literals in js",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_ui_truth.py::test_born_per_s_comes_from_engine",
    "label": "test born per s comes from engine",
    "outcome": "pass",
-   "tested_commit": "8353bee",
+   "tested_commit": "12cdcdc",
    "date": "2026-09-12",
    "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/js/evidence.test.mjs (11 tests via tests/test_client_evidence.py)",
@@ -164,17 +164,17 @@
    "outcome": "pass",
    "tested_commit": "12cdcdc",
    "date": "2026-09-12",
-   "carried_forward": true,
+   "carried_forward": false,
    "evidence": "scratch log brainsim-suite-r9-corrective.log (tests/test_server_clients.py, tests/test_ui_truth.py, tests/test_client_evidence.py, tests/test_results_record.py rerun at 12cdcdc)"
   },
   {
    "test": "tests/test_engine_determinism.py::test_schedule_digest_matches_reference",
    "label": "test schedule digest matches reference",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)",
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7",
    "note": "digest a839afcf... computed at 3060f23: the instrumented engine at 7cd6dc5 reproduces it for the tested command schedule (equivalence for that schedule, not a general proof)",
    "carried_note": "Not rerun at 12cdcdc. The corrective pass touched no engine, worker or server code (git diff 7cd6dc5..12cdcdc -- brainsim server is empty), so these 7cd6dc5 results are carried forward unchanged, including the three red kill tests."
   },
@@ -182,10 +182,10 @@
    "test": "tests/test_engine_determinism.py::test_frame_and_stims_reads_consume_no_rng",
    "label": "test frame and stims reads consume no rng",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_kill_stage0.py::test_k0_1_event_cost_and_silent_wall_time",
@@ -201,10 +201,10 @@
    "test": "tests/test_kill_stage0.py::test_k0_2_stability_over_60s_wake",
    "label": "test k0 2 stability over 60s wake",
    "outcome": "pass",
-   "tested_commit": "deedcc8",
-   "date": "2026-09-12",
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
    "carried_forward": true,
-   "evidence": "pytest tests/test_kill_stage0.py -k 'k0_2 or k0_11' at deedcc8: 2 passed (engine byte-identical to a140bc0)",
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7",
    "note": "window 100-120 s only"
   },
   {
@@ -239,10 +239,10 @@
    "test": "tests/test_kill_stage0.py::test_k0_11_scaling_skips_silent_presynaptic_input",
    "label": "test k0 11 scaling skips silent presynaptic input",
    "outcome": "pass",
-   "tested_commit": "deedcc8",
-   "date": "2026-09-12",
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
    "carried_forward": true,
-   "evidence": "pytest tests/test_kill_stage0.py -k 'k0_2 or k0_11' at deedcc8: 2 passed (engine byte-identical to a140bc0)"
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_kill_stage0.py::test_k0_10b_store_clamp_prevents_overflow_without_abort",
@@ -257,424 +257,434 @@
    "test": "tests/test_rules.py::test_stdp_pre_before_post_potentiates",
    "label": "test stdp pre before post potentiates",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_stdp_post_before_pre_depresses",
    "label": "test stdp post before pre depresses",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_add_synapses_returns_ids_and_raises_synapse_count",
    "label": "test add synapses returns ids and raises synapse count",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_add_synapses_raises_past_s_max",
    "label": "test add synapses raises past s max",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_kill_synapses_lowers_n_alive_and_zeroes_weight",
    "label": "test kill synapses lowers n alive and zeroes weight",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_in_degree_counts_only_alive_incoming",
    "label": "test in degree counts only alive incoming",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_rebuild_index_runs",
    "label": "test rebuild index runs",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
+  },
+  {
+   "test": "tests/test_rules.py::test_k0_3_population_imposed_pairing",
+   "label": "test k0 3 population imposed pairing",
+   "outcome": "fail",
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7",
+   "note": "ratio 0.927, required >= 1.2; pairing established, selectivity not reached (unchanged since 3060f23)"
   },
   {
    "test": "tests/test_rules.py::test_k0_7_isolated_neuron_rate_below_target",
    "label": "test k0 7 isolated neuron rate below target",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_k0_8_conduction_delay",
    "label": "test k0 8 conduction delay",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_k0_9_two_sign_controller_grows_e_and_respects_motif",
    "label": "test k0 9 two sign controller grows e and respects motif",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_k0_9_two_sign_controller_shrinks_e_grows_i",
    "label": "test k0 9 two sign controller shrinks e grows i",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_k0_9_two_sign_controller_restores_i_deficit",
    "label": "test k0 9 two sign controller restores i deficit",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_k0_9_two_sign_controller_trims_excess_i",
    "label": "test k0 9 two sign controller trims excess i",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_k0_10a_stall_latch_holds_growth_and_releases_on_sign_flip",
    "label": "test k0 10a stall latch holds growth and releases on sign flip",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_rules.py::test_k0_10d_latch_holds_error_driven_pruning",
    "label": "test k0 10d latch holds error driven pruning",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_present_while_paused_accepted_no_started_event_until_advance",
    "label": "test present while paused accepted no started event until advance",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_present_in_sleep_rejected_sense_gated_with_t",
    "label": "test present in sleep rejected sense gated with t",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_inject_ctx_cells_in_sleep_accepted",
    "label": "test inject ctx cells in sleep accepted",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_sleep_when_already_asleep_changed_false_clock_reset_true",
    "label": "test sleep when already asleep changed false clock reset true",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_run_pause_speed_accepted_plus_status_with_t",
    "label": "test run pause speed accepted plus status with t",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_layout_replies_in_order_with_run_id",
    "label": "test layout replies in order with run id",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_req_echoed_on_every_result",
    "label": "test req echoed on every result",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_invalid_command_rejected_with_reason",
    "label": "test invalid command rejected with reason",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_step_fifo_two_requests_batch_50",
    "label": "test step fifo two requests batch 50",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_history_expiry_66_presents_keeps_64_drops_first_two",
    "label": "test history expiry 66 presents keeps 64 drops first two",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_every_reply_keys_match_reply_keys",
    "label": "test every reply keys match reply keys",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_257th_active_inject_rejected_too_many_active",
    "label": "test 257th active inject rejected too many active",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_second_of_two_large_step_requests_rejected_pending_exceeds",
    "label": "test second of two large step requests rejected pending exceeds",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_session_commands.py::test_two_sessions_different_run_ids_stim_ids_restart_at_one",
    "label": "test two sessions different run ids stim ids restart at one",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_inject_returns_stim_record",
    "label": "test inject returns stim record",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_present_returns_stim_record",
    "label": "test present returns stim record",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_gated_present_returns_none_and_appends_nothing",
    "label": "test gated present returns none and appends nothing",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_inject_returns_none_when_ticks_non_positive",
    "label": "test inject returns none when ticks non positive",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_t_first_applied_after_one_step",
    "label": "test t first applied after one step",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_delivered_ticks_after_full_run",
    "label": "test delivered ticks after full run",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_t_last_applied_is_end_minus_one",
    "label": "test t last applied is end minus one",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_done_and_in_stimlog_after_drop_with_t_dropped",
    "label": "test done and in stimlog after drop with t dropped",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_two_overlapping_injections_keep_separate_counts",
    "label": "test two overlapping injections keep separate counts",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_wake_stimulus_gated_when_sleep_starts_mid_run",
    "label": "test wake stimulus gated when sleep starts mid run",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_stimlog_bounded_at_max_and_oldest_evicted",
    "label": "test stimlog bounded at max and oldest evicted",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_stim_events_started_and_ended_in_frame",
    "label": "test stim events started and ended in frame",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_ended_event_carries_delivered_and_gated_ticks_full_delivery",
    "label": "test ended event carries delivered and gated ticks full delivery",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_ended_event_carries_delivered_and_gated_ticks_when_gated",
    "label": "test ended event carries delivered and gated ticks when gated",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_frame_seq_increments",
    "label": "test frame seq increments",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_mixed_sense_and_ctx_injection_gated_partially_when_sleep_starts",
    "label": "test mixed sense and ctx injection gated partially when sleep starts",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_all_sense_injection_under_gate_is_fully_gated_not_partial",
    "label": "test all sense injection under gate is fully gated not partial",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   },
   {
    "test": "tests/test_stim_bookkeeping.py::test_stims_active_snapshot_matches_inj_length",
    "label": "test stims active snapshot matches inj length",
    "outcome": "pass",
-   "tested_commit": "8353bee",
-   "date": "2026-09-12",
-   "carried_forward": false,
-   "evidence": "non-kill suite at 8353bee (scratch log brainsim-s1/suite_job1.log)"
+   "tested_commit": "7cd6dc5",
+   "date": "2026-09-11",
+   "carried_forward": true,
+   "evidence": "scratch log brainsim-suite-r8-final.log (full suite, 3 failed / 71 passed); SPEC.md section 7"
   }
  ]
 }

@@ -270,7 +270,6 @@
         if (rec.delivered_ticks != null) {
           c.delivered = rec.delivered_ticks;
           c.gated = rec.gated_ticks;
-          c.partiallyGated = rec.partially_gated_ticks;
           c.deliveredFrom = "stimlog entry";
         }
         if (rec.t_end_planned != null && c.t_end_planned == null) c.t_end_planned = rec.t_end_planned;
@@ -354,12 +353,10 @@
         const started = c.t_start != null ? " · started " + secs(c.t_start) + " s" : "";
         if (c.delivered == null) return { cls: "ok", text: nm + " " + verbFor(c) + " · " + plannedMs(c) + " ms" + started };
         const span = plannedTicks(c);
-        /* every qualifier the engine reported, in the headline: a stimulus that
-           straddled a phase flip must not read as cleanly delivered */
-        const bits = [c.delivered + " of " + span + " ticks delivered"];
-        if (c.gated) bits.push(c.gated + " gated");
-        if (c.partiallyGated) bits.push(c.partiallyGated + " partially gated");
-        return { cls: "ok", text: nm + " " + verbFor(c) + " · " + bits.join(", ") + started };
+        const body = c.gated
+          ? c.delivered + " of " + span + " delivered, " + c.gated + " gated"
+          : c.delivered + " of " + span + " ticks delivered";
+        return { cls: "ok", text: nm + " " + verbFor(c) + " · " + body + started };
       }
       if (c.status === "running")
         return {
@@ -375,10 +372,8 @@
           return { cls: "", text: nm + " accepted · waiting for ticks" };
         }
         if (c.cmd === "sleep")
-          /* the same command enters and leaves the sleep phase (on:true/false),
-             so the row is named by what was asked for, not by the command name */
           return {
-            cls: "ok", text: (c.label || "sleep") + " · " + c.phase_before + " → " + c.phase_after
+            cls: "ok", text: "sleep now · " + c.phase_before + " → " + c.phase_after
               + " · changed: " + c.changed + " · phase clock restarted"
           };
         if (c.cmd === "speed")
@@ -466,96 +461,7 @@
 
   function num(v, d) { return typeof v === "number" && isFinite(v) ? v : d; }
 
-  /* ---- pure display helpers -------------------------------------------------
-     No DOM, no clock, no mutation of their arguments. They live in this file
-     because it is the only client file both the page and `node --test` load;
-     they are not part of evidence reconciliation and read no engine message. */
-
-  function outcomeCounts(rec) {
-    const out = { pass: 0, fail: 0, reject: 0, other: 0, total: 0 };
-    const rows = rec && Array.isArray(rec.entries) ? rec.entries : [];
-    for (const ent of rows) {
-      const o = ent && ent.outcome;
-      if (o === "pass") out.pass++;
-      else if (o === "fail") out.fail++;
-      else if (o === "reject") out.reject++;
-      else out.other++;
-      out.total++;
-    }
-    return out;
-  }
-
-  /* Header chip text. Never a constant: every word is a count of
-     entries[].outcome in the record files the page fetched. */
-  function stageChipText(stage0, stage1) {
-    let seg0;
-    if (stage0 == null) seg0 = "Stage 0 · record not loaded";
-    else {
-      const c0 = outcomeCounts(stage0);
-      const red = c0.fail + c0.reject + c0.other;
-      seg0 = red > 0
-        ? "Stage 0 · " + red + " kill test" + (red === 1 ? "" : "s") + " red"
-        : "Stage 0 · no kill test red";
-    }
-    let seg1;
-    if (stage1 == null) seg1 = "Stage 1 · record not loaded";
-    else {
-      const c1 = outcomeCounts(stage1);
-      const bits = [];
-      if (c1.fail > 0) bits.push(c1.fail + " fail");
-      if (c1.reject > 0) bits.push(c1.reject + " reject" + (c1.reject === 1 ? "" : "s"));
-      seg1 = "Stage 1 · " + (bits.length ? bits.join(" ")
-        : (c1.pass > 0 ? c1.pass + " pass" : "no results recorded"));
-    }
-    return seg0 + " · " + seg1;
-  }
-
-  /* Failures and rejects first, original order kept inside each rank, so a
-     handful of red rows cannot hide among dozens of green ones. */
-  function failuresFirst(entries) {
-    if (!Array.isArray(entries)) return [];
-    const rank = ent => {
-      const o = ent && ent.outcome;
-      return o === "fail" ? 0 : o === "reject" ? 1 : o === "pass" ? 3 : 2;
-    };
-    return entries
-      .map((ent, i) => [ent, i])
-      .sort((a, b) => (rank(a[0]) - rank(b[0])) || (a[1] - b[1]))
-      .map(p => p[0]);
-  }
-
-  const ROW_SKIP = ["type", "run_id", "regions", "spikes", "born", "died",
-    "stim_active", "stim_events", "growth_halted"];
-  const ROW_TAIL = ["spikes", "born / died", "stim_active", "stim_events"];
-
-  function uniqSorted(list) {
-    const seen = Object.create(null), out = [];
-    for (const s of (Array.isArray(list) ? list : [])) {
-      const k = String(s);
-      if (seen[k]) continue;
-      seen[k] = 1; out.push(k);
-    }
-    return out.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-  }
-
-  /* The Diagnostics key table's row order, computed once from the key sets
-     rather than from whatever order a frame's keys happen to arrive in: rows
-     are then created once and only their text changes, so nothing moves. */
-  function frameRowKeys(spec) {
-    const s = spec || {};
-    const scalars = uniqSorted(s.keys).filter(k => ROW_SKIP.indexOf(k) < 0);
-    const growth = uniqSorted(s.growth).map(g => "growth_halted." + g);
-    const regions = uniqSorted(s.regions).map(n => "regions." + n + ".rate_hz");
-    return scalars.concat(growth, regions, ROW_TAIL);
-  }
-
-  const Evidence = {
-    create: create,
-    ui: {
-      outcomeCounts: outcomeCounts, stageChipText: stageChipText,
-      failuresFirst: failuresFirst, frameRowKeys: frameRowKeys
-    }
-  };
+  const Evidence = { create: create };
   if (typeof module !== "undefined" && module.exports) module.exports = Evidence;
   if (typeof window !== "undefined") window.Evidence = Evidence;
 })();

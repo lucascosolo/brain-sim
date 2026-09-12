@@ -12,13 +12,9 @@
   <span class="pill" id="connpill"><span class="led"></span><span class="t">connecting</span></span>
   <span class="pill" id="simpill"><span class="led"></span><span class="t">unknown</span></span>
   <span class="badge" id="phasebadge">—</span>
-  <span class="hstat">simulated time <b id="hsimt">0.00</b> s</span>
-  <span class="hstat">plasticity gain g <b id="hg">—</b></span>
-  <span class="hstat">structural gain <b id="hgstruct">—</b></span>
-  <span class="hstat" id="hspeed">asked <b>1x</b> · accepted <b>—</b> · measured <b>—</b></span>
-  <span class="hstat units" id="hspeedunits">simulated s per wall s</span>
-  <span class="pill warn" id="warnchip" hidden><span class="led"></span><span class="t"></span></span>
-  <button id="stagechip" type="button">reading the recorded results…</button>
+  <span class="hstat">t = <b id="hsimt">0.00</b> s</span>
+  <span class="hstat" id="hspeed">req <b>1x</b> · acc <b>—</b> · meas <b>—</b></span>
+  <button id="stagechip" type="button">Stage 0 · experimental</button>
 </header>
 
 <nav id="tabs" role="tablist" aria-label="Views">
@@ -42,11 +38,9 @@
   </div>
   <div class="cgroup">
     <button class="btn" id="sleepbtn">Sleep now</button>
-    <button class="btn" id="wakebtn">Wake now</button>
     <span class="reqline" id="sleepline">—</span>
   </div>
 </div>
-<div id="explainbar"><div class="explainhost" data-explain="header"></div></div>
 
 <main id="observe" role="tabpanel" aria-labelledby="tab-observe">
   <section style="min-width:0">
@@ -57,15 +51,15 @@
         <div id="framelabel">waiting for first frame</div>
       </div>
       <div class="legendrow">
-        <span><i class="swatch" style="background:var(--e)"></i>E = excitatory (pushes others toward firing)</span>
-        <span><i class="swatch" style="background:var(--i)"></i>I = inhibitory (pushes others away from firing)</span>
+        <span><i class="swatch" style="background:var(--e)"></i>E</span>
+        <span><i class="swatch" style="background:var(--i)"></i>I</span>
         <span id="leg-glow"><i class="swatch" style="background:#fff"></i>—</span>
         <span><i class="swatch" style="border:1px solid var(--amber);background:rgba(255,180,84,.2)"></i>driven patch</span>
-        <label class="toggle"><input type="checkbox" id="synToggle"> sampled connections: <span id="synlabel">off</span></label>
+        <label class="toggle"><input type="checkbox" id="synToggle"> sampled connections</label>
         <label class="toggle" id="structlabel"><input type="checkbox" id="structToggle"> —</label>
+        <span id="synlabel">off</span>
         <span id="sublabel" hidden></span>
       </div>
-      <div class="explainhost" data-explain="map"></div>
     </div>
 
     <div class="panel" id="tlcard">
@@ -82,7 +76,6 @@
         <span><i class="swatch" style="background:var(--sleep);border:1px solid #4a3f72"></i>sleep</span>
         <span id="tlnote"></span>
       </div>
-      <div class="explainhost" data-explain="timeline"></div>
     </div>
   </section>
 
@@ -90,55 +83,27 @@
     <div class="panel sec">
       <h2>Stimulate</h2>
       <p class="note" id="patcaption">—</p>
-      <div class="explainhost" data-explain="stimulate"></div>
       <div class="patgrid" id="patgrid"></div>
       <details class="inject">
         <summary><span class="chev" aria-hidden="true"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M3 1.5 6 4.5 3 7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Custom injection (drag-select on the map)</summary>
         <div class="ctlrow">
-          <label class="note" style="margin:0">amplitude, mV <input type="number" id="injamp" value="8" step="0.5"></label>
-          <label class="note" style="margin:0">duration, ticks <input type="number" id="injticks" value="50" step="10"></label>
+          <label class="note" style="margin:0">amp mV <input type="number" id="injamp" value="8" step="0.5"></label>
+          <label class="note" style="margin:0">ticks <input type="number" id="injticks" value="50" step="10"></label>
         </div>
-        <p class="note tight" id="injdefaults">—</p>
         <div class="ctlrow">
           <button class="btn wide" id="injbtn" disabled>Inject 0 cells</button>
-          <button class="btn" id="injctx" disabled>Inject ctx sample (waiting for layout)</button>
+          <button class="btn" id="injctx">Inject 60 ctx cells</button>
         </div>
-        <p class="note tight" id="injctxnote">—</p>
         <p class="note" id="injnote">Drag a rectangle on the map to select cells.</p>
       </details>
       <h3 style="margin-top:16px">Command feedback</h3>
       <p class="note tight" id="cmdcaption">Newest first</p>
-      <div class="explainhost" data-explain="cmdfeedback"></div>
       <div id="cmdlist" role="log" aria-label="Command feedback"></div>
-    </div>
-
-    <div class="panel sec">
-      <h2>Heterosynaptic write</h2>
-      <label class="toggle"><input type="checkbox" id="heteroToggle"> heterosynaptic write</label>
-      <p class="note tight" id="heterostats">—</p>
-      <p class="note" id="heteroCells">—</p>
-      <p class="note">In plain words: when a memory-area cell is very active, it turns up the connections from the cells that were just talking to it and turns down its quieter ones by the same total amount, so it ends up listening more to what was happening at that moment. Only one of this and encode-mode can be on at a time; the simulator refuses the second.</p>
-      <p class="note">A labelled proxy (SPEC 8.16), not biology. In a wake sweep any hippocampal excitatory cell that fired at least <span id="heteroTrigger">5</span> times redistributes weight among its cortical inputs toward the inputs that were active in that sweep, keeping the cell's summed input weight the same. Nobody tells the engine which cells. Scaling, the pair rule and the prunes are untouched. Every number shown is the engine's own value from the frame.</p>
-    </div>
-
-    <div class="panel sec">
-      <h2>Encode-mode</h2>
-      <label class="toggle"><input type="checkbox" id="encodeToggle"> encode-mode</label>
-      <p class="note tight" id="encodestage">—</p>
-      <p class="note" id="wcaption">no W yet: turn encode-mode on and present A</p>
-      <div id="wcard"></div>
-      <div class="ctlrow">
-        <button class="btn" id="encPresentA">Present A</button>
-        <button class="btn" id="encHalfA">Present half-A</button>
-        <button class="btn" id="encNone">No stimulus</button>
-      </div>
-      <p class="note">these cells were the A winners; lighting them after a hint is the scribble, not speech.</p>
     </div>
 
     <div class="panel sec">
       <h2>Phase schedule</h2>
       <p class="note" id="schedline">—</p>
-      <div class="explainhost" data-explain="schedule"></div>
     </div>
   </aside>
 </main>
@@ -147,29 +112,23 @@
   <section class="panel sec">
     <h2>This run</h2>
     <p class="note">Every key of the current frame, exactly as received</p>
-    <div class="explainhost" data-explain="diagkeys"></div>
-    <div class="tblwrap"><table id="framekeys"><thead><tr><th>key</th><th>value</th><th>what it is</th></tr></thead><tbody></tbody></table></div>
+    <div class="tblwrap"><table id="framekeys"><tbody></tbody></table></div>
     <h3 style="margin-top:16px">Per-region raster</h3>
     <p class="note tight" id="rasternote">spikes per tick, scrolling</p>
-    <div class="explainhost" data-explain="raster"></div>
     <div class="rasters" id="rasters"></div>
     <h3 style="margin-top:16px">Config (simulator facts)</h3>
     <p class="note tight">the worker's own parameters, from the config reply</p>
-    <div class="explainhost" data-explain="config"></div>
-    <pre id="cfgjson" class="fixedpre">—</pre>
+    <pre id="cfgjson">—</pre>
     <h3 style="margin-top:16px">Client display preferences</h3>
     <p class="note tight" id="glowfull">display choices made by this page; not simulator parameters</p>
-    <div class="explainhost" data-explain="dispprefs"></div>
-    <pre id="dispjson" class="fixedpre">—</pre>
-    <p class="note tight" id="explainprefline">—</p>
+    <pre id="dispjson">—</pre>
     <h3 style="margin-top:16px">Command history (full, details expanded)</h3>
     <p class="note tight" id="cmdfullcap">—</p>
     <div id="cmdfull"></div>
     <h3 style="margin-top:16px">Last inspect reply</h3>
-    <pre id="inspjson" class="fixedpre">none yet</pre>
+    <pre id="inspjson">none yet</pre>
     <h3 style="margin-top:16px">Last region reply</h3>
-    <pre id="regjson" class="fixedpre">none yet</pre>
-    <div class="explainhost" data-explain="inspector"></div>
+    <pre id="regjson">none yet</pre>
     <h3 style="margin-top:16px">Message log</h3>
     <p class="note tight">commands out, results and errors in · newest first</p>
     <div id="log"></div>
@@ -178,7 +137,6 @@
   <section class="panel sec">
     <h2>How evidence reconciles</h2>
     <p class="note">What is allowed to change a command's state, and in what order.</p>
-    <div class="explainhost" data-explain="recon"></div>
     <ol class="recon">
       <li>A <b>result</b> sets the command's acceptance or rejection. Nothing else can.</li>
       <li><b>stim_events</b> set start and end when they are observed. Absence from <b>stim_active</b> sets nothing.</li>
@@ -193,50 +151,22 @@
   <section class="panel sec">
     <h2>Rules</h2>
     <p class="note">The equations the engine runs. Text, not a claim about outcomes.</p>
-    <p class="note tight">This list is a description written by hand. The simulator does not report it. The
-      <b>Config (simulator facts)</b> panel above is the checkable source for every key named here that the
-      simulator sends; the rest are named so they can be checked against <span class="mono">brainsim/params.py</span>
-      and <span class="mono">brainsim/engine.py</span>.</p>
-    <div class="explainhost" data-explain="rules"></div>
     <ol class="rules">
-      <li><b>Membrane.</b> Leaky integrate-and-fire with an adaptive threshold: the threshold rises after each spike and relaxes back, so a cell that has just fired needs more drive to fire again.
-        <div class="keys">keys · <span class="mono">dt_ms</span> (config reply) · <span class="mono">TAU_M_MS, V_REST_MV, V_RESET_MV, THETA_0_MV, TAU_THETA_MS, D_THETA_MV, T_REF_MS</span> (params.py, not reported)</div></li>
+      <li><b>Membrane.</b> Leaky integrate-and-fire with an adaptive threshold: the threshold rises after each spike and relaxes back, so a cell that has just fired needs more drive to fire again.</li>
       <li><b>Pair STDP, potentiation</b> — at a post-synaptic spike:
-        <div class="eq">w += g · a₊ · x_pre · (w_max − w)</div>
-        <div class="keys">keys · <span class="mono">g_wake, g_sleep</span> (config reply; the live value is frame <span class="mono">g</span>) · per-region <span class="mono">a_plus, w_max</span> (params.py REGIONS, not reported)</div></li>
+        <div class="eq">w += g · a₊ · x_pre · (w_max − w)</div></li>
       <li><b>Pair STDP, depression</b> — at delivery:
-        <div class="eq">w ← max(w · (1 − g · a₋ · y_post), 0)</div>
-        <div class="keys">keys · <span class="mono">g_wake, g_sleep</span> (config reply) · per-region <span class="mono">a_minus</span> (params.py REGIONS, not reported)</div></li>
-      <li><b>Traces.</b> x_pre and y_post gain +1 per spike and decay by exp(−1/20) per ms.
-        <div class="keys">keys · <span class="mono">dt_ms</span> (config reply) · <span class="mono">TAU_TRACE_MS</span> (params.py, not reported)</div></li>
+        <div class="eq">w ← max(w · (1 − g · a₋ · y_post), 0)</div></li>
+      <li><b>Traces.</b> x_pre and y_post gain +1 per spike and decay by exp(−1/20) per ms.</li>
       <li><b>Synaptic scaling.</b> Once per sweep, wake only, on excitatory synapses whose presynaptic cell fired in that sweep:
-        <div class="eq">factor = 1 + clip(0.1 · (r_target − rate) / r_target, ±0.1)</div>
-        <div class="keys">keys · <span class="mono">sweep_ticks, rate_ema_alpha</span> (config reply) · <span class="mono">ETA_SCALING, SCALING_CLIP</span> and per-region <span class="mono">r_target_exc, r_target_inh</span> (params.py, not reported)</div></li>
-      <li><b>Structural change under a rate setpoint.</b> Once per sweep, the simulator compares each cell's
-        recent firing rate with the target rate for its region and uses the signed error to decide, cell by cell,
-        how many incoming connections to create and how many to destroy. A cell firing below its target grows
-        excitatory inputs; a cell firing above its target loses them, weakest first. Inhibitory inputs are grown or
-        pruned toward a fixed ratio of the excitatory count. Separately, an excitatory connection whose weight has
-        fallen below a fraction of its maximum is destroyed on that sweep. The rate of all of this is scaled by
-        <span class="mono">g_struct</span> (shown in the header), which starts high and decays as the run ages.
-        <div class="keys">keys · <span class="mono">sweep_ticks</span> (config reply) · frame <span class="mono">g_struct, born_count, died_count, born_per_s, died_per_s, n_syn_alive</span> · <span class="mono">STRUCT_BASE, STRUCT_AGE_TAU_S, W_PRUNE_FRAC, W_GROW_FRAC, EI_MOTIF, GROW_BETA, PROJECTIONS</span> and per-region <span class="mono">r_target_exc, r_target_inh</span> (params.py, not reported)</div></li>
-      <li><b>Anti-windup.</b> Also once per sweep, the simulator checks whether a group's mean rate error has
-        stopped improving; if it has, it suspends the rate-driven creating <i>and</i> pruning of excitatory inputs
-        for that group until the error changes sign (inhibitory inputs toward the E/I ratio are still created), and
-        reports that as <span class="mono">growth_halted</span>. It also stops creating connections everywhere
-        once the connection store is nearly full, reported as <span class="mono">store_clamped</span>.
-        <div class="keys">keys · frame <span class="mono">growth_halted, store_clamped</span> · <span class="mono">WINDUP_WINDOW_SWEEPS, WINDUP_MIN_PROGRESS, WINDUP_NOISE_SIGMAS, WINDUP_CAP_FRAC, S_MAX</span> (params.py, not reported)</div></li>
+        <div class="eq">factor = 1 + clip(0.1 · (r_target − rate) / r_target, ±0.1)</div></li>
     </ol>
   </section>
 
   <section class="panel sec" id="recorded">
     <h2>Recorded results</h2>
     <p class="note">Hand-maintained record, not measured by this page. Real data from test runs.</p>
-    <div class="explainhost" data-explain="recorded"></div>
-    <h3 style="margin-top:16px">Stage 0 record</h3>
     <div id="recgroups"></div>
-    <h3 style="margin-top:22px">Stage 1 record</h3>
-    <div id="recgroups1"></div>
     <p class="note" style="margin-top:14px;color:var(--text)">A stable-looking live run does not change this record.</p>
   </section>
 </main>
