@@ -1,22 +1,17 @@
 import numpy as np
 
-from . import encode
-from . import hetero
-
 FRAME_KEYS = frozenset({
     "t", "phase", "age_s", "g", "g_struct", "sense_gated", "ticks", "n_syn_alive",
     "syn_born_total", "syn_died_total", "born_per_s", "died_per_s", "spike_total",
     "syn_touched_mean", "born_count", "died_count", "regions", "spikes", "truncated",
     "born", "died", "wall_ratio", "growth_halted", "store_clamped",
-    "stim_active", "stim_events", "seq", "encode", "hetero",
+    "stim_active", "stim_events", "seq",
 })
 
 CONFIG_KEYS = frozenset({
     "dt_ms", "batch_ticks", "pattern_amp_mv", "pattern_ticks", "wake_ticks", "sleep_ticks",
     "g_wake", "g_sleep", "sweep_ticks", "rate_ema_alpha", "frame_spike_cap", "v_trace_ticks",
     "hist_bins", "n_patterns", "pattern_frac", "stimlog_max", "seed",
-    "encode_k", "encode_delta_frac", "encode_recurrent_delta_frac", "encode_grace_ticks",
-    "hetero_write", "hetero_trigger_spikes", "hetero_eta",
 })
 
 REPLY_KEYS = {
@@ -26,7 +21,7 @@ REPLY_KEYS = {
     "region": frozenset({"type", "name", "n", "rate_hz", "n_syn_in", "n_syn_out",
                          "w_hist", "rate_hist", "run_id"}),
     "layout": frozenset({"type", "regions", "x", "y", "region", "is_exc", "synapse_sample",
-                         "patterns", "half_patterns", "run_id"}),
+                         "patterns", "run_id"}),
     "status": frozenset({"type", "running", "speed", "t", "run_id"}),
     "error": frozenset({"type", "cmd", "msg", "req", "run_id"}),
     "config": CONFIG_KEYS | {"type", "run_id"},
@@ -81,8 +76,7 @@ def make_frame(e):
         born=[list(b) for b in e._buf_born[:p.FRAME_STRUCT_CAP]],
         died=[list(d) for d in e._buf_died[:p.FRAME_STRUCT_CAP]],
         wall_ratio=None, growth_halted=dict(e.growth_halted), store_clamped=e.store_clamped,
-        seq=e._frame_seq, stim_active=e.stims_active(), stim_events=e._buf_stim_events,
-        encode=e.encode_view(), hetero=e.hetero_view())
+        seq=e._frame_seq, stim_active=e.stims_active(), stim_events=e._buf_stim_events)
     e._buf_stim_events = []
     e._buf_spikes, e._buf_touched, e._buf_born, e._buf_died, e._buf_ticks = [], [], [], [], 0
     e._born_count = e._died_count = 0
@@ -135,7 +129,6 @@ def layout(e):
     return dict(regions=regions, x=net.x.tolist(), y=net.y.tolist(),
                 region=net.region.tolist(), is_exc=net.is_exc.tolist(),
                 patterns=[pat.tolist() for pat in e.patterns],
-                half_patterns=[encode.cue_ids(pat).tolist() for pat in e.patterns],
                 synapse_sample=[[int(i), int(net.pre[i]), int(net.post[i])] for i in ids])
 
 
@@ -147,12 +140,7 @@ def config(e, batch_ticks, pattern_ticks):
                 sweep_ticks=p.SWEEP_TICKS, rate_ema_alpha=p.RATE_EMA_ALPHA,
                 frame_spike_cap=p.FRAME_SPIKE_CAP, v_trace_ticks=p.V_TRACE_TICKS,
                 hist_bins=p.HIST_BINS, n_patterns=len(e.patterns),
-                pattern_frac=p.PATTERN_FRAC, stimlog_max=p.STIMLOG_MAX, seed=e.seed,
-                encode_k=p.ENCODE_K, encode_delta_frac=p.ENCODE_DELTA_FRAC,
-                encode_recurrent_delta_frac=p.ENCODE_RECURRENT_DELTA_FRAC,
-                encode_grace_ticks=p.ENCODE_GRACE_TICKS,
-                hetero_write=bool(e.hetero_write), hetero_trigger_spikes=hetero.constants(p)[0],
-                hetero_eta=hetero.constants(p)[1])
+                pattern_frac=p.PATTERN_FRAC, stimlog_max=p.STIMLOG_MAX, seed=e.seed)
 
 
 def stimlog(e):

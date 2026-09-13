@@ -14,9 +14,6 @@ BATCH = 50
 PRESENT_TICKS = 200
 
 MAX_STEP_TICKS = 100000
-# A present() that arms the encode schedule (SPEC 8.12) runs the identification pass
-# inline on a deep copy, so a long presentation would block the worker loop twice over.
-ENCODE_PRESENT_MAX_TICKS = 2000
 
 _RESULT_FIELDS = ("reason", "stim_id", "n_cells", "amp_mv", "t_accept", "t_end_planned",
                   "t_target", "phase_before", "phase_after", "changed", "phase_clock_reset",
@@ -52,10 +49,6 @@ def _validate(k, c, e):
         pattern = c.get("pattern", 0)
         if not _is_int(pattern) or pattern not in range(len(e.patterns)):
             raise ValueError("pattern out of range")
-        if e.encode_stage == "idle" and ticks > ENCODE_PRESENT_MAX_TICKS:
-            raise ValueError(
-                f"ticks must be <= {ENCODE_PRESENT_MAX_TICKS} while encode-mode is idle: "
-                "the identification pass copies the engine and runs it inline")
     elif k in ("inspect", "watch"):
         i = c.get("id")
         if not _is_int(i) or not (0 <= i < net.n):
@@ -67,12 +60,6 @@ def _validate(k, c, e):
         f = c.get("factor", 1.0)
         if not _is_finite_float(f) or not (0 <= f <= 64):
             raise ValueError("factor must be a finite float in [0, 64]")
-    elif k in ("encode", "hetero"):
-        if not isinstance(c.get("on"), bool):
-            raise ValueError("on must be a bool")
-        if c["on"] and (e.hetero_write if k == "encode" else e.encode_stage != "off"):
-            raise ValueError("encode-mode and the heterosynaptic write are mutually exclusive: only one can be on "
-                             "at a time; turn the other off and let a running encode schedule finish")
     elif k == "step":
         ticks = c.get("ticks", 1)
         if not _is_int(ticks) or not (1 <= ticks <= 100000):
@@ -187,15 +174,6 @@ class Session:
                 self._result(k, req, "accepted", stim_id=rec["stim_id"],
                              n_cells=rec["n_cells"], amp_mv=rec["amp_mv"],
                              t_accept=rec["t_accept"], t_end_planned=rec["t_end_planned"])
-        elif k == "encode":
-            # The MODE flag only; an armed schedule is never cancelled by it.
-            before = e.encode_mode
-            e.encode_mode = bool(c["on"])
-            self._result(k, req, "accepted", changed=before != e.encode_mode)
-        elif k == "hetero":
-            before = e.hetero_write
-            e.hetero_write = bool(c["on"])
-            self._result(k, req, "accepted", changed=before != e.hetero_write)
         elif k == "watch":
             e.watch(int(c["id"]))
             self._result(k, req, "accepted")
