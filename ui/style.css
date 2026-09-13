@@ -351,10 +351,3 @@ ol.rules .keys .mono{color:var(--dim)}
 
 /* anchors scrolled into view land below the sticky control bar */
 .card, section, details.explain, h2, h3 { scroll-margin-top: 120px; }
-
-/* Encode-mode (SPEC 8.12): one chip per W cell, lit when the engine's frame says
-   that cell spiked inside the reported window. */
-#wcard{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-.wchip{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.5;
-  color:var(--dim);border:1px solid #2a3240;border-radius:3px;padding:1px 5px}
-.wchip.lit{border-color:var(--amber);color:#ffd79a;background:#241c0e}

@@ -113,29 +113,6 @@
     </div>
 
     <div class="panel sec">
-      <h2>Heterosynaptic write</h2>
-      <label class="toggle"><input type="checkbox" id="heteroToggle"> heterosynaptic write</label>
-      <p class="note tight" id="heterostats">—</p>
-      <p class="note" id="heteroCells">—</p>
-      <p class="note">In plain words: when a memory-area cell is very active, it turns up the connections from the cells that were just talking to it and turns down its quieter ones by the same total amount, so it ends up listening more to what was happening at that moment. Only one of this and encode-mode can be on at a time; the simulator refuses the second.</p>
-      <p class="note">A labelled proxy (SPEC 8.16), not biology. In a wake sweep any hippocampal excitatory cell that fired at least <span id="heteroTrigger">5</span> times redistributes weight among its cortical inputs toward the inputs that were active in that sweep, keeping the cell's summed input weight the same. Nobody tells the engine which cells. Scaling, the pair rule and the prunes are untouched. Every number shown is the engine's own value from the frame.</p>
-    </div>
-
-    <div class="panel sec">
-      <h2>Encode-mode</h2>
-      <label class="toggle"><input type="checkbox" id="encodeToggle"> encode-mode</label>
-      <p class="note tight" id="encodestage">—</p>
-      <p class="note" id="wcaption">no W yet: turn encode-mode on and present A</p>
-      <div id="wcard"></div>
-      <div class="ctlrow">
-        <button class="btn" id="encPresentA">Present A</button>
-        <button class="btn" id="encHalfA">Present half-A</button>
-        <button class="btn" id="encNone">No stimulus</button>
-      </div>
-      <p class="note">these cells were the A winners; lighting them after a hint is the scribble, not speech.</p>
-    </div>
-
-    <div class="panel sec">
       <h2>Phase schedule</h2>
       <p class="note" id="schedline">—</p>
       <div class="explainhost" data-explain="schedule"></div>

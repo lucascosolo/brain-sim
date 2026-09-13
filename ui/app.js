@@ -48,8 +48,7 @@ const st = {
   ripples: [], bornFlash: [], deathFlash: [],
   drag: null, selection: [], synOn: false, syn: null, structOn: false,
   log: [], tab: "observe", synHist: [], rowSig: null, fullSig: null, lineSegments: 0,
-  records: { 0: null, 1: null }, explainOpen: Object.create(null), keyRows: null,
-  wcardSig: null
+  records: { 0: null, 1: null }, explainOpen: Object.create(null), keyRows: null
 };
 const UI = Evidence.ui;   // pure display helpers, node-tested in tests/js/ui_helpers.test.mjs
 const $ = s => document.querySelector(s);
@@ -61,9 +60,7 @@ const el = {
   synlabel: $("#synlabel"), sublabel: $("#sublabel"), tlnote: $("#tlnote"),
   drawer: $("#drawer"), drawerbody: $("#drawerbody"), drawertitle: $("#drawertitle"),
   legGlow: $("#leg-glow"), tllegend: $("#tllegend"), rasternote: $("#rasternote"),
-  hg: $("#hg"), hgstruct: $("#hgstruct"), warnchip: $("#warnchip"), stagechip: $("#stagechip"),
-  encodestage: $("#encodestage"), wcaption: $("#wcaption"), wcard: $("#wcard"),
-  heterostats: $("#heterostats"), heteroCells: $("#heteroCells")
+  hg: $("#hg"), hgstruct: $("#hgstruct"), warnchip: $("#warnchip"), stagechip: $("#stagechip")
 };
 const map = $("#map"), mctx = map.getContext("2d");
 const tlc = $("#timeline"), tctx = tlc.getContext("2d");
@@ -357,7 +354,6 @@ function refresh() { VS = EV.state(); }
 function onRestart(note) {
   st.ripples = []; st.bornFlash = []; st.deathFlash = []; st.synHist = [];
   st.lastFrame = null; st.rowSig = null; st.fullSig = null;
-  st.wcardSig = null; el.wcard.innerHTML = "";
   sleepWatch = null; el.sleepline.textContent = "—";
   const b = $("#restartbanner");
   b.hidden = false;
@@ -379,9 +375,8 @@ function applyConfig() {
     `amplitude is in millivolts, duration in ticks of ${C.dt_ms} ms. For comparison, the lettered buttons above use ` +
     `the simulator's own pattern settings: ${C.pattern_amp_mv} mV for ${C.pattern_ticks} ticks (${msOf(C.pattern_ticks)} ms).`;
   $("#rule-stimlogmax").textContent = C.stimlog_max;
-  $("#heteroTrigger").textContent = C.hetero_trigger_spikes;
   $("#cfgjson").textContent = JSON.stringify(C, null, 1);
-  renderPatterns(); renderControls(); renderExplainers(); renderEncodeButtons();
+  renderPatterns(); renderControls(); renderExplainers();
 }
 
 function applyLayout() {
@@ -390,8 +385,6 @@ function applyLayout() {
   if (!st.bright || st.bright.length !== st.N) st.bright = new Float32Array(st.N);
   st.regionNames = Object.keys(L.regions);
   st.keyRows = null;
-  /* a layout belongs to one run: chips drawn from an older run's W are dropped */
-  st.wcardSig = null; el.wcard.innerHTML = "";
   layoutBoxes(); renderRegionHeads(); renderPatterns(); buildSyn(); buildRasters();
   renderExplainers(); renderCtxSampleLabel();
   if (st.lastFrame) buildKeyRows();
@@ -467,7 +460,7 @@ function applyFrame(f) {
     if (card && card.cells && card.cells.length) st.ripples.push({ cells: card.cells, at: nowW });
   }
 
-  renderHeader(); renderFrameLabel(f); renderRows(); renderEncode(f); renderHetero(f);
+  renderHeader(); renderFrameLabel(f); renderRows();
   if (st.tab === "diag") renderFrameKeys(f);
   pushRasters(f);
   st.gapNow = false;
@@ -617,79 +610,6 @@ function renderPatterns() {
     host.appendChild(b);
   });
 }
-
-/* ---- encode-mode panel (SPEC 8.12) ----------------------------------------
-   The mode, the stage, W and which of W spiked are all read off the frame's
-   `encode` key; nothing here infers any of them. The three buttons send only
-   commands the page could already send. */
-function renderEncodeButtons() {
-  if (!C || !L) return;
-  const a = L.patterns && L.patterns[0], half = L.half_patterns && L.half_patterns[0];
-  $("#encPresentA").textContent = a ? `Present A · ${a.length} cells` : "Present A";
-  $("#encHalfA").textContent = half ? `Present half-A · ${half.length} cells` : "Present half-A";
-  $("#encNone").textContent = `No stimulus · advance ${tickWord(C.pattern_ticks)}`;
-}
-
-function renderEncode(f) {
-  const enc = f.encode;
-  if (!enc) return;
-  const box = $("#encodeToggle");
-  if (box.checked !== enc.mode) box.checked = enc.mode;   /* engine truth, not the click */
-  const stage = enc.stage === "present"
-    ? `presenting · window on W until t = ${enc.t_present_end}`
-    : enc.stage === "grace" ? `grace · mask off at t = ${enc.t_grace_end}` : enc.stage;
-  if (el.encodestage.textContent !== stage) el.encodestage.textContent = stage;
-  const cap = enc.W.length
-    ? `W · ${enc.W.length} hpc E cells from the identification pass; lit = spiked in the last ${enc.window_ticks} ticks`
-    : "no W yet: turn encode-mode on and present A";
-  if (el.wcaption.textContent !== cap) el.wcaption.textContent = cap;
-  const sig = enc.W.join(",") + "|" + enc.spiked_last_50.join(",");
-  if (st.wcardSig === sig) return;
-  st.wcardSig = sig;
-  const lit = {};
-  for (const id of enc.spiked_last_50) lit[id] = true;
-  el.wcard.innerHTML = enc.W
-    .map(id => `<span class="wchip${lit[id] ? " lit" : ""}">${E(id)}</span>`).join("");
-}
-
-/* ---- heterosynaptic-write panel (SPEC 8.16): only the frame's `hetero` key. */
-function renderHetero(f) {
-  const h = f.hetero;
-  if (!h) return;
-  const box = $("#heteroToggle");
-  if (box.checked !== h.on) box.checked = h.on;   /* engine truth, not the click */
-  const d = v => v == null ? "—" : v;
-  const d3 = v => v == null ? "—" : v.toFixed(3);
-  const stats = `${h.on ? "on" : "off"} · ${d(h.sweeps)} sweeps · last: ${d(h.cells_last)} cells, ${d(h.syn_last)} synapses (${d(h.up_last)} up, ${d(h.down_last)} down) · ${d(h.cells_total)} cells in total · mean |dw| ${d3(h.mean_abs_dw_last)} · net dw ${d3(h.net_dw_last)} (of w_max) · at t ${d(h.t_last)}`;
-  if (el.heterostats.textContent !== stats) el.heterostats.textContent = stats;
-  const ids = h.cell_ids_last && h.cell_ids_last.length ? h.cell_ids_last.join(", ") : "—";
-  const n = h.cell_ids_last ? h.cell_ids_last.length : 0;
-  const line = h.cell_ids_truncated
-    ? `cells at the last write · first ${n} ids of ${h.cells_last} cells · ${ids}`
-    : `cells at the last write · ${ids}`;
-  if (el.heteroCells.textContent !== line) el.heteroCells.textContent = line;
-}
-
-$("#heteroToggle").onchange = e => {
-  sendTracked("hetero", { on: e.target.checked },
-    "heterosynaptic write " + (e.target.checked ? "on" : "off"));
-};
-
-$("#encodeToggle").onchange = e => {
-  sendTracked("encode", { on: e.target.checked },
-    "encode-mode " + (e.target.checked ? "on" : "off"));
-};
-$("#encPresentA").onclick = () => presentPattern(0);
-$("#encHalfA").onclick = () => {
-  if (!C || !L || !L.half_patterns || !L.half_patterns[0]) return;
-  const ids = L.half_patterns[0].slice();
-  sendTracked("inject", { ids: ids, amp: C.pattern_amp_mv, ticks: C.pattern_ticks },
-    `present half-A · ${ids.length} cells · ${msOf(C.pattern_ticks)} ms`, { cells: ids });
-};
-$("#encNone").onclick = () => {
-  if (!C) return;
-  sendTracked("step", { ticks: C.pattern_ticks }, `no stimulus · advance ${tickWord(C.pattern_ticks)}`);
-};
 
 function presentPattern(i) {
   if (!C || !L || !L.patterns || !L.patterns[i]) return;
@@ -1257,9 +1177,7 @@ const KEY_GLOSS = {
   spikes: "Which cells fired and in which step of this packet. Capped at frame_spike_cap.",
   "born / died": "The pairs of cells whose connection was created or destroyed in this packet, capped at FRAME_STRUCT_CAP.",
   stim_active: "Stimuli the simulator still has running, each with its own count of steps delivered so far.",
-  stim_events: "Started and ended events for stimuli in this packet. These, and only these, set a stimulus's start and end on this page.",
-  hetero: "Heterosynaptic write (SPEC 8.16), a labelled proxy and not biology. on is the flag; sweeps is how many wake sweeps applied it; cells_last, syn_last, up_last and down_last are the cells and synapses touched at the last write and how many went up and down; cells_total is the running count; mean_abs_dw_last and net_dw_last are the mean absolute and the summed weight change as fractions of w_max; t_last is the tick of the last write and cell_ids_last the cells involved.",
-  encode: "Encode-mode (SPEC 8.12), a labelled proxy schedule and not biology. mode is the flag; stage is off, idle, present or grace; W is the hpc excitatory cells the identification pass picked; spiked_last_50 is which of them fired in the last window_ticks steps; t_present_end and t_grace_end are the ticks the writes land and the mask comes off."
+  stim_events: "Started and ended events for stimuli in this packet. These, and only these, set a stimulus's start and end on this page."
 };
 function glossFor(key) {
   if (KEY_GLOSS[key]) return KEY_GLOSS[key];
@@ -1284,7 +1202,7 @@ function buildKeyRows() {
   });
   const body = $("#framekeys").querySelector("tbody");
   body.innerHTML = order.map(k =>
-    `<tr class="${k === "stim_active" || k === "stim_events" || k === "encode" || k === "hetero" ? "json" : ""}"><td class="val kcell">${E(k)}</td><td class="val vcell"></td><td class="gcell">${E(glossFor(k))}</td></tr>`
+    `<tr class="${k === "stim_active" || k === "stim_events" ? "json" : ""}"><td class="val kcell">${E(k)}</td><td class="val vcell"></td><td class="gcell">${E(glossFor(k))}</td></tr>`
   ).join("");
   st.keyRows = Object.create(null);
   order.forEach((k, i) => { st.keyRows[k] = body.rows[i].cells[1]; });
@@ -1295,8 +1213,6 @@ function keyValue(f, key) {
   if (key === "born / died") return f.born.length + " / " + f.died.length + " pairs";
   if (key === "stim_active") return f.stim_active.length ? JSON.stringify(f.stim_active) : "[]";
   if (key === "stim_events") return f.stim_events.length ? JSON.stringify(f.stim_events) : "[]";
-  if (key === "encode") return JSON.stringify(f.encode);
-  if (key === "hetero") return JSON.stringify(f.hetero);
   if (key.indexOf("growth_halted.") === 0) return String(f.growth_halted[key.slice(14)]);
   if (key.indexOf("regions.") === 0) {
     const r = f.regions[key.slice(8, key.length - 8)];
