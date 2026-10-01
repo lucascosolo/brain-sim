@@ -80,8 +80,6 @@ HETERO_TRIGGER_SPIKES = 5          # an hpc E cell with >= this many spikes in t
 HETERO_ETA = 0.15                  # weight moved per unit z-score, fraction of w_max_n[post]
 HETERO_Z_CLIP = 2.0                # z-score of presynaptic activity is clipped to +- this
 HETERO_FLOOR_FRAC = 0.10           # a write never lowers a weight below this fraction of w_max
-HETERO_ADDITIVE = False             # SPEC 8.40: potentiation-only write, read only while hetero_write is on, off == the 8.16 write
-HETERO_RECURRENT = False            # SPEC 8.41: the write also acts on a triggered cell's excitatory inputs from hpc; read only while hetero_write is on, off == the 8.16 input set
 
 # SPEC 8.21 triplet potentiation replacing the pair rule on excitatory synapses (labelled proxy).
 TRIPLET_STDP = False               # Engine.triplet_stdp: off by default, off path == master
