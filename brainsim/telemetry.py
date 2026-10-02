@@ -1,14 +1,13 @@
 import numpy as np
 
 from . import encode
-from . import hetero
 
 FRAME_KEYS = frozenset({
     "t", "phase", "age_s", "g", "g_struct", "sense_gated", "ticks", "n_syn_alive",
     "syn_born_total", "syn_died_total", "born_per_s", "died_per_s", "spike_total",
     "syn_touched_mean", "born_count", "died_count", "regions", "spikes", "truncated",
     "born", "died", "wall_ratio", "growth_halted", "store_clamped",
-    "stim_active", "stim_events", "seq", "encode", "hetero",
+    "stim_active", "stim_events", "seq", "encode", "slow",
 })
 
 CONFIG_KEYS = frozenset({
@@ -16,7 +15,7 @@ CONFIG_KEYS = frozenset({
     "g_wake", "g_sleep", "sweep_ticks", "rate_ema_alpha", "frame_spike_cap", "v_trace_ticks",
     "hist_bins", "n_patterns", "pattern_frac", "stimlog_max", "seed",
     "encode_k", "encode_delta_frac", "encode_recurrent_delta_frac", "encode_grace_ticks",
-    "hetero_write", "hetero_trigger_spikes", "hetero_eta",
+    "slow_weights", "slow_tag_frac", "slow_tau_sweeps",
 })
 
 REPLY_KEYS = {
@@ -82,7 +81,7 @@ def make_frame(e):
         died=[list(d) for d in e._buf_died[:p.FRAME_STRUCT_CAP]],
         wall_ratio=None, growth_halted=dict(e.growth_halted), store_clamped=e.store_clamped,
         seq=e._frame_seq, stim_active=e.stims_active(), stim_events=e._buf_stim_events,
-        encode=e.encode_view(), hetero=e.hetero_view())
+        encode=e.encode_view(), slow=e.slow_view())
     e._buf_stim_events = []
     e._buf_spikes, e._buf_touched, e._buf_born, e._buf_died, e._buf_ticks = [], [], [], [], 0
     e._born_count = e._died_count = 0
@@ -151,8 +150,8 @@ def config(e, batch_ticks, pattern_ticks):
                 encode_k=p.ENCODE_K, encode_delta_frac=p.ENCODE_DELTA_FRAC,
                 encode_recurrent_delta_frac=p.ENCODE_RECURRENT_DELTA_FRAC,
                 encode_grace_ticks=p.ENCODE_GRACE_TICKS,
-                hetero_write=bool(e.hetero_write), hetero_trigger_spikes=hetero.constants(p)[0],
-                hetero_eta=hetero.constants(p)[1])
+                slow_weights=bool(e.slow_weights), slow_tag_frac=p.SLOW_TAG_FRAC,
+                slow_tau_sweeps=p.SLOW_TAU_SWEEPS)
 
 
 def stimlog(e):

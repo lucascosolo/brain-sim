@@ -32,6 +32,8 @@ class Network:
         self.pre = np.zeros(s_max, np.int32)
         self.post = np.zeros(s_max, np.int32)
         self.w = np.zeros(s_max, np.float32)
+        # Slow weight component (SPEC 8.13): a floor under w; all zeros unless Engine.slow_weights
+        self.w_slow = np.zeros(s_max, np.float32)
         self.delay = np.ones(s_max, np.uint8)
         self.alive = np.zeros(s_max, bool)
         self.born = np.zeros(s_max, np.int32)
@@ -159,6 +161,7 @@ class Network:
         self.pre[ids] = pre
         self.post[ids] = np.asarray(post, np.int32)
         self.w[ids] = w
+        self.w_slow[ids] = 0.0
         self.delay[ids] = delay
         self.alive[ids] = True
         self.born[ids] = t
@@ -171,6 +174,7 @@ class Network:
             return
         self.alive[ids] = False
         self.w[ids] = 0.0
+        self.w_slow[ids] = 0.0
         self.free.extend(ids.tolist())
 
     def pair_keys(self):

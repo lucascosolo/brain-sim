@@ -63,7 +63,7 @@ const el = {
   legGlow: $("#leg-glow"), tllegend: $("#tllegend"), rasternote: $("#rasternote"),
   hg: $("#hg"), hgstruct: $("#hgstruct"), warnchip: $("#warnchip"), stagechip: $("#stagechip"),
   encodestage: $("#encodestage"), wcaption: $("#wcaption"), wcard: $("#wcard"),
-  heterostats: $("#heterostats"), heteroCells: $("#heteroCells")
+  slowstats: $("#slowstats"), slowW: $("#slowW")
 };
 const map = $("#map"), mctx = map.getContext("2d");
 const tlc = $("#timeline"), tctx = tlc.getContext("2d");
@@ -379,7 +379,6 @@ function applyConfig() {
     `amplitude is in millivolts, duration in ticks of ${C.dt_ms} ms. For comparison, the lettered buttons above use ` +
     `the simulator's own pattern settings: ${C.pattern_amp_mv} mV for ${C.pattern_ticks} ticks (${msOf(C.pattern_ticks)} ms).`;
   $("#rule-stimlogmax").textContent = C.stimlog_max;
-  $("#heteroTrigger").textContent = C.hetero_trigger_spikes;
   $("#cfgjson").textContent = JSON.stringify(C, null, 1);
   renderPatterns(); renderControls(); renderExplainers(); renderEncodeButtons();
 }
@@ -467,7 +466,7 @@ function applyFrame(f) {
     if (card && card.cells && card.cells.length) st.ripples.push({ cells: card.cells, at: nowW });
   }
 
-  renderHeader(); renderFrameLabel(f); renderRows(); renderEncode(f); renderHetero(f);
+  renderHeader(); renderFrameLabel(f); renderRows(); renderEncode(f); renderSlow(f);
   if (st.tab === "diag") renderFrameKeys(f);
   pushRasters(f);
   st.gapNow = false;
@@ -652,27 +651,25 @@ function renderEncode(f) {
     .map(id => `<span class="wchip${lit[id] ? " lit" : ""}">${E(id)}</span>`).join("");
 }
 
-/* ---- heterosynaptic-write panel (SPEC 8.16): only the frame's `hetero` key. */
-function renderHetero(f) {
-  const h = f.hetero;
-  if (!h) return;
-  const box = $("#heteroToggle");
-  if (box.checked !== h.on) box.checked = h.on;   /* engine truth, not the click */
-  const d = v => v == null ? "—" : v;
-  const d3 = v => v == null ? "—" : v.toFixed(3);
-  const stats = `${h.on ? "on" : "off"} · ${d(h.sweeps)} sweeps · last: ${d(h.cells_last)} cells, ${d(h.syn_last)} synapses (${d(h.up_last)} up, ${d(h.down_last)} down) · ${d(h.cells_total)} cells in total · mean |dw| ${d3(h.mean_abs_dw_last)} · net dw ${d3(h.net_dw_last)} (of w_max) · at t ${d(h.t_last)}`;
-  if (el.heterostats.textContent !== stats) el.heterostats.textContent = stats;
-  const ids = h.cell_ids_last && h.cell_ids_last.length ? h.cell_ids_last.join(", ") : "—";
-  const n = h.cell_ids_last ? h.cell_ids_last.length : 0;
-  const line = h.cell_ids_truncated
-    ? `cells at the last write · first ${n} ids of ${h.cells_last} cells · ${ids}`
-    : `cells at the last write · ${ids}`;
-  if (el.heteroCells.textContent !== line) el.heteroCells.textContent = line;
+/* ---- slow-weights panel (SPEC 8.13) ---------------------------------------
+   Everything shown is the frame's `slow` key: the flag, the counts and the
+   ctx -> W fast and slow means are engine truth; nothing is inferred here. */
+function renderSlow(f) {
+  const sl = f.slow;
+  if (!sl) return;
+  const box = $("#slowToggle");
+  if (box.checked !== sl.on) box.checked = sl.on;   /* engine truth, not the click */
+  const stats = `${sl.on ? "on" : "off"} · ${sl.n} synapses carry a slow component (mean ${sl.mean_frac.toFixed(3)} of w_max) · ${sl.tagged_last} tagged at the last sweep`;
+  if (el.slowstats.textContent !== stats) el.slowstats.textContent = stats;
+  const wline = sl.n_onto_W == null
+    ? "no W yet"
+    : `ctx → W · ${sl.n_onto_W} synapses · fast ${sl.w_onto_W == null ? "—" : sl.w_onto_W.toFixed(3)} · slow floor ${sl.w_slow_onto_W == null ? "—" : sl.w_slow_onto_W.toFixed(3)} (of w_max)`;
+  if (el.slowW.textContent !== wline) el.slowW.textContent = wline;
 }
 
-$("#heteroToggle").onchange = e => {
-  sendTracked("hetero", { on: e.target.checked },
-    "heterosynaptic write " + (e.target.checked ? "on" : "off"));
+$("#slowToggle").onchange = e => {
+  sendTracked("slow", { on: e.target.checked },
+    "slow weights " + (e.target.checked ? "on" : "off"));
 };
 
 $("#encodeToggle").onchange = e => {
@@ -1258,7 +1255,7 @@ const KEY_GLOSS = {
   "born / died": "The pairs of cells whose connection was created or destroyed in this packet, capped at FRAME_STRUCT_CAP.",
   stim_active: "Stimuli the simulator still has running, each with its own count of steps delivered so far.",
   stim_events: "Started and ended events for stimuli in this packet. These, and only these, set a stimulus's start and end on this page.",
-  hetero: "Heterosynaptic write (SPEC 8.16), a labelled proxy and not biology. on is the flag; sweeps is how many wake sweeps applied it; cells_last, syn_last, up_last and down_last are the cells and synapses touched at the last write and how many went up and down; cells_total is the running count; mean_abs_dw_last and net_dw_last are the mean absolute and the summed weight change as fractions of w_max; t_last is the tick of the last write and cell_ids_last the cells involved.",
+  slow: "Slow weights (SPEC 8.13), a labelled proxy and not biology. on is the flag; n is how many excitatory connections carry a slow component and mean_frac its mean as a fraction of w_max; tagged_last is how many were at or above SLOW_TAG_FRAC of w_max at the last sweep; n_onto_W, w_onto_W and w_slow_onto_W are the ctx-to-W connections and their fast and slow means.",
   encode: "Encode-mode (SPEC 8.12), a labelled proxy schedule and not biology. mode is the flag; stage is off, idle, present or grace; W is the hpc excitatory cells the identification pass picked; spiked_last_50 is which of them fired in the last window_ticks steps; t_present_end and t_grace_end are the ticks the writes land and the mask comes off."
 };
 function glossFor(key) {
@@ -1284,7 +1281,7 @@ function buildKeyRows() {
   });
   const body = $("#framekeys").querySelector("tbody");
   body.innerHTML = order.map(k =>
-    `<tr class="${k === "stim_active" || k === "stim_events" || k === "encode" || k === "hetero" ? "json" : ""}"><td class="val kcell">${E(k)}</td><td class="val vcell"></td><td class="gcell">${E(glossFor(k))}</td></tr>`
+    `<tr class="${k === "stim_active" || k === "stim_events" || k === "encode" || k === "slow" ? "json" : ""}"><td class="val kcell">${E(k)}</td><td class="val vcell"></td><td class="gcell">${E(glossFor(k))}</td></tr>`
   ).join("");
   st.keyRows = Object.create(null);
   order.forEach((k, i) => { st.keyRows[k] = body.rows[i].cells[1]; });
@@ -1296,7 +1293,7 @@ function keyValue(f, key) {
   if (key === "stim_active") return f.stim_active.length ? JSON.stringify(f.stim_active) : "[]";
   if (key === "stim_events") return f.stim_events.length ? JSON.stringify(f.stim_events) : "[]";
   if (key === "encode") return JSON.stringify(f.encode);
-  if (key === "hetero") return JSON.stringify(f.hetero);
+  if (key === "slow") return JSON.stringify(f.slow);
   if (key.indexOf("growth_halted.") === 0) return String(f.growth_halted[key.slice(14)]);
   if (key.indexOf("regions.") === 0) {
     const r = f.regions[key.slice(8, key.length - 8)];

@@ -67,12 +67,9 @@ def _validate(k, c, e):
         f = c.get("factor", 1.0)
         if not _is_finite_float(f) or not (0 <= f <= 64):
             raise ValueError("factor must be a finite float in [0, 64]")
-    elif k in ("encode", "hetero"):
+    elif k in ("encode", "slow"):
         if not isinstance(c.get("on"), bool):
             raise ValueError("on must be a bool")
-        if c["on"] and (e.hetero_write if k == "encode" else e.encode_stage != "off"):
-            raise ValueError("encode-mode and the heterosynaptic write are mutually exclusive: only one can be on "
-                             "at a time; turn the other off and let a running encode schedule finish")
     elif k == "step":
         ticks = c.get("ticks", 1)
         if not _is_int(ticks) or not (1 <= ticks <= 100000):
@@ -192,10 +189,11 @@ class Session:
             before = e.encode_mode
             e.encode_mode = bool(c["on"])
             self._result(k, req, "accepted", changed=before != e.encode_mode)
-        elif k == "hetero":
-            before = e.hetero_write
-            e.hetero_write = bool(c["on"])
-            self._result(k, req, "accepted", changed=before != e.hetero_write)
+        elif k == "slow":
+            # SPEC 8.13: the flag only; the slow components already stored are kept.
+            before = e.slow_weights
+            e.slow_weights = bool(c["on"])
+            self._result(k, req, "accepted", changed=before != e.slow_weights)
         elif k == "watch":
             e.watch(int(c["id"]))
             self._result(k, req, "accepted")
