@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>brain-sim · 3D slice viewer mockup (demonstration data)</title>
+<style>
+/* Same tokens and type as ui/style.css; opens from file:// with no network. */
+:root{
+  --bg:#0a0c10; --bg2:#0d1016; --panel:#11151c; --panel2:#151a22;
+  --line:#212936; --line2:#2c3646;
+  --text:#e2e8f1; --dim:#9aa8bb; --dimmer:#7a889b;
+  --amber:#ffb454; --ice:#eaf4ff; --e:#6aa8e0; --i:#e08a6a; --ok:#63d39c; --bad:#ff7070;
+  --brain:#b9a4f0;
+  --r:6px; --fs-xs:11px; --fs-s:12px; --fs-m:13px; --fs-l:15px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{font-family:"Segoe UI Variable Text",-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:var(--fs-m);line-height:1.45;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+#mockbar{background:#3a2a0c;color:var(--amber);border-bottom:1px solid #6b4a14;padding:7px 16px;font-size:var(--fs-s)}
+#mockbar b{color:#ffd9a0}
+header{display:flex;gap:14px;align-items:baseline;padding:9px 16px;background:var(--bg2);border-bottom:1px solid var(--line)}
+header h1{font-size:var(--fs-l);margin:0;font-weight:600}
+header .dim{color:var(--dim)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:12px;padding:12px 16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.panel h2{font-size:var(--fs-s);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:0 0 8px;font-weight:600}
+.note{color:var(--dim);font-size:var(--fs-s);margin:6px 0 0}
+canvas{display:block;width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r)}
+#view{height:520px;cursor:grab}
+#view.drag{cursor:grabbing}
+#slice{height:300px;cursor:crosshair}
+.row{display:flex;gap:8px;align-items:center;margin:6px 0;flex-wrap:wrap}
+.row label{color:var(--dim);font-size:var(--fs-s);min-width:74px}
+input[type=range]{flex:1;accent-color:var(--amber);min-width:120px}
+button{background:var(--panel2);color:var(--text);border:1px solid var(--line2);border-radius:5px;padding:5px 10px;font:inherit;font-size:var(--fs-s);cursor:pointer}
+button:hover{border-color:#3c4a5e}
+button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+button[aria-pressed=true]{background:#2a2110;border-color:var(--amber);color:var(--amber)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--dim);font-size:var(--fs-s);margin-top:8px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.side{display:flex;flex-direction:column;gap:12px}
+#cellcard{font-size:var(--fs-s);color:var(--dim);min-height:64px}
+#cellcard b{color:var(--text);font-weight:600}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
+/* Two chat windows, deliberately unlike each other. */
+.chats{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px 16px}
+.chat{border-radius:var(--r);padding:10px 12px;min-height:190px;display:flex;flex-direction:column;gap:8px}
+.chat h2{margin:0;font-size:var(--fs-m);font-weight:600}
+.chat .tag{font-size:var(--fs-xs);letter-spacing:.06em;text-transform:uppercase}
+.chat .log{flex:1;font-size:var(--fs-s)}
+.chat input[type=text]{flex:1;background:transparent;color:var(--text);border:1px solid var(--line2);border-radius:5px;padding:6px 8px;font:inherit}
+#askchat{background:var(--panel);border:1px solid var(--line2)}
+#askchat .tag{color:var(--e)}
+#askchat .msg{border-left:2px solid var(--e);padding-left:8px;margin:6px 0;color:var(--dim)}
+#askchat .msg.you{border-color:var(--line2);color:var(--text)}
+#brainchat{background:#120f1c;border:1px dashed var(--brain)}
+#brainchat h2,#brainchat .tag{color:var(--brain)}
+#brainchat .log{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--dim)}
+#brainchat .reward{display:flex;gap:8px}
+#brainchat .reward button{border-color:var(--brain)}
+@media (max-width:980px){main{grid-template-columns:1fr}.chats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="mockbar"><b>MOCKUP.</b> Everything moving on this page is a scripted demonstration, not the simulation. The 3D cell positions are a proposal: today's engine places each region's cells on a flat 2D sheet, so this view cannot be wired to it until the engine itself has a third coordinate.</div>
+<header>
+  <h1>brain-sim · 3D slice viewer</h1>
+  <span class="dim">drag to rotate · move the slice · click a cell in the slice</span>
+  <span class="dim mono" id="clock">t = 0 ms (demo clock)</span>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Whole brain</h2>
+    <canvas id="view" aria-label="3D view of all cells with the slice highlighted"></canvas>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--e)"></span>excitatory cell</span>
+      <span><span class="dot" style="background:var(--i)"></span>inhibitory cell</span>
+      <span><span class="dot" style="background:var(--amber)"></span>fired just now</span>
+      <span>bright = inside the slice · faint = outside it</span>
+    </div>
+    <p class="note">In the real page a dot lights only when the simulator reports that cell's spike in the frame it just sent. Nothing would be interpolated, smoothed or animated on the page's own initiative.</p>
+  </section>
+
+  <div class="side">
+    <section class="panel">
+      <h2>Slice</h2>
+      <div class="row"><label>cut across</label>
+        <button data-axis="0" aria-pressed="false">left–right</button>
+        <button data-axis="1" aria-pressed="true">top–bottom</button>
+        <button data-axis="2" aria-pressed="false">front–back</button>
+      </div>
+      <div class="row"><label for="pos">position</label><input id="pos" type="range" min="-100" max="100" value="10"></div>
+      <div class="row"><label for="thick">thickness</label><input id="thick" type="range" min="4" max="60" value="18"></div>
+      <canvas id="slice" aria-label="The slice seen face-on"></canvas>
+      <p class="note" id="slicenote">—</p>
+    </section>
+
+    <section class="panel">
+      <h2>Selected cell</h2>
+      <div id="cellcard">Click a cell in the slice.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Stimulate</h2>
+      <div class="row">
+        <button id="presentA">present pattern A</button>
+        <button id="poke">poke the selected cell's neighbours</button>
+      </div>
+      <p class="note">In the real page these send the simulator's existing commands and show its accepted / rejected reply, as the current page does.</p>
+    </section>
+  </div>
+</main>
+
+<div class="chats">
+  <section class="chat" id="askchat">
+    <span class="tag">assistant · a language model, not the brain</span>
+    <h2>Ask about the brain</h2>
+    <div class="log">
+      <div class="msg you">What just happened when I presented A?</div>
+      <div class="msg">(demo text) 31 sense cells fired, then 212 cortex cells within 40 ms, then 14 hippocampal cells. Every number here would be read from the simulator's own record and linked to it.</div>
+    </div>
+    <div class="row"><input type="text" placeholder="Ask a question about what you are seeing" disabled><button disabled>ask</button></div>
+  </section>
+  <section class="chat" id="brainchat">
+    <span class="tag">the network itself · no language model here, ever</span>
+    <h2>Talk with the brain</h2>
+    <div class="log">The brain has no words yet. What you type would be turned into a pattern on its sense cells; anything shown here would be read from its own cells firing, or this stays empty.</div>
+    <div class="row"><input type="text" placeholder="hi" disabled><button disabled>send</button></div>
+    <div class="reward"><button disabled>＋ that was good</button><button disabled>－ that was bad</button></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+/* ---- proposed 3D layout (mock data): sense = input slab, ctx = shell, hpc = inner body ---- */
+let seed = 7;
+const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+const cells = [];
+function add(region, n, nExc, place) {
+  for (let i = 0; i < n; i++) {
+    const p = place();
+    cells.push({ id: cells.length, region, exc: i < nExc, x: p[0], y: p[1], z: p[2], glow: 0, last: null });
+  }
+}
+add("sense", 200, 200, () => [rnd() * 1.0 - 0.5, -0.92 + rnd() * 0.06, rnd() * 0.8 - 0.4]);
+add("ctx", 2000, 1600, () => {            // thick dome shell
+  for (;;) {
+    const x = rnd() * 2 - 1, y = rnd() * 1.1 - 0.25, z = rnd() * 2 - 1;
+    const r = Math.hypot(x, y / 0.85, z);
+    if (r > 0.72 && r < 1.0) return [x, y, z];
+  }
+});
+add("hpc", 400, 320, () => {              // curved body under the shell
+  const a = rnd() * Math.PI - Math.PI / 2, r = 0.09 * Math.sqrt(rnd()), b = rnd() * Math.PI * 2;
+  return [0.42 * Math.sin(a) + r * Math.cos(b), -0.38 + 0.16 * Math.cos(a) + r * Math.sin(b), 0.30 * Math.cos(a * 1.3) - 0.1 + r * Math.sin(b + 1)];
+});
+const AX = ["x", "y", "z"], AXNAME = ["left–right", "top–bottom", "front–back"];
+const st = { yaw: 0.6, pitch: 0.25, axis: 1, pos: 0.10, thick: 0.18, sel: null, t: 0, queue: [] };
+
+/* ---- scripted demo activity (never the simulation) ---- */
+const RATE = { sense: 5, ctx: 4, hpc: 1 };         // Hz, background
+function fire(c) { c.glow = 1; c.last = st.t; }
+function demoTick(dtMs) {
+  st.t += dtMs;
+  for (const c of cells) {
+    c.glow *= Math.exp(-dtMs / 90);
+    if (rnd() < RATE[c.region] * (c.exc ? 1 : 1.6) * dtMs / 1000) fire(c);
+  }
+  st.queue = st.queue.filter(ev => {
+    if (ev.at > st.t) return true;
+    for (const c of cells) {
+      if (c.region !== ev.region) continue;
+      const d = Math.hypot(c.x - ev.x, c.y - ev.y, c.z - ev.z);
+      if (d < ev.radius && rnd() < ev.p) fire(c);
+    }
+    return false;
+  });
+}
+function wave(x, y, z) {
+  st.queue.push({ at: st.t, region: "sense", x, y: -0.9, z, radius: 0.22, p: 0.9 });
+  for (let k = 1; k <= 4; k++) st.queue.push({ at: st.t + 12 * k, region: "ctx", x, y, z, radius: 0.25 + 0.14 * k, p: 0.35 });
+  st.queue.push({ at: st.t + 45, region: "hpc", x: 0.1, y: -0.3, z: 0.1, radius: 0.3, p: 0.25 });
+}
+
+/* ---- drawing ---- */
+const view = document.getElementById("view"), vctx = view.getContext("2d");
+const slice = document.getElementById("slice"), sctx = slice.getContext("2d");
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const COL = { e: css("--e"), i: css("--i"), amber: css("--amber"), line: css("--line2"), dim: css("--dimmer") };
+function fit(cv) {
+  const r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  if (cv.width !== Math.round(r.width * d) || cv.height !== Math.round(r.height * d)) { cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); }
+  return [cv.width, cv.height, d];
+}
+function project(x, y, z, w, h) {
+  const cy = Math.cos(st.yaw), sy = Math.sin(st.yaw), cp = Math.cos(st.pitch), sp = Math.sin(st.pitch);
+  const x1 = x * cy + z * sy, z1 = -x * sy + z * cy;
+  const y2 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
+  const s = Math.min(w, h) * 0.40 * (1 + z2 * 0.12);
+  return [w / 2 + x1 * s, h / 2 - y2 * s, z2];
+}
+const inSlab = c => Math.abs(c[AX[st.axis]] - st.pos) <= st.thick / 2;
+function drawView() {
+  const [w, h, d] = fit(view);
+  vctx.clearRect(0, 0, w, h);
+  for (const c of cells) {
+    const [px, py] = project(c.x, c.y, c.z, w, h), on = inSlab(c);
+    vctx.globalAlpha = c.glow > 0.05 ? Math.max(c.glow, on ? 0.9 : 0.35) : (on ? 0.9 : 0.13);
+    vctx.fillStyle = c.glow > 0.25 ? COL.amber : (c.exc ? COL.e : COL.i);
+    const r = (on ? 1.9 : 1.1) * d + (c.glow > 0.25 ? 1.6 * d * c.glow : 0);
+    vctx.beginPath(); vctx.arc(px, py, r, 0, 6.2832); vctx.fill();
+  }
+  vctx.globalAlpha = 1;                              // slice plane outline
+  const a = st.axis, o = [(a + 1) % 3, (a + 2) % 3], q = [];
+  for (const [u, v] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+    const p = [0, 0, 0]; p[a] = st.pos; p[o[0]] = u * 1.05; p[o[1]] = v * 1.05;
+    q.push(project(p[0], p[1], p[2], w, h));
+  }
+  vctx.strokeStyle = COL.amber; vctx.lineWidth = d; vctx.setLineDash([6 * d, 5 * d]);
+  vctx.beginPath(); q.forEach((p, i) => i ? vctx.lineTo(p[0], p[1]) : vctx.moveTo(p[0], p[1])); vctx.closePath(); vctx.stroke();
+  vctx.setLineDash([]);
+}
+let slicePts = [];
+function drawSlice() {
+  const [w, h, d] = fit(slice);
+  sctx.clearRect(0, 0, w, h);
+  const a = st.axis, u = AX[(a + 1) % 3], v = AX[(a + 2) % 3], s = Math.min(w, h) * 0.46;
+  slicePts = [];
+  let n = 0, lit = 0;
+  for (const c of cells) {
+    if (!inSlab(c)) continue;
+    n++; if (c.glow > 0.25) lit++;
+    const px = w / 2 + c[u] * s * (a === 1 ? 1 : 1), py = h / 2 - c[v] * s * (a === 1 ? -1 : 1);
+    slicePts.push([px, py, c]);
+    sctx.globalAlpha = 1;
+    sctx.fillStyle = c.glow > 0.25 ? COL.amber : (c.exc ? COL.e : COL.i);
+    sctx.beginPath(); sctx.arc(px, py, (2.3 + 2.2 * c.glow) * d, 0, 6.2832); sctx.fill();
+    if (st.sel === c) { sctx.strokeStyle = "#fff"; sctx.lineWidth = 1.5 * d; sctx.beginPath(); sctx.arc(px, py, 6 * d, 0, 6.2832); sctx.stroke(); }
+  }
+  document.getElementById("slicenote").textContent =
+    `${n} cells in this slice (cut ${AXNAME[a]} at ${st.pos.toFixed(2)}, ${st.thick.toFixed(2)} thick) · ${lit} lit right now`;
+}
+function drawCard() {
+  const c = st.sel, el = document.getElementById("cellcard");
+  if (!c) return;
+  const name = { sense: "sense (input)", ctx: "cortex", hpc: "hippocampus" }[c.region];
+  el.innerHTML = `<div class="kv"><span>cell</span><b class="mono">#${c.id}</b><span>region</span><b>${name}</b>` +
+    `<span>type</span><b>${c.exc ? "excitatory" : "inhibitory"}</b>` +
+    `<span>position</span><b class="mono">${c.x.toFixed(2)}, ${c.y.toFixed(2)}, ${c.z.toFixed(2)}</b>` +
+    `<span>last fired</span><b class="mono">${c.last == null ? "not yet" : Math.round(st.t - c.last) + " ms ago (demo)"}</b></div>`;
+}
+
+/* ---- interaction ---- */
+let drag = null;
+view.addEventListener("pointerdown", e => { drag = [e.clientX, e.clientY]; view.classList.add("drag"); view.setPointerCapture(e.pointerId); });
+view.addEventListener("pointermove", e => {
+  if (!drag) return;
+  st.yaw += (e.clientX - drag[0]) * 0.008; st.pitch = Math.max(-1.4, Math.min(1.4, st.pitch + (e.clientY - drag[1]) * 0.008));
+  drag = [e.clientX, e.clientY];
+});
+view.addEventListener("pointerup", () => { drag = null; view.classList.remove("drag"); });
+slice.addEventListener("click", e => {
+  const r = slice.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  const x = (e.clientX - r.left) * d, y = (e.clientY - r.top) * d;
+  let best = null, bd = 14 * d;
+  for (const [px, py, c] of slicePts) { const dd = Math.hypot(px - x, py - y); if (dd < bd) { bd = dd; best = c; } }
+  if (best) st.sel = best;
+});
+document.querySelectorAll("button[data-axis]").forEach(b => b.onclick = () => {
+  st.axis = +b.dataset.axis;
+  document.querySelectorAll("button[data-axis]").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
+});
+document.getElementById("pos").oninput = e => { st.pos = e.target.value / 100; };
+document.getElementById("thick").oninput = e => { st.thick = e.target.value / 100; };
+document.getElementById("presentA").onclick = () => wave(-0.2, 0.45, 0.1);
+document.getElementById("poke").onclick = () => { const c = st.sel; if (c) st.queue.push({ at: st.t, region: c.region, x: c.x, y: c.y, z: c.z, radius: 0.2, p: 0.8 }); };
+
+const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let prev = performance.now();
+function loop(now) {
+  const dt = Math.min(50, now - prev); prev = now;
+  demoTick(still ? dt * 0.25 : dt);
+  if (!drag && !still) st.yaw += dt * 0.00006;
+  drawView(); drawSlice(); drawCard();
+  document.getElementById("clock").textContent = `t = ${Math.round(st.t)} ms (demo clock)`;
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
