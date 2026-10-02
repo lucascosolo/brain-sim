@@ -6,64 +6,6 @@ absent and the UI says so. Every mechanism below is marked as biology-derived, a
 model, or a proxy chosen by me. Numbers marked "initial" are tuning guesses; the kill tests are
 the arbiter, not my confidence.
 
-## 0. Direction: Path A and the stage ladder (owner, locked 2026-10-01)
-
-This section is the owner's direction, recorded as given. It is above every later section:
-where an older sentence disagrees with it, this section holds.
-
-**Path A: spike-first.** The mind of this project is the spiking network and its
-plasticity rules, nothing else. Language is not a goal of the current work. It is allowed
-only as a late capability that emerges from the network itself, attempted after the stages
-below have passed their own tests, and only if the simulation then runs faster than human
-wall-clock time and the tests of that stage allow it.
-
-**Non-negotiables.**
-
-- No LLM and no transformer as the mind at runtime. No mini-AGI architecture in the plant.
-- Language is not the next milestone. The order is the ladder below and it is not skipped.
-- The hard walls stand: no reopening of S1.0 (`sense->ctx` learning), no Vogels inhibitory
-  plasticity unless the owner names it, no teacher current, no engineered synchrony, no
-  switching inhibition off for chosen cells, no hand-set weights presented as learning, no
-  kill-test bar lowered or rewritten to pass.
-- Every proxy is labeled a proxy. Nothing is claimed as biology beyond its label.
-- Nothing is merged to master without the owner saying so. Master carries records.
-
-**The stage ladder.** A stage's kill tests are written before any code of that stage. For
-Stages 2 and later none are written yet, and nothing of them is implemented.
-
-| stage | what it must show | status on 2026-10-01 |
-|---|---|---|
-| 0 | a stable, honest spiking plant and UI (section 7) | recorded in `ui/stage0_results.json`, with its red tests shown as red |
-| 1 | **episode memory**: one showing of a pattern leaves a memory that half a cue brings back | not passed; see below |
-| 2 | **sequences**: ordered sequences of sense patterns, recalled in order | not started; no contract yet |
-| 3 | **structure and scale**: growth of the plant backed by profiler measurements, not by guess | not started; no contract yet |
-| 4 and later | **symbol-like tokens**, explicit and later; only here may anything resembling language be attempted | not started; no contract yet |
-
-**Stage 1 laws.** K1.1-top16 is the episode-recall law: the half cue brings back 13 of the
-16 top memory cells within 50 ticks, judged as trained minus never-trained, with the bounds
-on a different pattern and on no stimulus. The official K1.1 as coded (8.2) includes a size
-clause, an assembly of at most 20 cells; that clause FAILS on every run so far and is kept
-as a separate goal. Neither is edited to pass. K1.1 remains FAIL.
-
-**The two kinds of memory in the record, and which one is carried.** Both are proxies and
-both live on unmerged branches.
-
-| label | what it is | where | role |
-|---|---|---|---|
-| **excitatory binding** (primary Stage-1 line) | the 8.46 setting: the zero-sum write over a memory cell's cortical and recurrent inputs, weight bound x1.25, step 0.30, with the pair rule onto inhibitory cells switched off; recall sits in excitatory links (cells bound to each other and to their cortical inputs) | branches `joint-bound`, `joint-confirm` and their children; SPEC 8.42 to 8.48 | the line Stage 1 is pursued on |
-| **disinhibition baseline** | the 8.30 pending-express mechanism: recall sits in weakened excitatory inputs to inhibitory cells (8.35 to 8.37), not in an association between excitatory cells | branch `pending-express` and children; SPEC 8.30 to 8.37 | a labeled baseline for comparison only; not carried as the Stage-1 memory |
-
-Any text, table or UI label that reports recall says which of the two it is.
-
-**Where the primary line stands.** Confirmed on six seeds one second after a single showing
-(8.46). Not the law: 13 of 16 on four seeds of six (8.46); official K1.1 not met (8.47).
-Persistence and a second pattern were measured in 8.48, before this section was written:
-the gain roughly halves within ten seconds and then holds, which the fixed bar counts as
-LOST; a second pattern does not erase the first, but the round is REJECTED on one seed.
-
-**Not done under this section.** No sequence memory, no scale-up and no symbol or text
-pathway is implemented or started. The UI's "Text in" and "Readout" stay absent.
-
 ## 1. Hardware and stack
 
 Measured on this PC: Intel i5-12600KF, 16 threads, 31 GB RAM. A GTX 980 Ti is present but the
@@ -564,8 +506,7 @@ histograms). **Diagnostics**: every frame key, per-region rasters, raw replies, 
 the rule equations, the config reply, the client display preferences, "How evidence
 reconciles", and the recorded results from `ui/stage0_results.json` (hand-maintained, dated,
 per-commit, with carried-forward failures marked as not rerun). "Text in" and "Readout" remain
-absent: no text pathway or readout population exists before Stage 4 (section 0; this read
-"Stage 2" until the stage ladder of 2026-10-01).
+absent: no text pathway or readout population exists before Stage 2.
 
 Command evidence (one source of truth extended to commands): every command carries a `req`
 that the server prefixes with the socket's `client_id`; the worker answers with a `result`
@@ -3601,8 +3542,6 @@ Nothing to merge; no engine change.
 
 ### 8.21 Triplet potentiation beside the heterosynaptic write, on the slowed homeostat (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `triplet`; the code is not on master.
-
 Branch `triplet` from master b750638. A spike: nothing merges unless it passes. K1.1's bar
 is untouched; K1.1 is run under this plant only if T6 passes.
 
@@ -3743,8 +3682,6 @@ wording has it.
 K1.1 not run. Not merged. The constants are not to be tuned on this branch.
 
 ### 8.22 Readouts with learning frozen, and an offline screen of two further published rules (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `rule-screen`; the code is not on master.
 
 Branch `rule-screen` from `triplet` fb9bade. A diagnostic: no engine change, nothing merges.
 K1.1's bar is not lowered. Two corrections come first, both from an outside read of 8.21
@@ -3919,8 +3856,6 @@ from this screen. K1.1 not run. Not merged.
 
 ### 8.23 Ceiling diagnostic: can any weights on this wiring let a half cue recall the assembly? (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `ceiling`; the code is not on master.
-
 Branch `ceiling` from `rule-screen`. A diagnostic: no engine change, nothing merges, and the
 weights it sets are an oracle, not a learning rule: it asks what the best outcome of ANY
 rule could be on the wiring as it stands. K1.1's bar is not lowered.
@@ -4025,8 +3960,6 @@ built on a branch with construction parameters overridden. K1.1 not run. Not mer
 
 ### 8.24 What-if ceilings: which change of the plant would lift the 8.23 ceiling? (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `ceiling`; the code is not on master.
-
 Branch `ceiling`. A diagnostic: no engine change, no default changed, nothing merges. The
 what-if plants are built on the branch by overriding construction parameters for one run;
 they are not proposals to adopt until the owner has seen the result, because adopting one
@@ -4123,8 +4056,6 @@ it passes Stage 0's health tests; and whether K1.1's window stays at 50 ticks. K
 run. Not merged.
 
 ### 8.25 Second-generation plant `gen2` on a branch: health, then the ceiling (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `gen2`; the code is not on master.
 
 Owner's decisions, 2026-10-01: build a second-generation plant on a new branch only, master
 untouched; denser hippocampal recurrence and the cortex's background rebalanced against the
@@ -4248,8 +4179,6 @@ than predicted; `K1.1-200` on every seed with idle below half of it, right.
 
 ### 8.26 K0.10b store size by rule; learned half cue on `gen2` (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `gen2`; the code is not on master.
-
 Branch `gen2` only. No engine change, no new mechanism, nothing merged. K1.1 is unchanged
 (even-id half cue, 1.3 mV, 13 of 16 of W within 50 ticks) and remains FAIL whatever this
 round shows: the driver below is a diagnostic and is not `tests/test_k11_binding.py`.
@@ -4363,8 +4292,6 @@ I did not predict the runaway.
 
 ### 8.27 Where the training deficit lives: synapse-class transplant on `gen2` (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `deficit-diag`; the code is not on master.
-
 Branch `deficit-diag` (from `gen2`). A diagnostic: no engine change, no new mechanism, no
 hand-set weights, nothing merged. K1.1 is unchanged and remains FAIL; raw W counts and
 200-tick counts are not read as memory. The primary number everywhere is **trained minus
@@ -4458,8 +4385,6 @@ on at least two seeds: right, on all three. `C5` carries most of the rest: partl
 I did not predict `C4`'s sign.
 
 ### 8.28 Strongly driven cells are exempt from the pair rule's sanding: plateau override, a labelled proxy (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `plateau-override`; the code is not on master.
 
 Branch `plateau-override` (from `deficit-diag`). Test-side proxy, labelled; no engine change;
 nothing merged; an engine build with tests first follows only on a PASS. K1.1 is unchanged
@@ -4563,8 +4488,6 @@ Prediction check. `PH` about -2: right (-1.4 / -3.4 / -1.0). `PO` near 0: low, i
 exceeding half of D on one seed: wrong, B falls or holds on every seed.
 
 ### 8.29 Pending pair plasticity in the engine: the engine form of 8.28 (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `pending-stdp`; the code is not on master.
 
 Branch `pending-stdp` (from `plateau-override`). An engine mechanism behind a flag, off by
 default, tests first by a different worker. A labelled proxy: I claim no biology beyond
@@ -4689,8 +4612,6 @@ worry about, for a reason I did not foresee.
 
 ### 8.30 The tag is expressed: restoring the fast brake of 8.29 (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `pending-express`; the code is not on master.
-
 Branch `pending-express` (from `pending-stdp`). One change to the 8.29 engine mechanism,
 behind its own flag, off by default, tests first by a different worker. A labelled proxy;
 no biology is claimed beyond "a synapse has a labile, expressed strength and a consolidated
@@ -4802,8 +4723,6 @@ population events: right.
 
 ### 8.31 The official K1.1 protocol on the 8.30 mechanism (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `k11-on-pending-express`; the code is not on master.
-
 Branch `k11-on-pending-express` (from `pending-express`). No engine change, no new
 mechanism, nothing merged. The bar is 8.2's, as coded in `tests/k11_binding.py` and
 `tests/test_k11_binding.py`, unchanged: not one constant, window or criterion is edited.
@@ -4903,177 +4822,7 @@ on the large assembly: wrong, it is 90 to 96 %. c3 met: right. Owner's wording, 
 3 reach 13, seed 1 a coin toss: right (seed 1 on the official draw 16, on repeats 5 of 8).
 Twin at 5 to 8: right.
 
-### 8.32 Why is the memory so large? Assembly size by plant and by rule (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `assembly-size-diag`; the code is not on master.
-
-Branch `assembly-size-diag` (from `k11-on-pending-express`). A diagnostic: no engine
-change, no new mechanism, nothing merged, no K1.1 claim. 8.31 failed on criterion 1 only:
-the assembly (hippocampal E cells with at least 4 Hz excess during the 2 s of A, 8.2's
-definition, unchanged) is 86 / 134 / 103 cells against a bar of 20. Before anything is
-changed, this round measures where that size comes from.
-
-**What is run.** `tests/k832_assembly_size.py`. For each plant (today's and `gen2`) and
-seed 1, 2, 3: warm 120,000 ticks, then on deep copies of that one engine the official
-timeline (baseline 2 s, A for 2 s) under four settings, all on the slowed homeostat C3:
-
-- F: nothing can learn (pair-rule amplitudes zero, heterosynaptic write off, pending off,
-  scaling off). The size here is what the wiring alone does with A.
-- P: the plain pair rule.
-- PH: pair rule plus the heterosynaptic write (8.16).
-- PE: PH plus pending and expressed tag (8.30), the setting of 8.31.
-
-**Kill test (fixed).**
-1. VALID on a seed if the `gen2` PE arm reproduces 8.31's assembly size exactly (86 / 134 /
-   103) and the F arm's weights and live synapses are bit-identical before and after.
-2. Reading on `gen2`, all three seeds: PLANT if F is above 20 cells and at least 60 % of
-   PE on every seed; RULE if F is at most 20 on every seed; MIXED otherwise.
-3. No pass or fail of K1.1 is read from this. It decides only whether the next round works
-   on the plant (how sparsely the memory region answers) or on the write rule.
-
-Reported beside it: the same four sizes on today's plant; the size counted in each quarter
-of the presentation (does the set grow while A is on); overlap of each arm's assembly with
-PE's; the mean rate of the memory region's E and I cells and of cortex during A; how many
-cortex E cells pass the same 4 Hz line.
-
-There is no trained-minus-never-trained number here: the quantity is the size of the
-response to A itself, and the F arm is its no-learning control.
-
-**Prediction.** MIXED. On `gen2` F will already be well above 20 (40 to 80 cells), because
-each memory cell hears 60 cortex cells instead of 40 and 80 neighbours, and the rules
-that strengthen active inputs within the 2 s (PH, PE) add the rest. Today's plant: F
-around 20 to 40, as in 8.3 to 8.9.
-
-**Result (2026-10-01, branch `assembly-size-diag`, logs `~/.cache/scratch/brainsim-asd/k832_{gen2,today}_seed{1,2,3}`):
-VALID on three seeds. Reading: MIXED, and mostly the plant. With nothing learning, `gen2`
-already answers A with 52 / 78 / 64 cells (bar 20); the rules add 30 to 70 % on top. A
-diagnostic; K1.1 remains FAIL. Not merged.**
-
-Assembly size (hippocampal E cells, of 320, with at least 4 Hz excess during A), seeds 1 / 2 / 3:
-
-| setting | `gen2` | today's plant |
-|---|---|---|
-| F, nothing learns | 52 / 78 / 64 | 11 / 24 / 23 |
-| P, pair rule | 73 / 101 / 90 | 15 / 32 / 32 |
-| PH, plus heterosynaptic write | 79 / 110 / 97 | 21 / 41 / 35 |
-| PE, plus pending and expressed tag (8.31) | 86 / 134 / 103 | 34 / 56 / 54 |
-| F as a share of PE | 0.60 / 0.58 / 0.62 | 0.32 / 0.43 / 0.43 |
-
-Validity: PE on `gen2` reproduces 8.31 exactly (86 / 134 / 103); F's weights and live
-synapses are bit-identical before and after on every run. Kill-test reading: F is above 20
-on every `gen2` seed, and 60 % of PE on seeds 1 and 3 but 58 % on seed 2, so by the rule
-as written MIXED, not PLANT.
-
-Beside it.
-
-- **PE's growth comes in the second half of the presentation.** Size counted per 500-tick
-  quarter, PE on `gen2`: 81, 70, 94, 105 / 122, 92, 136, 157 / 93, 71, 120, 129. The step
-  is at the slow sweep in the middle of A (tick 123,000), when the write is committed; F
-  does not grow (60, 50, 56, 46 / 102, 66, 63, 65 / 82, 54, 67, 51). Quarter counts run
-  higher than the whole-presentation size because 4 Hz excess over 500 ticks is only two
-  extra spikes; compare quarters with quarters only. *Corrected 2026-10-01:* the first
-  version of these numbers subtracted the 2 s baseline count from a 0.5 s count (Codex
-  review caught it); the driver now scales the baseline to the quarter and the runs were
-  repeated (logs `k832b_*`). Whole-presentation sizes, the kill-test reading and the
-  conclusion are unchanged.
-- **The arms nest.** Almost every cell of F, P and PH is in PE's assembly (51 of 52, 78 of
-  78, 64 of 64 for F): the rules add cells to the wiring's set, they do not pick another.
-- **Rates during A, `gen2`, F:** memory-region E 2.4 / 3.2 / 2.7 Hz (baseline 0.8 to 0.9),
-  its I cells 8.7 / 10.2 / 8.8 Hz (baseline 2.8 to 3.4); 387 / 468 / 395 of 1600 cortex E
-  cells pass the same 4 Hz line. Today's plant, F: memory-region E 1.4 / 1.7 / 1.6 Hz with
-  a similar cortex response (472 / 463 / 439 cells). So `gen2` turns a similar cortical
-  input into three to five times as many memory cells.
-- **Today's plant is at the edge of the bar even with nothing learning** (11 / 24 / 23),
-  and over it with any rule, as 8.3 to 8.9 found (25, 39).
-
-Readings. The 20-cell bar is missed first by the wiring: on `gen2` the response to A
-before any learning is already 2.5 to 4 times the bar, and none of the three rules tested
-shrinks it (a rule that depresses selectively during A could in principle; none here
-does). Caveats: F also switches scaling off, so F to P is not the pair rule alone; and F
-inherits weights shaped by 120,000 ticks of learning, so "wiring" means the warmed plant. The rule then adds to it, PE most, at the mid-presentation commit.
-The next round therefore works on how sparsely the memory region answers (its feedback
-inhibition and in-degree, which `gen2` raised), not on the write rule.
-
-Prediction check. MIXED: right. F on `gen2` 40 to 80: right. Today's plant F 20 to 40:
-right on seeds 2 and 3, seed 1 is 11.
-
-### 8.33 Fewer cortex inputs per memory cell: an in-degree sweep (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `sparse-hpc-indegree`; the code is not on master.
-
-Branch `sparse-hpc-indegree` (from `assembly-size-diag`). One lever, a static plant
-parameter: the number of cortex cells each memory-region cell listens to (`ctx` to `hpc`
-in-degree; `gen2` set it to 60, today's plant has 40). No engine change, no new rule,
-nothing merged. The lever and the sweep values are the Codex advisor's suggestion after
-8.32 (`~/.cache/scratch/brainsim-asd/codex_832.md`); the 8.30 mechanism and everything
-else of `gen2` (memory-to-memory in-degree 80 included) stay as they are.
-
-**What is run.** In-degree 15, 30, 45 and 60, seeds 1, 2, 3, each a brain built and warmed
-from scratch with that in-degree (test-side: the projection table is edited before the
-engine is built, `tests/k833_plant.py`). Per setting and seed: `tests/k832_assembly_size.py`
-(sizes under F / P / PH / PE, plus a 2 s resting check on the PE setting right after the
-warm-up) and `tests/k831_k11_official.py` (the official `run_experiment`, unmodified, with
-the never-trained twin).
-
-**Kill test (fixed; no setting is added after the results are seen).**
-1. VALID at a setting and seed if, at rest, cortex E is at 1.5 to 2.5 Hz and memory-region
-   E at 0.75 to 1.25 Hz, at most 20 % of either fires in one tick, and every validity entry
-   of the official driver is true. In-degree 60 must reproduce 8.31 and 8.32 exactly.
-2. PASS at a setting if on all three seeds it is valid, the three official criteria hold as
-   coded (assembly 1 to 20 cells, at least 80 % of it within 50 ticks of the half cue, no
-   spurious assembly), and W cells on the half cue at 50 ticks, trained minus never-trained
-   (mean of 8 repeats), is at least +2.0.
-3. The lever is REJECTED if no setting passes.
-
-A pass here would be a pass on this branch's plant only; K1.1 on master stays FAIL until
-the owner rules on plant and mechanism.
-
-**Prediction.** REJECTED. Fewer inputs will shrink the response less than in proportion,
-because scaling raises the remaining weights to hold the resting rate. In-degree 30: F
-still 25 to 45 cells. In-degree 15: F near or under 20, but either the rules lift it back
-over 20 or the half cue no longer reaches 80 % in 50 ticks, and the resting rate of the
-memory region may leave its band.
-
-**Result (2026-10-01, branch `sparse-hpc-indegree`, logs `~/.cache/scratch/brainsim-shi/`):
-REJECTED. No in-degree passes; the assembly does not shrink with fewer cortex inputs.
-In-degree 60 reproduces 8.31 and 8.32 exactly. K1.1 remains FAIL. Not merged.**
-
-Seeds 1 / 2 / 3. Size = hippocampal E cells with at least 4 Hz excess during A (bar 1 to 20).
-
-| in-degree | rest, memory-region E Hz (band 0.75 to 1.25) | size, nothing learns (F) | size, 8.30 mechanism (official c1) | c2, share within 50 ticks (bar 0.80) | c3 no spurious | W trained minus never | setting |
-|---|---|---|---|---|---|---|---|
-| 15 | 0.57 / 0.53 / 0.58, out of band | 4 / 84 / 108 | 10 / 172 / 137 | 0.60 / 1.00 / 0.99 | fail / fail / fail | +2.4 / +10.6 / +6.4 | invalid, fails |
-| 30 | 0.75 / 0.74 / 0.70, seeds 2 and 3 out | 65 / 92 / 61 | 105 / 191 / 115 | 0.70 / 1.00 / 0.85 | met | +8.5 / +8.9 / +10.3 | invalid, fails c1 |
-| 45 | 0.89 / 0.86 / 0.80 | 60 / 74 / 66 | 100 / 133 / 93 | 0.95 / 0.88 / 0.89 | met | +10.6 / +8.5 / +8.0 | valid, fails c1 |
-| 60 (`gen2`) | 0.91 / 0.76 / 0.91 | 52 / 78 / 64 | 86 / 134 / 103 | 0.90 / 0.96 / 0.91 | met | +8.4 / +8.4 / +9.1 | valid, fails c1 |
-
-Cortex E at rest is 1.55 to 1.97 Hz and the largest one-tick share is under 0.04 in every
-run; official validity entries are all true; every replica matches its official run.
-
-Readings.
-
-- **The number of cortex inputs is not what sets the size.** From 60 down to 30 the
-  response to A with nothing learning stays at 50 to 90 cells, and with the mechanism it
-  grows if anything. Scaling holds each cell's resting rate, so fewer inputs become
-  stronger inputs and the cell answers A as before.
-- **At 15 the plant breaks rather than sparsens.** The memory region rests below its band,
-  and the three seeds scatter (4, 84 and 108 cells with nothing learning). Seed 1 is the
-  only run in the sweep with a small assembly (10 cells); it then completes only 60 % in
-  50 ticks and fails the spurious criterion.
-- **Recall is robust to this lever** wherever the plant is healthy: trained minus
-  never-trained stays at +8 to +11 W cells at in-degree 30 to 60.
-- What is left that differs between `gen2` (52 to 78 cells with nothing learning) and
-  today's plant (11 to 24): the memory region's own recurrent in-degree (80), and cortex's
-  lower resting rate, under which scaling makes each cortical spike count for more. Not
-  tested here.
-
-Prediction check. REJECTED: right. In-degree 30 with nothing learning at 25 to 45 cells:
-wrong, it is 61 to 92, no smaller than at 60. In-degree 15 near or under 20: right on seed 1
-only. Resting rate leaving its band at 15: right.
-
 ### 8.34 Is the recall recurrent? Memory-to-memory links switched off at recall only (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `recurrent-off-recall`; the code is not on master.
 
 Branch `recurrent-off-recall` (from `k11-on-pending-express`). A diagnostic named by the
 owner after the Codex review of 8.31: no engine change, no new mechanism, nothing merged,
@@ -5181,8 +4930,6 @@ Prediction check. MIXED: right in the label (0.52 / 0.97 / 0.53, predicted 0.5 t
 REC-twin removes little: right. FF-twin removes most of the gain: wrong, it removes none.
 
 ### 8.35 Where is the learned recall stored? Seat-finding transplants (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `seat-transplant`; the code is not on master.
 
 Branch `seat-transplant` (from `recurrent-off-recall`). A diagnostic named by the owner
 after 8.34: no engine change, no new mechanism, no wiring change, nothing merged, not a
@@ -5326,8 +5073,6 @@ STATE under 0.2: right. The class that carries the gain was not among my four.
 
 ### 8.36 Which synapses onto inhibitory cells carry the recall? The residual class split in five (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `ei-split`; the code is not on master.
-
 Branch `ei-split` (from `seat-transplant`). A diagnostic, run under the owner's standing
 permission to continue; no engine change, nothing merged, not a K1.1 result. 8.35 put the
 half-cue gain in a residual class of five kinds of synapse. This round swaps each kind
@@ -5409,8 +5154,6 @@ part: SI yes, CI weakly.
 
 ### 8.37 Does any recall survive when synapses onto inhibitory cells cannot learn? (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `ei-frozen-training`; the code is not on master.
-
 Branch `ei-frozen-training` (from `ei-split`). A diagnostic under the owner's standing
 permission; no engine change, nothing merged, not a K1.1 result. 8.35 and 8.36 put the
 half-cue gain of the 8.30 mechanism in the excitatory synapses onto inhibitory cells. This
@@ -5489,8 +5232,6 @@ Prediction check. GONE with G between -3 and +1: right on seeds 1 and 3; seed 2 
 
 ### 8.38 Room to strengthen: a higher weight bound on the memory region's excitatory cells (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `weight-headroom`; the code is not on master.
-
 Branch `weight-headroom` (from `ei-frozen-training`). One lever, a static plant parameter;
 no engine change, no new rule, nothing merged. 8.37 left the 8.30 mechanism with no recall
 once the synapses onto inhibitory cells cannot learn. A reason on the table: the excitatory
@@ -5563,8 +5304,6 @@ below.
 
 ### 8.39 A stronger heterosynaptic write, with room under the bound (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `hetero-eta`; the code is not on master.
-
 Branch `hetero-eta` (from `weight-headroom`). One lever, the step of the existing
 heterosynaptic write (`HETERO_ETA`, 0.15 since 8.16); no engine change, nothing merged.
 8.38 showed a small selective excitatory gain once the cortex-to-memory synapses have room
@@ -5624,8 +5363,6 @@ repeats: right. 0.60 no larger than 0.30: wrong on seed 2, right on seeds 1 and 
 noise; the reason given (inputs at the bound) was wrong, they stop at 0.75 to 0.79.
 
 ### 8.40 A write that adds: potentiation-only heterosynaptic write (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `hetero-additive`; the code is not on master.
 
 Branch `hetero-additive` (from `hetero-eta`). One engine mechanism behind a flag that is
 off by default; nothing merged. A labelled proxy, not biology: it stands in for the
@@ -5712,8 +5449,6 @@ two seeds: wrong, one seed (5 of 8). B difference near zero: right on seeds 2 an
 
 ### 8.41 The adding write on the memory region's own links too (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `hetero-recurrent`; the code is not on master.
-
 Branch `hetero-recurrent` (from `hetero-additive`). One engine mechanism behind a flag that
 is off by default; nothing merged. A labelled proxy, as 8.40. 8.40 gave a consistent
 excitatory gain of 3 to 5 W cells but only 9 to 12 of 16 on the half cue: the half cue
@@ -5797,8 +5532,6 @@ two seeds, higher at 0.30. 13 of 16 on more than half the repeats on two seeds: 
 
 ### 8.42 A write that pays for what it adds, over cortical and recurrent inputs together (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `zero-sum-joint`; the code is not on master.
-
 Branch `zero-sum-joint` (from `hetero-recurrent`). No new code: the 8.16 zero-sum write
 (`HETERO_ADDITIVE` off) with the 8.41 input set (`HETERO_RECURRENT` on). Nothing merged.
 8.41 reached 13 of 16 on the half cue but the W cells also fired with no stimulus and for
@@ -5867,8 +5600,6 @@ or 6 of 8.
 
 ### 8.43 The same write with a smaller step (predeclared 2026-10-01)
 
-Recorded here from the unmerged branch `zero-sum-step`; the code is not on master.
-
 Branch `zero-sum-step` (from `zero-sum-joint`). No new code. 8.42 failed on one clause on
 one seed: seed 1's W cells fire with no stimulus on some repeats (0, 0, 6, 2, 0, 3, 0, 12
 of 16 at step 0.30), and at both steps the W-to-W links ended at 0.9 of the bound, so the
@@ -5931,8 +5662,6 @@ repeats: right except seed 1 (4 and 5 of 8). Seed 1 failing the no-stimulus clau
 wrong (+0.3). G under +2.0 at 0.05: right, on all three seeds.
 
 ### 8.44 The same write measured with 32 repeats (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `more-repeats`; the code is not on master.
 
 Branch `more-repeats` (from `zero-sum-step`). No engine change; the runner takes `--reps`.
 8.43 showed that recall is all-or-little on each repeat, so a mean of eight repeats moves
@@ -6003,493 +5732,6 @@ and 3 never catching by themselves: wrong (3 and 1 repeats of 32 at 0.60, 0 and 
 PASS at 0.15: wrong, by seed 3's no-stimulus difference (+0.7). G +3 to +4 at 0.15: right
 within the error. 13 of 16 on a third to a half of the repeats at 0.15: right for seeds 2
 and 3 (12 and 11 of 32), seed 1 higher (19).
-
-### 8.45 The same write under a lower weight bound (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `joint-bound`; the code is not on master.
-
-Branch `joint-bound` (from `more-repeats`). No new code. In 8.44 what fails is the W set
-catching by itself with no cue, on a few repeats. With the bound at 1.5 times its normal
-value, each W-to-W link ends near 1.4 times the normal bound, so very few W cells firing
-together by chance are enough to start the rest. The raised bound came from 8.38, when the
-write acted on cortical inputs only; the joint write has never been run at the normal
-bound. This round asks whether weaker single links (normal bound, or 1.25 times) make the
-set harder to start by chance while the half cue, which drives several W cells at once,
-still starts it.
-
-**What is run.** `tests/k840_additive.py --additive 0 --recurrent 1 --reps 32`, seeds 1, 2,
-3, as 8.44 except the bound: x1.0 and x1.25, each at step 0.30 and 0.60.
-
-**Kill test (8.40's bars, 32 repeats as 8.44).** G = W cells on the half cue at 50 ticks,
-trained minus never-trained.
-1. VALID as 8.40.
-2. PASS at a setting if on all three seeds it is valid, G is at least +2.0, the same
-   difference on B is at most half of G, and on no stimulus at most +0.5.
-3. REJECTED if no setting passes.
-
-Reported beside it: the Stage-1 count (13 of 16, mean and repeats of 32); repeats with no
-stimulus at 6 of 16 or more; W-to-W and cortex-to-W weights.
-
-**Prediction.** PASS at bound x1.0, step 0.60: no stimulus within +0.5 on every seed and
-no repeat catching by itself, G +3 to +5, the half cue short of 13 on average (10 to 12).
-At x1.25 seed 1 still fails the no-stimulus clause (+0.6 to +1.0) with G about +6.
-
-**Result (2026-10-01, branch `joint-bound`, logs `~/.cache/scratch/brainsim-jb/`): VALID on
-three seeds. The fixed test PASSES at one setting, bound x1.25 with step 0.30: the first
-setting to meet all three clauses on all three seeds with nothing learned onto inhibitory
-cells. This is a pass of this round's test only. The Stage-1 count (13 of 16) is not
-reached on seeds 1 and 2, and seed 3's no-stimulus margin is thinner than its error. K1.1
-remains FAIL. Not merged.**
-
-Zero-sum write over cortical and recurrent inputs, no pair rule onto inhibitory cells; W
-cells of 16 at 50 ticks, means of 32 repeats, seeds 1 / 2 / 3:
-
-| bound | step | half cue, trained \| never | G (bar +2.0) | B difference (bar half of G) | none difference (bar +0.5) | repeats reaching 13 of 16 | repeats with no stimulus at 6 or more (twin 0) | verdict |
-|---|---|---|---|---|---|---|---|---|
-| x1.0 | 0.30 | 5.0 \| 6.5, 4.2 \| 5.5, 8.5 \| 6.6 | **-1.5 / -1.4 / +1.9** | -2.3 / -5.8 / -1.0 | -0.3 / -0.5 / -0.2 | 1 / 0 / 6 of 32 | 0 / 0 / 0 | G fails |
-| x1.0 | 0.60 | 5.0 \| 6.5, 3.7 \| 5.4, 7.4 \| 6.9 | **-1.5 / -1.7 / +0.6** | -3.0 / -6.4 / -3.2 | -0.5 / -0.3 / -0.3 | 2 / 1 / 7 of 32 | 0 / 0 / 0 | G fails |
-| x1.25 | 0.30 | 10.7 \| 6.3, 11.2 \| 7.2, 14.6 \| 7.2 | +4.4 ± 0.7 / +4.1 ± 0.6 / +7.4 ± 0.6 | -3.3 / -2.7 / -3.8 | -0.1 ± 0.2 / +0.3 ± 0.3 / +0.4 ± 0.6 | 15 / 14 / 27 of 32 | 0 / 1 / 2 | **PASS** |
-| x1.25 | 0.60 | 11.2 \| 5.6, 12.6 \| 6.8, 15.0 \| 7.5 | +5.6 / +5.8 / +7.5 | -3.3 / -3.0 / -3.2 | -0.2 / +0.3 / **+1.6 ± 0.7** | 18 / 21 / 29 of 32 | 0 / 1 / 6 | seed 3 none |
-
-Weights as a share of the bound, trained | twin, at x1.25 step 0.30: W to W 0.95 | 0.38,
-0.76 | 0.36, 0.94 | 0.39; onto W from A-answering cortex 0.86 | 0.66, 0.85 | 0.63, 0.87 |
-0.66; from other cortex 0.37 | 0.70, 0.32 | 0.65, 0.33 | 0.65. Validity: rest cortex E
-1.53 to 1.75 Hz, memory-region E 0.75 to 0.95 Hz (seed 2 at x1.0 sits on the lower edge,
-0.75); twin with no stimulus at most 1.3 of 16; twin's rate before the probes 0.76 to 0.95
-Hz. Assembly 41 to 61.
-
-Readings.
-
-- **At the normal bound the write removes recall instead of adding it.** There the inputs
-  from A-answering cortex already sit at 0.93 of the bound in the twin and cannot rise
-  (0.94 to 0.96 trained), so the zero-sum write only takes from the other inputs (0.9 down
-  to 0.3 to 0.6). The W-to-W links rise, but the cells lose more drive than they gain: the
-  half cue falls below the twin on seeds 1 and 2. Everything is quieter, B most of all.
-- **A quarter more room is enough to turn that into a gain** (+4.1 to +7.4 at step 0.30),
-  with B well below the twin and the cells about as quiet as the twin with no cue on
-  seeds 1 and 2.
-- **The pass is narrow.** Seed 3's no-stimulus difference at the passing setting is +0.4
-  with a standard error of 0.6, and its W set caught by itself on two repeats of 32 (one
-  reaching 15 of 16). At step 0.60 the same seed fails clearly (+1.6, six repeats). Which
-  seed catches by itself changes with the bound (seed 1 at x1.5, seed 3 at x1.25), because
-  a different bound gives a differently warmed brain.
-- **Recall against quiet is one trade, not two knobs.** Across 8.44 and this round, every
-  setting where the half cue averages 13 of 16 on all three seeds also has a seed whose W
-  set catches by itself on about one repeat in five.
-
-Prediction check. PASS at x1.0, step 0.60: wrong, G is negative on two seeds; the part
-about no stimulus (within +0.5, no repeat catching by itself) was right. Seed 1 failing
-the no-stimulus clause at x1.25: wrong, seed 1 is quiet there and seed 3 is the one that
-catches. G about +6 at x1.25: right at step 0.60 (+5.6 to +7.5).
-
-### 8.46 Does the 8.45 pass hold on fresh draws and fresh seeds (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `joint-confirm`; the code is not on master.
-
-Branch `joint-confirm` (from `joint-bound`). No new code. 8.45 passed its test at one
-setting (bound x1.25, step 0.30), by a margin on seed 3 thinner than its error, at a
-setting chosen after seeing four. A pass found that way has to be repeated before it
-counts. This round reruns that one setting, unchanged, with 96 repeats per probe (the
-first 32 are 8.45's draws, the other 64 are new) on seeds 1, 2, 3 and on three seeds never
-used in this search, 4, 5, 6.
-
-**What is run.** `tests/k840_additive.py --k 1.25 --eta 0.30 --additive 0 --recurrent 1
---reps 96`, seeds 1 to 6.
-
-**Kill test (8.40's bars).** G = W cells on the half cue at 50 ticks, trained minus
-never-trained, mean of 96 repeats.
-1. VALID as 8.40, on each seed.
-2. CONFIRMED if on all six seeds it is valid, G is at least +2.0, the same difference on B
-   is at most half of G, and on no stimulus at most +0.5.
-3. Otherwise NOT CONFIRMED; the table says which seeds and which clause.
-
-Reported beside it: the same on the 64 new repeats alone for seeds 1 to 3; the Stage-1
-count (13 of 16, mean and repeats of 96); repeats with no stimulus at 6 of 16 or more.
-
-**Prediction.** NOT CONFIRMED. G at least +3 and B below the twin on all six seeds, but
-the no-stimulus clause fails on one or two of the six (the W set catching by itself on 3
-to 10 % of repeats there). The half cue averages 13 of 16 on at most two seeds of six.
-
-**Result (2026-10-01, branch `joint-confirm`, logs `~/.cache/scratch/brainsim-jc/`): VALID
-on six seeds. CONFIRMED: all six seeds meet the three clauses with 96 repeats, and seeds 1
-to 3 meet them on the 64 new repeats alone. This confirms the round test of 8.45, not
-K1.1: the half cue averages 13 of 16 on four seeds of six. K1.1 remains FAIL. Not merged.**
-
-Bound x1.25, step 0.30, zero-sum write over cortical and recurrent inputs, no pair rule
-onto inhibitory cells; W cells of 16 at 50 ticks, means of 96 repeats with the paired
-standard error:
-
-| seed | half cue, trained \| never | G (bar +2.0) | B, trained \| never | B difference (bar half of G) | none, trained \| never | none difference (bar +0.5) | repeats reaching 13 of 16 | repeats with no stimulus at 6 or more, trained \| twin | clauses |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | 11.5 \| 6.4 | +5.1 ± 0.4 | 0.9 \| 3.9 | -3.0 | 0.5 \| 0.6 | -0.2 ± 0.1 | 50 of 96 | 2 \| 0 | met |
-| 2 | 11.1 \| 7.0 | +4.0 ± 0.3 | 1.4 \| 4.0 | -2.5 | 1.3 \| 0.9 | +0.4 ± 0.1 | 40 of 96 | 1 \| 0 | met |
-| 3 | 14.9 \| 7.8 | +7.0 ± 0.4 | 2.1 \| 5.0 | -3.0 | 1.8 \| 1.3 | +0.5 ± 0.3 (+0.45) | 83 of 96 | 9 \| 0 | met |
-| 4 (new) | 13.7 \| 11.3 | +2.4 ± 0.3 | 0.8 \| 2.7 | -1.9 | 0.7 \| 1.1 | -0.4 ± 0.1 | 72 of 96 | 1 \| 1 | met |
-| 5 (new) | 14.1 \| 9.2 | +5.0 ± 0.3 | 1.0 \| 1.8 | -0.7 | 0.6 \| 0.6 | 0.0 ± 0.2 | 75 of 96 | 2 \| 0 | met |
-| 6 (new) | 13.3 \| 8.7 | +4.7 ± 0.3 | 0.6 \| 2.4 | -1.8 | 0.5 \| 0.7 | -0.2 ± 0.1 | 69 of 96 | 0 \| 0 | met |
-
-On the 64 new repeats alone, seeds 1 / 2 / 3: G +5.4 / +4.0 / +6.9; B -2.9 / -2.5 / -2.5;
-none -0.2 / +0.5 (+0.47) / +0.5 (+0.45). Validity: rest cortex E 1.55 to 1.75 Hz,
-memory-region E 0.86 to 0.95 Hz; twin with no stimulus at most 1.3 of 16; twin's rate
-before the probes 0.81 to 0.98 Hz. Assembly 40 to 61. W-to-W links 0.76 to 0.95 of the
-bound trained, 0.36 to 0.39 twin; onto W from A-answering cortex 0.81 to 0.87 trained,
-0.61 to 0.71 twin; from other cortex 0.28 to 0.37 trained, 0.60 to 0.72 twin.
-
-Readings.
-
-- **The gain is real and repeats.** On six brains, three of them never used while
-  searching, one 2-second showing of A leaves the 16 W cells answering half of A with 2.4
-  to 7.0 more cells than an equally old brain that never saw A, each difference at least
-  seven standard errors from zero. B brings back fewer W cells than in the twin on every
-  seed. No inhibitory cell's inputs learn in this arm, and the weights that moved are the
-  ones the write acts on (A's cortical inputs and W-to-W up, the other inputs down).
-- **Two seeds are close to the no-stimulus bar** (+0.40 and +0.45 against +0.5), and on
-  seed 3 the W set catches by itself on 9 repeats of 96, about one 50-tick window in ten.
-  The clause is met as written; the firing without a cue is small but not zero.
-- **It is not the Stage-1 law.** The half cue averages 13 of 16 or more on seeds 3 to 6
-  and 11.5 and 11.1 on seeds 1 and 2. Seed 4's gain is the smallest (+2.4) because its
-  twin already answers the half cue with 11.3 of 16.
-- **What it rests on.** A setting chosen after seeing others (bound x1.25, step 0.30), in
-  the arm where the pair rule onto inhibitory cells is switched off, on the `gen2` plant
-  with the slowed homeostat, measured one second after a single showing. Retention over
-  longer delays, a second pattern, and the assembly size (40 to 61 against 20) are not
-  tested here.
-
-Prediction check. NOT CONFIRMED: wrong, all six seeds meet the three clauses. G at least
-+3 on all six: wrong for seed 4 (+2.4). B below the twin on all six: right. The half cue
-at 13 of 16 on at most two seeds: wrong, four of six.
-
-### 8.47 The official K1.1 protocol on the 8.46 setting (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `official-on-joint`; the code is not on master.
-
-Branch `official-on-joint` (from `joint-confirm`). No engine change; a driver
-`tests/k847_official.py` that configures the brain as 8.46 (bound x1.25, step 0.30,
-zero-sum write over cortical and recurrent inputs, pending, expressed tag, no pair rule
-onto inhibitory cells, `gen2`, C3) at tick 120,000 and then calls the unmodified
-`k11.run_experiment`, as 8.31 did for the 8.30 mechanism. 8.46 used this search's own
-test; this round reads the same brain with the test K1.1 is written in.
-
-**What is run.** `tests/k847_official.py`, seeds 1 to 6 (the law is judged on 1, 2, 3; 4
-to 6 are reported beside it).
-
-**Kill test (K1.1 as coded in SPEC 8.2, nothing rewritten).**
-1. VALID if the official validity checks hold and the flags are confirmed on the engine
-   the official run used.
-2. K1.1 as coded is MET only if on seeds 1, 2 and 3: c1 the assembly has 1 to 20 cells, c2
-   the half cue recalls at least 0.80 of it within 50 ticks, c3 no other assembly forms.
-3. Otherwise NOT MET, clause by clause in the table.
-
-**Prediction.** NOT MET. c1 fails on every seed (assembly 40 to 61). c3 is met on every
-seed. c2 (0.80 of the whole assembly in 50 ticks, a single draw) is met on two or three
-seeds of six.
-
-**Result (2026-10-01, branch `official-on-joint`, logs `~/.cache/scratch/brainsim-oj/`):
-VALID on six seeds. K1.1 as coded is NOT MET: the size clause fails on every seed and the
-completion clause on seeds 1 and 2. K1.1 remains FAIL. Not merged.**
-
-The unmodified `k11.run_experiment` on the 8.46 setting, a single official draw per seed:
-
-| seed | valid | assembly size (c1: 1 to 20) | half cue recalls of the assembly at 50 ticks (c2: at least 0.80) | at 100 / 200 ticks (diagnostic) | full A at 50 ticks | spurious excess against its limit (c3) | c1 | c2 | c3 |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | yes | 50 | 0.72 (36 cells) | 0.82 / 0.94 | 1.00 | 22.3 against 25.0 | FAIL | FAIL | met |
-| 2 | yes | 51 | 0.57 (29 cells) | 0.75 / 0.90 | 0.94 | 3.6 against 25.5 | FAIL | FAIL | met |
-| 3 | yes | 51 | 0.86 (44 cells) | 0.96 / 1.00 | 1.00 | 16.7 against 25.5 | FAIL | met | met |
-| 4 | yes | 61 | 0.92 (56 cells) | 0.95 / 0.95 | 1.00 | 10.3 against 30.5 | FAIL | met | met |
-| 5 | yes | 40 | 0.78 (31 cells) | 0.93 / 0.98 | 0.98 | 10.3 against 20.0 | FAIL | FAIL | met |
-| 6 | yes | 49 | 0.90 (44 cells) | 0.94 / 0.98 | 1.00 | 3.2 against 24.5 | FAIL | met | met |
-
-Flags confirmed on the engine the official run used (zero-sum write with the recurrent
-input set, step 0.30, pending, expressed tag, slowed homeostat, no pair rule onto
-inhibitory cells).
-
-Readings.
-
-- **The official test agrees with 8.46 seed by seed.** The seeds whose W cells fell short
-  of 13 of 16 there (1 and 2) are the ones that fall short of 0.80 here; seed 5 misses by
-  one cell (31 of 40, needing 32). The 100- and 200-tick figures are diagnostic and are
-  never a pass.
-- **Against the 8.30 mechanism, read by the same test (8.31): 0.90 / 0.96 / 0.91 there,
-  0.72 / 0.57 / 0.86 here on seeds 1 to 3.** The earlier mechanism, whose recall sits in
-  weakened inputs to inhibitory cells, completes more of the assembly than this one, whose
-  recall sits in excitatory links.
-- **The size clause is where it was**: 40 to 61 cells against 20, as on every `gen2` run
-  since 8.31.
-
-Prediction check. NOT MET: right. c1 failing on every seed: right. c3 met on every seed:
-right (seed 1 with little room, 22.3 against 25.0). c2 met on two or three seeds of six:
-right, three (3, 4, 6).
-
-### 8.48 Persistence and a second pattern on the 8.46 setting (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `persist-dual`; the code is not on master.
-
-Branch `persist-dual` (from `official-on-joint`). No engine change; one driver,
-`tests/k848_persist_dual.py`. Owner's ruling of 2026-10-01: the 8.46 setting is the primary
-Stage-1 line, labeled **excitatory binding** (the zero-sum write over cortical and
-recurrent inputs, bound x1.25, step 0.30, pair rule onto inhibitory cells off, `gen2`,
-slowed homeostat). The 8.30 mechanism stays in the record as the labeled **disinhibition
-baseline** and is not run here. 8.46 measured the memory one second after a single
-showing. This round asks two things of the same setting, unchanged: does the memory last,
-and can a second pattern be written without erasing the first or setting the cells off.
-
-**What is run.** Seeds 1 to 6, 96 reseeded repeats per probe, every probe on a copy. W(A)
-= the 16 memory-region excitatory cells that fire most during A; W(B) likewise during B.
-The twin is the same brain, same age, same schedule, never shown anything.
-
-*Part 1, persistence.* A is shown for 2 s (ticks 122,000 to 124,000). Probes (half cue of
-A, full B, no stimulus; 50 ticks) at four points: **1 s** after A (tick 125,000, the 8.46
-point); **10 s** (134,000); **37 s with sleep** (161,000: the brain's own 20 s sleep runs
-from 140,000 to 160,000, then 1 s awake); **37 s awake** (161,000 on a copy whose sleep
-is postponed with the engine's own `set_sleep(False)` at 139,000).
-
-*Part 2, A then B.* A at 122,000 to 124,000, 1 s, B for 2 s at 125,000 to 127,000, 1 s,
-probes at 128,000 (half cue of A, half cue of B, full A, full B, no stimulus). Four brains
-of the same age: A then B, A only, B only, twin.
-
-**Kill test (fixed before coding).** The three checks are 8.40's: G (half cue, trained
-minus twin, W cells at 50 ticks) at least +2.0; the same difference for the other pattern
-at most half of G; with no stimulus at most +0.5. Runaway = the trained brain's
-memory-region excitatory cells above 1.4 Hz over the last second before the probes, or
-more than 0.20 of them (or of cortex) in one tick.
-1. VALID if rest at 120,000 is in band as 8.40, the flags are confirmed, the twin with no
-   stimulus is at most 3 of 16 at every point, sleep and wake are where the schedule says,
-   and the 1 s point reproduces 8.46's repeats exactly.
-2. Part 1, at each of the three later points: SURVIVES if on seeds 1, 2 and 3 the three
-   checks are met, G is at least half of that seed's G at 1 s, and there is no runaway.
-   Otherwise LOST at that point.
-3. Part 2: PASS if on seeds 1, 2 and 3, in the A-then-B brain against the twin: W(A) meets
-   the three checks (other pattern = full B) and A's G is at least half of the A-only
-   brain's G at the same age; W(B) meets the three checks (other pattern = full A); no
-   runaway. Otherwise REJECTED, with the table.
-Seeds 4 to 6 are held to the same bars and reported beside; a verdict that holds on three
-seeds and not on six is stated as such.
-
-Reported beside it: the Stage-1 count (13 of 16) for A and B; repeats with no stimulus at
-6 of 16 or more; W-to-W weights at each point; cells shared by W(A) and W(B).
-
-**Prediction.** Part 1: SURVIVES at 10 s and at 37 s awake (G falling by a fifth or less).
-With sleep: G survives, but the no-stimulus check fails on at least one seed of three.
-Part 2: REJECTED. B meets its G; A keeps more than half of its G; but with two written
-sets the cells fire without a cue beyond +0.5 on at least one seed.
-
-**Result (2026-10-01, branch `persist-dual`, logs `~/.cache/scratch/brainsim-pd/`): VALID on
-six seeds. Part 1: LOST at all three later points by the fixed bar (one seed of 1 to 3
-falls short at each); the gain stays above zero everywhere but roughly halves within ten
-seconds and then holds. Part 2: REJECTED on seed 2; writing B does not erase A on any
-seed, and there is no runaway. This is the excitatory-binding line; the disinhibition
-baseline (8.30) was not run. K1.1 remains FAIL. Not merged.**
-
-Validity: rest cortex E 1.55 to 1.75 Hz, memory-region E 0.86 to 0.95 Hz; flags confirmed
-on every probed brain; sleep and wake where declared; the 1 s point reproduces 8.46's
-repeats exactly on all six seeds; twin with no stimulus at most 1.9 of 16.
-
-**Part 1, persistence.** G = W(A) cells on the half cue of A at 50 ticks, trained minus
-twin, 96 repeats (standard errors 0.3 to 0.4). "met" = the three checks, at least half of
-the seed's G at 1 s, no runaway.
-
-| seed | 1 s | 10 s | 37 s with sleep | 37 s awake |
-|---|---|---|---|---|
-| 1 | +5.1 met | +2.8 met | +3.2 met | +2.7 met |
-| 2 | +4.0 met | **+1.6 NOT met** (G under +2.0) | **+1.5 NOT met** (G under +2.0) | +2.4 met |
-| 3 | +7.0 met | +4.2 met | +4.7 met | **+3.0 NOT met** (under half of +7.0; no stimulus +1.1) |
-| verdict on 1 to 3 | | LOST | LOST | LOST |
-| 4 | +2.4 met | +1.4 NOT met | +0.5 NOT met | +2.0 met |
-| 5 | +5.0 met | +3.1 met | +3.9 met | +3.5 met |
-| 6 | +4.7 met | +2.1 NOT met (under half of +4.7) | +3.2 met | +3.2 met |
-| mean of six | +4.7 | +2.5 | +2.8 | +2.8 |
-
-Beside it, seeds 1 / 2 / 3 / 4 / 5 / 6:
-
-| point | half cue of A, trained (of 16) | repeats of 96 reaching 13 of 16 | B, trained minus twin | no stimulus, trained minus twin | memory-region rate, trained, Hz | W(A)-to-W(A) links, share of bound (twin 0.36 to 0.40) |
-|---|---|---|---|---|---|---|
-| 1 s | 11.5 / 11.1 / 14.9 / 13.7 / 14.1 / 13.3 | 50 / 40 / 83 / 72 / 75 / 69 | -3.0 / -2.5 / -3.0 / -1.9 / -0.7 / -1.8 | -0.2 / +0.4 / +0.5 / -0.4 / 0.0 / -0.2 | 0.96 / 0.75 / 0.95 / 0.84 / 1.13 / 0.92 | 0.95 / 0.76 / 0.94 / 0.87 / 0.86 / 0.91 |
-| 10 s | 8.1 / 6.2 / 13.2 / 11.7 / 13.5 / 8.1 | 17 / 5 / 69 / 50 / 69 / 18 | -1.6 / -3.1 / -5.4 / -1.7 / -0.8 / -2.0 | +0.2 / 0.0 / +0.1 / -0.3 / +0.4 / -0.7 | 0.76 / 0.94 / 0.91 / 0.78 / 0.87 / 0.90 | 0.88 / 0.72 / 0.83 / 0.84 / 0.79 / 0.84 |
-| 37 s with sleep | 8.9 / 8.1 / 10.0 / 9.1 / 11.4 / 9.3 | 23 / 13 / 30 / 17 / 45 / 22 | -2.8 / -4.5 / -4.6 / -2.4 / -1.6 / -1.0 | -0.3 / -0.8 / -0.5 / -0.5 / -0.4 / -0.3 | 0.88 / 0.84 / 0.79 / 0.89 / 0.96 / 0.71 | 0.88 / 0.71 / 0.83 / 0.83 / 0.79 / 0.84 |
-| 37 s awake | 6.7 / 7.9 / 9.7 / 12.6 / 9.6 / 9.2 | 8 / 15 / 26 / 55 / 22 / 26 | -1.3 / -2.7 / -3.5 / -2.2 / -0.9 / -0.9 | -0.1 / -0.2 / **+1.1** / 0.0 / +0.2 / +0.2 | 0.87 / 0.93 / 0.89 / 0.76 / 0.91 / 0.87 | 0.85 / 0.69 / 0.75 / 0.82 / 0.73 / 0.81 |
-
-**Part 2, A then B** (probes 4 s after A ended and 1 s after B ended). W(A) and W(B) share
-no cell on any seed.
-
-| seed | A: G in the A-then-B brain \| in the A-only brain | A: full B \| no stimulus | A | B: G in the A-then-B brain \| in a B-only brain | B: full A \| no stimulus | B | runaway |
-|---|---|---|---|---|---|---|---|
-| 1 | +4.3 \| +3.5 | -2.6 \| -0.1 | met | +5.7 \| +5.3 | -2.4 \| +0.4 | met | no |
-| 2 | **+1.7** \| +1.9 | -3.0 \| -0.3 | NOT met | +6.0 \| +5.5 | +0.1 \| **+2.6** | NOT met | no |
-| 3 | +5.9 \| +5.8 | -4.8 \| -0.1 | met | +5.7 \| +6.2 | -2.8 \| -0.5 | met | no |
-| verdict on 1 to 3 | | | | | | REJECTED (seed 2) | |
-| 4 | **+1.8** \| +1.1 | -1.1 \| +0.5 | NOT met | +2.7 \| +2.4 | -2.5 \| +0.1 | met | no |
-| 5 | +4.0 \| +4.4 | -0.6 \| +0.5 | met | +5.5 \| +4.5 | -1.1 \| +0.4 | met | no |
-| 6 | +3.2 \| +2.9 | -1.2 \| 0.0 | met | +2.8 \| +3.0 | -0.3 \| +0.2 | met | no |
-
-Half cue of B in the A-then-B brain, W(B) cells of 16: 12.0 / 14.5 / 11.9 / 7.2 / 12.3 /
-8.3 (twin 6.3 / 8.4 / 6.2 / 4.5 / 6.8 / 5.5); 13 of 16 on 55 / 83 / 52 / 11 / 61 / 13
-repeats of 96. Memory-region rate over the last second, A-then-B brain: 0.75 to 1.02 Hz
-(twin 0.82 to 1.00); largest one-tick share 0.025. Links, share of bound, A-then-B brain:
-W(A) to W(A) 0.75 to 0.93, W(B) to W(B) 0.79 to 0.93, between the two sets 0.10 to 0.14
-(twin 0.32 to 0.45).
-
-Readings.
-
-- **The memory fades fast and then stops fading.** Averaged over six seeds the gain goes
-  +4.7 at 1 s, +3.2 at 4 s (the A-only brains of Part 2), +2.5 at 10 s, +2.8 at 37 s. It
-  is above zero at every point on every seed (smallest: seed 4 after sleep, +0.5 ± 0.3),
-  and the different pattern stays below the twin everywhere. By the bar fixed beforehand
-  that is LOST: at each later point one of seeds 1 to 3 falls under +2.0 or under half of
-  its 1 s value.
-- **The written links fade much less than the recall does.** W(A)-to-W(A) links go from
-  0.76 to 0.95 of the bound at 1 s to 0.69 to 0.85 at 37 s awake; the twin's stay near
-  0.38. Why a small loss of weight gives half the recall is not established here; recall
-  being all-or-little per try (8.43) makes it plausible but that was not tested.
-- **Sleep neither erases nor rescues.** With the 20 s sleep in the interval the mean gain
-  is +2.8, as without it; after sleep the cells are quieter than the twin with no stimulus
-  on every seed. The one clear no-stimulus failure is awake (seed 3, +1.1).
-- **A second pattern does not overwrite the first.** A's gain in the A-then-B brain equals
-  its gain in an A-only brain of the same age within the error on every seed. The two sets
-  share no cells, and the write pushes the links between them to the floor (0.10), so each
-  set answers the other's pattern less than the twin does. The memory-region rate stays at
-  rest: no runaway.
-- **Why Part 2 is still rejected.** On seed 2, and on seed 4, A's gain is under +2.0 four
-  seconds after it was written, with or without B: that is Part 1's fading, not
-  interference. And on seed 2 the B set catches by itself (+2.6 with no stimulus, 6 or
-  more of 16 on 28 repeats of 96); it does so in the B-only brain too (+1.2, 15 repeats),
-  so it is B's own write on that brain, made worse by A having been written first.
-- **A limit of the measurement.** Each point is one moment of one brain, probed 96 times
-  with fresh noise. Differences between points on a single seed mix fading with what that
-  moment happened to be; the six-seed means are the safer reading.
-
-Prediction check. Part 1, SURVIVES at 10 s and 37 s awake with a fifth lost or less:
-wrong, about half is lost by 10 s. With sleep, G surviving but the no-stimulus check
-failing: wrong on both counts (seed 2's G fails; no seed fires more than its twin after
-sleep). Part 2, REJECTED: right. B meets its G: right, on all six. A keeps more than half
-of its G: right, on all six. No-stimulus firing beyond +0.5 on at least one seed: right
-(seed 2's B set).
-
-### 8.49 Why the excitatory-binding memory halves in ten seconds: a diagnosis (predeclared 2026-10-01)
-
-Recorded here from the unmerged branch `persist-diagnosis`; the code is not on master.
-
-Branch `persist-diagnosis` (from `persist-dual`). Diagnosis only: no fix, no engine change,
-one driver `tests/k849_persist_diag.py`. Primary line only (excitatory binding, the 8.46
-setting); the disinhibition baseline is not run. 8.48 found the half-cue gain falling from
-+4.7 at 1 s to +2.5 at 10 s (six-seed means) and then holding, while the written links
-lost only a little (W-to-W 0.95 to 0.88 of the bound on seed 1).
-
-**Hypothesis (fixed before coding).**
-1. The drop is the rate homeostat (synaptic scaling) answering the two seconds of strong
-   firing during A itself: the cells that fired for A keep a running rate estimate above
-   target for several seconds afterwards.
-2. While it is above target, every one-second sweep multiplies all their used excitatory
-   inputs by 0.99 (the slowed setting's limit); nine sweeps is 0.91, which is the size of
-   the loss seen on the written links.
-3. The estimate decays back to target within about seven sweeps, so the scaling stops:
-   the gain falls and then holds. The twin never fired for A, so it is not scaled.
-
-**What is run.** Seeds 1 to 6, the 8.46 setting unchanged up to the end of A (tick
-124,000). From there six continuations of each brain and its twin: the original one and
-five whose noise is reseeded at 124,000, so that a point is six moments and not one (the
-limit named in 8.48). Probes at 1 s (125,000) and at 10 s (134,000), 32 repeats per
-continuation, 192 per point. Between 125,000 and 134,000 one process is switched off, in
-the trained brain and the twin alike:
-
-| arm | switched off from 125,000 to 134,000 |
-|---|---|
-| BASE | nothing (8.48 again) |
-| SCALE-OFF | synaptic scaling (`ETA_SCALING` 0) |
-| PAIR-OFF | the pair rule on every synapse (both amplitudes 0) |
-| HETERO-OFF | the heterosynaptic write |
-| ALL-OFF | all three: no weight may change |
-
-G = W(A) cells on the half cue at 50 ticks, trained minus twin. Drop = G at 1 s minus G at
-10 s in BASE. An arm explains (its G at 10 s minus BASE's G at 10 s) / drop.
-
-**Kill test (fixed before coding).**
-1. VALID if rest is in band as 8.40; the original continuation reproduces 8.48's repeats
-   at 1 s and at 10 s exactly; the twin with no stimulus is at most 3 of 16; in ALL-OFF the
-   weights and the synapse set at 134,000 are bit-identical to 125,000 in both brains; and
-   the drop is at least 1.0 cell on each of seeds 1, 2, 3 (below that a share of it means
-   nothing).
-2. PASS as a diagnostic if one single-process arm (SCALE-OFF, PAIR-OFF or HETERO-OFF)
-   explains at least 60 % of the drop on all of seeds 1, 2 and 3.
-3. Otherwise REJECTED / mixed, with the table.
-Seeds 4 to 6 are reported beside with the same arithmetic. No arm is a fix and none is
-claimed as one: an arm that keeps the gain says where the loss comes from, not that the
-brain is healthy with that process off.
-
-Reported beside it: B and no-stimulus differences per arm; the running rate estimate of
-the W cells against their target at 1 s; W-to-W and cortex-to-W weights per arm.
-
-**Prediction.** PASS: SCALE-OFF explains 70 to 100 % of the drop on every seed; PAIR-OFF
-and HETERO-OFF each under 30 %; ALL-OFF about the same as SCALE-OFF.
-
-**Result (2026-10-01, branch `persist-diagnosis`, logs `~/.cache/scratch/brainsim-pg/`):
-VALID on six seeds. NOT a pass: synaptic scaling is the largest single cause on every seed
-and explains 72 % and 87 % of the drop on seeds 1 and 2, but 51 % on seed 3, under the 60 %
-bar. REJECTED / mixed by the fixed test. Excitatory-binding line only. K1.1 remains FAIL.
-Not merged.**
-
-Validity: rest in band on every seed; the original continuation reproduces 8.48's repeats
-at 1 s and 10 s exactly; with all three processes off the weights and the synapse set at
-134,000 are bit-identical to 125,000 in both brains; twin with no stimulus at most 1.2 of
-16; the drop is at least 1.0 on every seed.
-
-G = W(A) cells on the half cue at 50 ticks, trained minus twin, six continuations x 32
-repeats (standard error over continuations 0.1 to 0.5). Share = how much of the drop the
-arm gives back.
-
-| seed | G at 1 s | G at 10 s (BASE) | drop | SCALE-OFF: G, share | PAIR-OFF: G, share | HETERO-OFF: G, share | ALL-OFF: G, share | single cause at 60 % |
-|---|---|---|---|---|---|---|---|---|
-| 1 | +5.4 | +2.5 | 2.9 | +4.6, **72 %** | +3.0, 17 % | +2.8, 10 % | +5.7, 111 % | scaling |
-| 2 | +3.9 | +2.2 | 1.8 | +3.7, **87 %** | +2.3, 7 % | +1.5, -36 % | +4.2, 113 % | scaling |
-| 3 | +7.9 | +4.3 | 3.6 | +6.1, **51 %** | +4.5, 6 % | +3.9, -11 % | +6.7, 68 % | none |
-| verdict on 1 to 3 | | | | | | | | **not on all three: REJECTED / mixed** |
-| 4 | +2.8 | +0.8 | 2.0 | +2.3, 78 % | +0.5, -14 % | +0.4, -23 % | +2.6, 91 % | scaling |
-| 5 | +5.7 | +3.3 | 2.3 | +4.9, 67 % | +3.6, 13 % | +3.2, -4 % | +5.3, 86 % | scaling |
-| 6 | +4.5 | +2.3 | 2.2 | +4.0, 79 % | +2.8, 23 % | +2.1, -10 % | +4.4, 97 % | scaling |
-
-Beside it, seeds 1 / 2 / 3 / 4 / 5 / 6:
-
-| measure | value |
-|---|---|
-| W cells' running rate estimate at 1 s, trained (twin 1.1 to 1.4; target 1.0), Hz | 5.6 / 5.5 / 6.4 / 5.7 / 6.4 / 6.0 |
-| the same at 10 s, trained | 1.0 / 1.0 / 1.2 / 0.9 / 1.2 / 1.0 |
-| W-to-W links, share of bound: 1 s | 0.94 / 0.76 / 0.92 / 0.87 / 0.89 / 0.91 |
-| at 10 s BASE | 0.87 / 0.73 / 0.79 / 0.83 / 0.80 / 0.84 |
-| at 10 s SCALE-OFF | 0.88 / 0.74 / 0.81 / 0.84 / 0.82 / 0.86 |
-| at 10 s PAIR-OFF | 0.90 / 0.74 / 0.89 / 0.85 / 0.85 / 0.87 |
-| onto W from A-answering cortex: 1 s | 0.86 / 0.85 / 0.87 / 0.84 / 0.81 / 0.86 |
-| at 10 s BASE | 0.81 / 0.81 / 0.80 / 0.81 / 0.75 / 0.81 |
-| at 10 s SCALE-OFF | 0.84 / 0.83 / 0.82 / 0.83 / 0.78 / 0.84 |
-| no stimulus, trained minus twin, SCALE-OFF at 10 s | 0.0 / +0.3 / +0.2 / -0.1 / **+0.8** / -0.2 |
-
-Readings.
-
-- **The drop is real, not an accident of the moment probed.** Averaged over six moments
-  per point it is 1.8 to 3.6 cells on every seed, the same size 8.48 saw on one moment.
-- **It is a loss of weight, and mostly the homeostat's.** With every weight change
-  switched off for the nine seconds the gain is kept on five seeds (86 to 113 %) and
-  two-thirds kept on seed 3. Switching off scaling alone gives back 51 to 87 %, far more
-  than the pair rule (at most 23 %) or the write (at most 10 %, usually slightly worse
-  with it off). On five seeds of six scaling passes the 60 % bar; on seed 3 it does not.
-- **The route is as predicted, the detail is not.** The W cells' rate estimate is 5.5 to
-  6.4 Hz one second after A against a 1 Hz target and is back at target by 10 s, so the
-  homeostat scales their inputs down in between: a response to the showing itself. But
-  the loss on the W-to-W links, which the hypothesis put down to scaling, is mostly the
-  pair rule's (W-to-W is 0.87 at 10 s, 0.88 with scaling off, 0.90 with the pair rule
-  off, 0.94 with all off, seed 1). Scaling's share of the recall runs through the cortical
-  inputs instead (0.81 against 0.84 with scaling off). Losing W-to-W weight to the pair
-  rule costs little recall on its own.
-- **The parts do not add up one by one.** On every seed all three off gives back more than
-  the three single arms summed (seed 1: 72 + 17 + 10 against 111), so the processes
-  compound. On seed 3 a third of the drop remains with no weight change at all: something
-  other than weights, not identified here.
-- **Not a fix.** With scaling off the cells are no longer held to their target; on seed 5
-  the trained W cells fire more than the twin with no stimulus (+0.8, over the +0.5 bound
-  used elsewhere). The arm shows where the loss comes from and nothing more.
-
-Prediction check. PASS: wrong, seed 3 gives 51 %. SCALE-OFF 70 to 100 % on every seed:
-right on seeds 1, 2, 4 and 6, wrong on 3 and 5. PAIR-OFF and HETERO-OFF each under 30 %:
-right. ALL-OFF about the same as SCALE-OFF: wrong, it is higher on every seed. Hypothesis
-line 2 (the W-to-W loss is scaling's): wrong, as above.
 
 ## 9. Files created in Stage 0
 
