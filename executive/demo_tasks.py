@@ -190,3 +190,15 @@ def method_fix_model() -> ScriptedDeliberator:
         return {"diagnosis": "total adds one", "confidence": 0.9,
                 "edits": [{"path": "calc/stats.py", "old": "return sum(self.items) + 1", "new": "return sum(self.items)"}]}
     return ScriptedDeliberator(answer, "scripted-method-fix")
+
+
+def task_contradiction(root: Path) -> Path:
+    files = base_files()
+    files["tests/test_contra.py"] = "from calc.stats import mean\n\n\ndef test_mean_plus_one():\n    assert mean([1, 2, 3]) == 3\n"
+    return _write(root, files)
+
+
+def floor_mean_model() -> ScriptedDeliberator:
+    """Satisfies the contradicting test by breaking test_mean, every time."""
+    return ScriptedDeliberator(lambda req: {"diagnosis": "mean is off by one", "confidence": 0.7, "edits": [
+        {"path": "calc/stats.py", "old": "return total / len(xs)", "new": "return total / len(xs) + 1"}]}, "scripted-plus-one")

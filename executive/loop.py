@@ -132,6 +132,8 @@ class Executive:
     def _block(self, reason: str) -> None:
         self.state["status"] = "blocked"
         self.state["blocked_reason"] = reason
+        conflict = any((s.get("resolution") or "").startswith("conflict") for s in self.goal["subgoals"])
+        self.state["escalate_to"] = "human" if conflict else "agent"
         self.goal["status"] = "blocked"
         self.state["intention"] = None
         self.trace("goal_blocked", goal=self.goal["id"], reason=reason)
@@ -227,6 +229,19 @@ class Executive:
             self.trace("decision", decision="abandon", subgoal=sub["id"], candidates=[],
                        reason="sandbox denial is an environment limit, not a code bug")
             self.trace("handoff", subgoal=sub["id"], target=sub["target"], reason="sandbox_denied")
+            return
+        regressed = [set(a.get("regressions") or []) for a in sub["attempts"] if a["outcome"] == "regressed"]
+        if len(regressed) >= 2 and set.intersection(*regressed):
+            # Every attempted fix for this test broke the same other test(s): strong evidence that
+            # the two requirements contradict each other. That needs a human decision, not
+            # another model, and not the agent tier (E6: Haiku handoff agents broke tests here).
+            clash = sorted(set.intersection(*regressed))
+            sub["status"] = "abandoned"
+            sub["resolution"] = (f"conflict: every fix for {sub['target']} broke {', '.join(clash)}; "
+                                 "the requirements look contradictory and need a human decision")
+            self.goal["unresolved_questions"].append(f"Which should win: {sub['target']} or {', '.join(clash)}?")
+            self.trace("decision", decision="abandon", subgoal=sub["id"], candidates=[], reason="requirements conflict")
+            self.trace("handoff", subgoal=sub["id"], target=sub["target"], reason="conflict_needs_human", clash=clash)
             return
         candidates = []
         for op in self.operators:

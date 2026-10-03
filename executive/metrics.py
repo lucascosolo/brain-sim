@@ -21,6 +21,7 @@ def compute(state_dir: Path | str) -> dict:
         "status": state["status"],
         "completed_verified": state["status"] == "complete",
         "blocked_reason": state["blocked_reason"],
+        "escalate_to": state.get("escalate_to"),
         "steps": state["step"],
         "actions_total": len(actions) + len(llm),
         "actions_deterministic": len(actions),

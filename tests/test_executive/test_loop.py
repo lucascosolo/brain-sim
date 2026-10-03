@@ -192,3 +192,16 @@ def test_sandbox_denied_failure_is_handed_off_not_edited(dirs):
     assert m["status"] == "blocked" and llm.calls == []
     assert events(dirs[1], "handoff")[0]["reason"] == "sandbox_denied"
     assert "subprocess.run" in (dirs[0] / "pkg" / "ver.py").read_text()
+
+
+def test_repeated_identical_regressions_escalate_to_a_human(dirs):
+    ex, m = run(dirs, T.task_contradiction, deliberator=T.floor_mean_model())
+    assert m["status"] == "blocked" and m["escalate_to"] == "human", m
+    assert m["attempts_by_outcome"] == {"regressed": 2} and m["llm_calls"] == 2
+    assert "return total / len(xs)" in (dirs[0] / "calc" / "stats.py").read_text()   # rolled back, untouched
+    assert any("Which should win" in q for q in ex.goal["unresolved_questions"])
+
+
+def test_plain_impasse_escalates_to_the_agent_tier(dirs):
+    ex, m = run(dirs, T.task_logic_bug)
+    assert m["escalate_to"] == "agent"

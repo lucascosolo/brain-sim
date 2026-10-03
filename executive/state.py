@@ -34,6 +34,7 @@ def new_state(task_id: str, workspace_root: str, objective: str, priority: float
         "workspace_root": workspace_root,
         "status": "active",
         "blocked_reason": None,
+        "escalate_to": None,   # when blocked: "agent" (a stronger model may finish) or "human" (a decision is needed)
         "step": 0,
         "goals": [{
             "id": "g1", "kind": "tests_pass", "description": objective, "priority": priority,

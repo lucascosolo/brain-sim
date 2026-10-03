@@ -157,7 +157,8 @@ def run_one(exp: str, arm: str, task_id: str, rep: int, agent_model: str, base: 
                      "correct_after_exec": not after_exec["failed"] and not after_exec["collect_errors"],
                      "harm_by_exec": sorted(set(before["passed"]) - set(after_exec["passed"])),
                      "tests_modified_by_exec": tests_digest(repo) != clean_tests}
-        if m["status"] != "complete" and arm == "hybrid":
+        exec_part["escalate_to"] = m["escalate_to"]
+        if m["status"] != "complete" and arm == "hybrid" and m["escalate_to"] != "human":
             agent_part = run_agent(repo, agent_model, budget, d / "agent.jsonl", max_turns)
     else:
         agent_part = run_agent(repo, agent_model, budget, d / "agent.jsonl", max_turns)
