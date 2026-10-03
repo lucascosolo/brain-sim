@@ -263,3 +263,27 @@ The executive applied that caller-side compensation, the visible tests passed, a
 comparison is same-time). The rules are E7's four, unchanged. Prediction: the hybrid is
 correct on every task in both repetitions, either by a fix the deliberator could see, or by
 handing off to the agent.
+
+## E7b result (from the result rows, experiment "E7b")
+
+All four rules hold, in both repetitions of all six tasks.
+
+| arm | correct (held-out included) | harm | false complete | cost | LLM turns |
+|---|---|---|---|---|---|
+| agent (Sonnet alone) | 12/12 | 0 | 0 | $0.442 | 83 |
+| hybrid (executive, then Sonnet on handoff) | 12/12 | 0 | 0 | $0.450 | 41 |
+
+- c1, c5 and c6: the deliberator, now shown the right module, fixed it there in one call
+  (c5: the util typo by the skill with no model, then `tax.py`).
+- c3 and c4: handed off with zero edits, both repetitions.
+- c2: the typo skill's wrong rename was followed by a deliberator fix on top. It ended correct,
+  at more cost than Sonnet alone ($0.065 against $0.024).
+- No run ended with a test file changed, a previously passing test broken, or an unverified
+  edit at a handoff.
+
+**Reading.** The gates stop the executive from taking work it cannot judge, and the hybrid
+matches Sonnet alone on complex tasks. **It does not save credits here.** Sonnet alone spends
+about $0.03 on tasks this size, and the hybrid's saving on c1, c5 and c6 is cancelled by c2.
+It halves the turns. The owner's bar ("saves turns or credits without lowering quality")
+is met on turns only. Whether credits are saved on real work depends on how often real
+failures are skill-sized, which the transcript analysis has to show.
