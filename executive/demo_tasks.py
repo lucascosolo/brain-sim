@@ -135,3 +135,12 @@ def test_editing_model() -> ScriptedDeliberator:
 
 def malformed_model() -> ScriptedDeliberator:
     return ScriptedDeliberator(lambda req: {"answer": "just change it"}, "scripted-malformed")
+
+
+def sprawling_model() -> ScriptedDeliberator:
+    """Proposes a rewrite far larger than the bug: the scope guard must refuse it unapplied."""
+    def answer(req: DeliberationRequest) -> dict:
+        src = _source(req, "calc/stats.py")
+        return {"diagnosis": "rewrite the module", "confidence": 0.9,
+                "edits": [{"path": "calc/stats.py", "old": src, "new": src.replace("s[mid + 1]", "s[mid - 1]") + "\n" * 40}]}
+    return ScriptedDeliberator(answer, "scripted-sprawling")

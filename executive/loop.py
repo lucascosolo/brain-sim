@@ -30,6 +30,10 @@ from .signatures import context_hash, signature
 
 DEFAULT_PROTECTED = ("tests/*", "test_*.py", "*/test_*.py", "*_test.py", "conftest.py", "*/conftest.py")
 PROJECTION_FILE_LINES = 150
+# Scope guard: a model-proposed change larger than this is outside what the executive can verify
+# cheaply. It is not applied; the subgoal is handed off (abandoned with a reason) instead.
+MAX_DELIBERATION_FILES = 2
+MAX_DELIBERATION_CHANGED_LINES = 30
 PATH_LINE_RE = re.compile(r"^(?P<path>[\w./-]+\.py):(?P<line>\d+)")
 
 
@@ -240,7 +244,25 @@ class Executive:
         if isinstance(plan, str):            # deliberation failed; plan holds the outcome name
             self._record_attempt(sub, op, None, plan, prediction_error=None, note="no edits applied")
             return
+        if op.uses_llm:
+            too_big = self._out_of_scope(plan)
+            if too_big:
+                self._record_attempt(sub, op, plan, "out_of_scope", prediction_error=None, note=too_big)
+                sub["status"] = "abandoned"
+                sub["resolution"] = f"handed off: {too_big}"
+                self.trace("handoff", subgoal=sub["id"], target=sub["target"], reason=too_big)
+                return
         self._apply(sub, op, plan, failure)
+
+    @staticmethod
+    def _out_of_scope(plan: Plan) -> str | None:
+        files = {e["path"] for e in plan.edits}
+        changed = sum(max(e["old"].count("\n"), e["new"].count("\n")) + 1 for e in plan.edits)
+        if len(files) > MAX_DELIBERATION_FILES:
+            return f"proposed change touches {len(files)} files (limit {MAX_DELIBERATION_FILES})"
+        if changed > MAX_DELIBERATION_CHANGED_LINES:
+            return f"proposed change spans {changed} lines (limit {MAX_DELIBERATION_CHANGED_LINES})"
+        return None
 
     def _apply(self, sub: dict, op, plan: Plan, failure: dict) -> None:
         tests = self.state["world"]["tests"]

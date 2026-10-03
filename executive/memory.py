@@ -14,7 +14,7 @@ from pathlib import Path
 
 from .state import now
 
-OUTCOMES = ("fixed", "progressed", "no_effect", "regressed", "edit_refused", "invalid_response", "llm_error")
+OUTCOMES = ("fixed", "progressed", "no_effect", "regressed", "edit_refused", "invalid_response", "llm_error", "out_of_scope")
 
 
 class Memory:

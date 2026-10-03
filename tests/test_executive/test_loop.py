@@ -138,3 +138,11 @@ def test_identical_inputs_give_identical_decisions(tmp_path):
         keep = ("decision", "operator", "outcome", "reason", "kind", "capability", "regressions", "fingerprint")
         return [{k: e[k] for k in keep if k in e} for e in events(d[1])]
     assert decisions(1) == decisions(2)
+
+
+def test_oversized_model_change_is_handed_off_not_applied(dirs):
+    repo = dirs[0]
+    ex, m = run(dirs, T.task_logic_bug, deliberator=T.sprawling_model())
+    assert m["status"] == "blocked" and m["attempts_by_outcome"] == {"out_of_scope": 1}
+    assert events(dirs[1], "handoff")[0]["reason"].startswith("proposed change spans")
+    assert "s[mid + 1]" in (repo / "calc" / "stats.py").read_text()   # untouched
