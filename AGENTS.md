@@ -1,9 +1,9 @@
 # brain-sim — agent instructions
 
-brain-sim is becoming a **cognitive executive**: persistent goals, world state, prediction,
-action selection and memory in ordinary code, with language models called as tools at explicit
-impasses. `README.md` says what exists; `docs/architecture.md` says how it fits together and
-why; `DECISIONS.md` records each choice. Read all three before proposing a feature.
+brain-sim holds the recovered spiking-network research code. The cognitive executive that was
+built here moved to reflex-layer on 2026-10-03 (`archive/2026-10-03-moved-to-reflex-layer/MOVED.md`);
+executive work happens there, under reflex-layer's AGENTS.md. `README.md` says what exists here;
+`DECISIONS.md` records each choice.
 
 This file inherits the global `~/.agents/AGENTS.md` and reflex-layer's `AGENTS.md` safety
 invariants. Rules below override them only where they are stricter.
@@ -14,7 +14,7 @@ invariants. Rules below override them only where they are stricter.
    steps that delete (`find -delete`, `git clean`, `shutil.rmtree`, `os.remove`, `unlink`,
    `TemporaryDirectory()` cleanup and their equivalents included). Removal is a move into a
    quarantine/archive location, logged, and the user is told it can be deleted by hand.
-   `tests/test_executive/test_safety.py` runs reflex-layer's `safety_lint` over this repository.
+   `tests/test_safety_lint.py` runs reflex-layer's `safety_lint` over this repository.
 2. **The executive has no shell and no direct file writes to the workspace.** Every effect on
    a workspace goes through reflex-layer's capability registry, granting only the one effect
    each call needs. Code under study runs only in reflex-layer's confined test child.
@@ -25,13 +25,14 @@ invariants. Rules below override them only where they are stricter.
 4. **The recovered spiking plant is frozen research material.** `brainsim/`, `server/`, `ui/`,
    `mockups/`, `run.py`, `SPEC.md`, `tests/k*.py`, `tests/s10_*.py`, the plant's `tests/test_*.py` and
    `docs/recovery/` are not edited, moved or "cleaned up": the recovery manifests key on their
-   paths and recovery is not closed. New work goes in `executive/` and `tests/test_executive/`.
+   paths and recovery is not closed. `archive/` holds frozen copies of moved material: not
+   edited, and deleted only by the owner by hand.
 5. Derived data lives in `~/.cache/brain-sim/`, never `/tmp` on the owner's PC (tmpfs).
 
 ## Development conventions
 
 - Python ≥3.11, stdlib plus reflex-layer. New dependencies need a `DECISIONS.md` entry.
-- Run `python3 -m pytest -q tests/test_executive` before committing (seconds). The plant's
+- Run `python3 -m pytest -q tests/test_safety_lint.py` before committing (seconds). The plant's
   legacy suite (`python3 -m pytest -q tests`) takes ~11 minutes and has 120 known failures
   from the recovery (see `docs/report-2026-10-03.md`); do not "fix" it piecemeal.
 - Measured results are append-only JSONL in `bench/results/`. Say which numbers are measured

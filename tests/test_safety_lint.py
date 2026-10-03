@@ -8,9 +8,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-import reflex
+try:
+    import reflex
+except ImportError:  # a sibling checkout of reflex-layer, which owns the lint
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "reflex-layer"))
+    import reflex
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 LINT = Path(reflex.__file__).resolve().parent.parent / "tools" / "safety_lint.py"
 LEGACY_TEST_HYGIENE = {
     "tests/k03_pairing.py", "tests/k818_drive_loss.py", "tests/k819_homeostat_ablation.py",
