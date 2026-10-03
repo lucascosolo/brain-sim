@@ -1,0 +1,2072 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>brain-sim · UI mockup (demonstration data)</title>
+<style>
+/* Typography note: this page must open from file:// with no network, so the UI copy uses a
+   humanist system stack rather than a webfont. Monospace is reserved for Diagnostics tables
+   and JSON. Every numeral is tabular. */
+:root{
+  --bg:#0a0c10; --bg2:#0d1016; --panel:#11151c; --panel2:#151a22;
+  --line:#212936; --line2:#2c3646;
+  --text:#e2e8f1; --dim:#9aa8bb; --dimmer:#7a889b;
+  --amber:#ffb454; --amber-dim:#8a5f24; --ice:#eaf4ff;
+  --e:#6aa8e0; --i:#e08a6a; --ok:#63d39c; --bad:#ff7070;
+  --wake:rgba(106,168,224,.10); --sleep:rgba(150,120,220,.13);
+  --r:6px;
+  --fs-xs:11px; --fs-s:12px; --fs-m:13px; --fs-l:15px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{
+  font-family:"Segoe UI Variable Text",-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:var(--fs-m); line-height:1.45;
+  font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--amber);color:#0a0c10}
+*{scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#3c4a5e}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--ice);outline-offset:2px;border-radius:3px}
+button,select,input{font:inherit;color:inherit;font-variant-numeric:tabular-nums}
+b{font-weight:600}
+a{color:var(--ice)}
+.mono{font-family:ui-monospace,"JetBrains Mono","SF Mono",Menlo,Consolas,monospace}
+kbd{
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:10px;line-height:1;
+  padding:2px 4px;margin-left:6px;border:1px solid var(--line2);border-radius:3px;
+  background:#0b0f14;color:var(--dim);vertical-align:1px;white-space:nowrap;
+}
+
+/* ---- demo strip ---- */
+#demostrip{
+  position:sticky;top:0;z-index:60;
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  padding:7px 16px;
+  background:#2a1d05;border-bottom:1px solid #5d4413;
+  color:#ffd79a;font-size:var(--fs-s);letter-spacing:.01em;
+}
+#demostrip .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);flex:none;
+  box-shadow:0 0 0 3px rgba(255,180,84,.18)}
+#demostrip .sl{margin-left:auto;display:flex;align-items:center;gap:7px}
+#demostrip label{color:#e5c894}
+#demostrip select{
+  -webkit-appearance:none;appearance:none;
+  background:#3a2a08 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='6'><path d='M1 1l3.5 3.5L8 1' stroke='%23ffd79a' stroke-width='1.3' fill='none' stroke-linecap='round'/></svg>") no-repeat right 7px center;
+  border:1px solid #6d5218;color:#ffe1b0;border-radius:var(--r);padding:3px 22px 3px 8px;font-size:var(--fs-s);
+}
+.demotag{
+  display:inline-block;padding:0 5px;border-radius:3px;
+  background:rgba(255,180,84,.14);color:var(--amber);
+  font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  vertical-align:2px;
+}
+
+/* ---- header ---- */
+header#hdr{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;
+  padding:9px 16px;background:var(--bg2);border-bottom:1px solid var(--line);
+}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:3px 9px;border:1px solid var(--line2);border-radius:99px;
+  font-size:var(--fs-s);color:var(--text);background:var(--panel);white-space:nowrap;
+}
+.pill .led{width:7px;height:7px;border-radius:50%;background:var(--dimmer);flex:none}
+.pill.live .led{background:var(--ok);box-shadow:0 0 0 3px rgba(99,211,156,.16)}
+.pill.warn{border-color:#6a5320}.pill.warn .led{background:var(--amber)}
+.pill.bad{border-color:#6b2c2c}.pill.bad .led{background:var(--bad)}
+.pill.dimmed{opacity:.62}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:var(--r);
+  font-size:var(--fs-s);font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+}
+.badge.wake{background:rgba(106,168,224,.16);color:#a9cff0;border:1px solid #2f4a68}
+.badge.sleep{background:rgba(150,120,220,.18);color:#c6b6ee;border:1px solid #4a3f72}
+.hstat{font-size:var(--fs-s);color:var(--dim);white-space:nowrap}
+.hstat b{color:var(--text);font-weight:600}
+#stagechip{
+  margin-left:auto;display:inline-flex;align-items:center;gap:6px;
+  padding:3px 10px;border-radius:var(--r);border:1px solid #6b2c2c;background:rgba(255,112,112,.10);
+  color:#ffb3b3;font-size:var(--fs-s);cursor:pointer;
+}
+#stagechip:hover{background:rgba(255,112,112,.18)}
+
+/* ---- tabs ---- */
+#tabs{display:flex;gap:2px;padding:0 16px;background:var(--bg2);border-bottom:1px solid var(--line)}
+#tabs button{
+  background:none;border:none;border-bottom:2px solid transparent;
+  padding:8px 14px;color:var(--dim);font-size:var(--fs-m);cursor:pointer;
+}
+#tabs button:hover{color:var(--text)}
+#tabs button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--amber)}
+
+
+/* ---- layout ---- */
+main{padding:14px 16px 28px}
+#observe{display:grid;grid-template-columns:minmax(0,72fr) minmax(0,28fr);gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+h2{font-size:var(--fs-l);margin:0;font-weight:600;letter-spacing:-.01em}
+h3{font-size:var(--fs-m);margin:0;font-weight:600}
+.note{font-size:var(--fs-s);color:var(--dim);margin:5px 0 0;overflow-wrap:break-word;max-width:72ch}
+.note.tight{margin-top:3px}
+
+/* map */
+#mapcard{padding:10px 12px}
+#regionheads{display:grid;grid-template-columns:1fr 2.4fr 1.1fr;gap:8px;margin-bottom:9px}
+#regionheads button{
+  text-align:left;background:none;border:none;padding:2px 0;cursor:pointer;display:block;width:100%;
+}
+#regionheads .rt{display:block;font-size:var(--fs-m);font-weight:600;color:var(--text)}
+#regionheads .rs{display:block;font-size:var(--fs-xs);color:var(--dim);line-height:1.35}
+#regionheads button:hover .rt{color:var(--ice);text-decoration:underline;text-underline-offset:3px}
+#mapbox{position:relative;background:#070a0e;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+#map{display:block;width:100%;height:clamp(190px,30vh,520px);touch-action:none;cursor:crosshair}
+#map:focus-visible{outline:2px solid var(--ice);outline-offset:-2px}
+#framelabel{
+  position:absolute;left:8px;bottom:7px;font-size:var(--fs-xs);color:var(--dim);
+  background:rgba(8,11,15,.82);padding:2px 7px;border-radius:4px;
+}
+.legendrow{display:flex;flex-wrap:wrap;align-items:center;gap:5px 14px;margin-top:8px;font-size:var(--fs-xs);color:var(--dim)}
+.legendrow span{display:inline-flex;align-items:center;gap:5px}
+.swatch{width:9px;height:9px;border-radius:50%;flex:none}
+.swatch.sq{border-radius:2px;height:3px;width:14px}
+.toggle{display:inline-flex;align-items:center;gap:7px;font-size:var(--fs-s);color:var(--dim);cursor:pointer}
+.toggle input{accent-color:var(--amber);width:14px;height:14px}
+
+/* timeline */
+#tlcard{padding:10px 12px 8px;margin-top:10px}
+#tlhead{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}
+#timeline{display:block;width:100%;height:118px}
+
+/* stimulate */
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.sec{min-width:0}
+.reqline{overflow-wrap:break-word}
+.sec{padding:12px}
+.patgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.patbtn{
+  min-height:52px;border-radius:var(--r);border:1px solid var(--line2);
+  background:linear-gradient(180deg,var(--panel2),#10141b);
+  color:var(--text);font-size:19px;font-weight:600;cursor:pointer;position:relative;
+  transition:border-color .12s ease,background .12s ease,transform .12s cubic-bezier(.2,.8,.2,1);
+}
+.patbtn:hover,.patbtn:focus-visible{border-color:var(--amber);background:#1b1607;transform:translateY(-1px)}
+.patbtn:active{transform:translateY(0)}
+.patbtn .sub{display:block;font-size:10px;font-weight:400;color:var(--dim);letter-spacing:.04em}
+.tip{
+  position:absolute;left:50%;top:calc(100% + 7px);transform:translateX(-50%);
+  width:198px;padding:7px 9px;border-radius:var(--r);z-index:30;
+  background:#0b0f14;border:1px solid var(--line2);box-shadow:0 10px 24px -8px rgba(0,0,0,.8);
+  font-size:var(--fs-xs);color:var(--dim);line-height:1.4;text-align:left;
+  opacity:0;visibility:hidden;transition:opacity .12s ease;pointer-events:none;
+}
+.patbtn:hover .tip,.patbtn:focus-visible .tip{opacity:1;visibility:visible}
+.patgrid .patbtn:nth-child(n+3) .tip{left:auto;right:0;transform:none}
+
+/* result cards */
+#cards{display:flex;flex-direction:column;gap:7px;margin-top:11px}
+.card{
+  border:1px solid var(--line);border-left:1px solid var(--line);border-radius:var(--r);
+  background:var(--panel2);padding:8px 10px;
+}
+.card .top{display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+.card .what{font-size:var(--fs-s);font-weight:600}
+.card .st{font-size:var(--fs-xs);letter-spacing:.02em}
+.card .facts{font-size:var(--fs-xs);color:var(--dim);margin-top:3px;line-height:1.5}
+.card.pending{border-color:var(--line2)}
+.card.unconfirmed{border-color:#6a5320;background:#171307}
+.card.rejected{border-color:#6b2c2c;background:#1a0f0f}
+.card.ended{opacity:.8}
+.card.unknown{border-color:#6a5320;background:#161206}
+.st.pending{color:var(--dim)}.st.unconfirmed{color:var(--amber)}
+.st.rejected{color:#ff9c9c}.st.accepted{color:#a9cff0}
+.st.running{color:var(--ok)}.st.ended{color:var(--dim)}.st.unknown{color:var(--amber)}
+.st.executed{color:var(--ok)}
+.empty{font-size:var(--fs-s);color:var(--dimmer);padding:9px 0}
+
+/* controls */
+.ctlrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.btn{
+  border:1px solid var(--line2);background:var(--panel2);color:var(--text);
+  border-radius:var(--r);padding:8px 13px;min-height:38px;cursor:pointer;font-size:var(--fs-m);
+  transition:border-color .12s ease,background .12s ease;
+}
+.btn:hover{border-color:#41506a;background:#19202a}
+.btn[aria-pressed="true"]{border-color:var(--amber);color:#ffd79a}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.wide{flex:1;min-width:96px}
+.reqline{font-size:var(--fs-xs);color:var(--dim);margin-top:6px;min-height:16px}
+.reqline .pend{color:var(--amber)}
+input[type=range]{accent-color:var(--amber);flex:1;min-width:90px;height:22px}
+input[type=number],input[type=text]{
+  background:#0b0f14;border:1px solid var(--line2);border-radius:4px;padding:5px 7px;width:5.5em;
+}
+details.inject{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}
+details.inject summary{cursor:pointer;font-size:var(--fs-s);color:var(--dim);list-style:none;display:flex;gap:6px;align-items:center}
+details.inject summary::-webkit-details-marker{display:none}
+details.inject summary .chev{transition:transform .15s ease;display:inline-flex}
+details.inject[open] summary .chev{transform:rotate(90deg)}
+
+/* drawer */
+#drawer{
+  position:fixed;top:0;right:0;bottom:0;width:min(420px,92vw);z-index:80;
+  background:var(--panel);border-left:1px solid var(--line2);
+  box-shadow:-24px 0 48px -20px rgba(0,0,0,.75);
+  display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .22s cubic-bezier(.16,1,.3,1);
+}
+#drawer[hidden]{display:none}
+#drawer.open{transform:none}
+#drawer header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+#drawer .body{overflow:auto;padding:14px;flex:1}
+#drawerclose{background:none;border:1px solid var(--line2);border-radius:var(--r);width:30px;height:30px;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin-left:auto;color:var(--dim)}
+#drawerclose:hover{color:var(--text);border-color:#41506a}
+.field{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)}
+.field .k{color:var(--dim);font-size:var(--fs-s)}
+.field .v{font-weight:600}
+.measure{font-size:var(--fs-xs);color:var(--dim);margin:4px 0 10px;line-height:1.45}
+.bars{display:flex;flex-direction:column;gap:3px;margin-top:5px}
+.bar{height:15px;border-radius:2px;background:var(--e);position:relative;min-width:2px}
+.bar.inh{background:var(--i)}
+.bar span{position:absolute;left:5px;top:0;font-size:10px;color:#06090d;font-weight:600;line-height:15px;white-space:nowrap}
+canvas.mini{display:block;width:100%;height:74px;background:#070a0e;border:1px solid var(--line);border-radius:4px;margin-top:5px}
+
+/* diagnostics */
+#diag{display:flex;flex-direction:column;gap:14px}
+table{border-collapse:collapse;width:100%;font-size:var(--fs-s)}
+.tblwrap{overflow-x:auto;margin-top:8px}
+th,td{text-align:left;padding:4px 10px 4px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--dim);font-weight:600;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.07em}
+td.num,td.val{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+pre{
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:var(--fs-xs);
+  background:#080b0f;border:1px solid var(--line);border-radius:var(--r);padding:9px;
+  overflow:auto;max-height:220px;margin:8px 0 0;color:#bcd3ea;
+}
+.chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.08em}
+.chip.pass{background:rgba(99,211,156,.15);color:#8ce9bd;border:1px solid #2f6b51}
+.chip.fail{background:rgba(255,112,112,.15);color:#ffadad;border:1px solid #7a3434}
+.rasters{display:grid;gap:6px;margin-top:8px}
+canvas.raster{display:block;width:100%;height:46px;background:#070a0e;border:1px solid var(--line);border-radius:4px}
+.eq{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:var(--fs-s);color:#bcd3ea;
+  background:#080b0f;border:1px solid var(--line);border-radius:4px;padding:6px 8px;display:inline-block;margin-top:4px}
+ol.rules{padding-left:18px;margin:6px 0 0}
+ol.rules li{margin-bottom:10px;color:var(--dim)}
+ol.rules li b{color:var(--text)}
+#log{max-height:260px;overflow:auto;margin-top:8px;border:1px solid var(--line);border-radius:var(--r)}
+#log div{
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:var(--fs-xs);
+  padding:2px 8px;border-bottom:1px solid #161c25;color:var(--dim);white-space:pre-wrap;word-break:break-word;
+}
+#log div b{color:var(--text)}
+#log div.out{color:#d4b483}
+#log div.err{color:#ff9c9c}
+
+
+#controlbar{
+  position:sticky;top:38px;z-index:45;
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;
+  padding:7px 16px;background:var(--bg2);border-bottom:1px solid var(--line);
+}
+.cgroup{display:flex;align-items:center;gap:7px;min-width:0}
+.cgroup .reqline{margin:0;font-size:var(--fs-xs);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38ch}
+#controlbar .btn{min-height:32px;padding:5px 11px}
+#restartbanner{
+  display:flex;align-items:center;gap:8px;padding:7px 16px;
+  background:#2a1d05;border-bottom:1px solid #6d5218;color:#ffd79a;font-size:var(--fs-s);
+}
+#cmdlist{
+  height:172px;overflow-y:auto;margin-top:9px;
+  border:1px solid var(--line);border-radius:var(--r);background:#0c1016;
+}
+.cmdrow{border-bottom:1px solid #171d26}
+.cmdrow:last-child{border-bottom:none}
+.cmdrow .line{display:flex;align-items:flex-start;gap:7px;padding:6px 8px}
+.pchip{
+  flex:none;min-width:20px;height:18px;line-height:18px;text-align:center;border-radius:4px;
+  font-size:10px;font-weight:700;letter-spacing:.04em;padding:0 4px;
+  background:rgba(255,180,84,.16);color:var(--amber);border:1px solid #6a5320;
+}
+.pchip.cmd{background:rgba(154,168,187,.12);color:var(--dim);border-color:var(--line2)}
+.pchip.bad{background:rgba(255,112,112,.14);color:#ffadad;border-color:#7a3434}
+.otext{flex:1;min-width:0;font-size:var(--fs-s);line-height:1.35;overflow-wrap:break-word}
+.otext.warn{color:var(--amber)}.otext.bad{color:#ff9c9c}.otext.ok{color:var(--text)}
+.detbtn{
+  flex:none;background:none;border:1px solid var(--line2);border-radius:4px;color:var(--dim);
+  font-size:10px;padding:1px 6px;cursor:pointer;
+}
+.detbtn:hover{color:var(--text);border-color:#41506a}
+.det{padding:0 8px 8px 35px}
+.det div{font-size:var(--fs-xs);color:var(--dim);display:flex;gap:8px;line-height:1.5}
+.det div span:first-child{min-width:11ch;color:var(--dimmer)}
+.det div span:last-child{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;overflow-wrap:anywhere}
+#cmdfull .cmdrow{border-bottom:1px solid var(--line)}
+ol.recon{padding-left:18px;margin:6px 0 0;max-width:78ch}
+ol.recon li{margin-bottom:7px;color:var(--dim)}
+ol.recon li b{color:var(--text)}
+@media (max-width:900px){
+  #observe{grid-template-columns:minmax(0,1fr)}
+  #controlbar{position:fixed;top:auto;left:0;right:0;bottom:0;border-top:1px solid var(--line2);
+    border-bottom:none;box-shadow:0 -14px 28px -16px #000}
+  body{padding-bottom:104px}
+  #map{height:clamp(240px,38vh,420px)}
+  #regionheads{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+  #regionheads button{width:100%}
+  #regionheads .rt{display:inline;margin-right:7px}
+  #regionheads .rs{display:inline}
+  #drawer{top:auto;left:0;width:100%;max-height:58vh;border-left:none;border-top:1px solid var(--line2);
+    border-radius:12px 12px 0 0;transform:translateY(100%)}
+  #drawer.open{transform:none}
+  #stagechip{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:0s !important;animation-duration:0s !important}
+}
+</style>
+</head>
+<body>
+
+<div id="demostrip">
+  <span class="dot" aria-hidden="true"></span>
+  <span><b>DEMONSTRATION DATA</b> · scripted frames and command results · no simulator connected</span>
+  <span class="sl">
+    <label for="scenario">scenario</label>
+    <select id="scenario">
+      <option value="live">F1 · live</option>
+      <option value="paused">F2 · paused</option>
+      <option value="late">F3 · pending / late</option>
+      <option value="gated">F4 · gated (sleep)</option>
+      <option value="stale">F5 · stale</option>
+      <option value="disconnected">F6 · disconnected</option>
+      <option value="restarted">F6b · disconnected, worker restarted</option>
+    </select>
+  </span>
+</div>
+
+<header id="hdr">
+  <span class="pill" id="connpill"><span class="led"></span><span class="t">connecting</span></span>
+  <span class="pill" id="simpill"><span class="led"></span><span class="t">unknown</span></span>
+  <span class="badge wake" id="phasebadge">wake</span>
+  <span class="hstat">t = <b id="hsimt">0.00</b> s</span>
+  <span class="hstat" id="hspeed">req <b>1x</b> · acc <b>—</b> · meas <b>—</b></span>
+  <button id="stagechip" type="button">Stage 0 · experimental</button>
+</header>
+
+<nav id="tabs" role="tablist" aria-label="Views">
+  <button role="tab" id="tab-observe" aria-selected="true" aria-controls="observe">Observe<kbd>1</kbd></button>
+  <button role="tab" id="tab-diag" aria-selected="false" aria-controls="diag">Diagnostics<kbd>2</kbd></button>
+</nav>
+
+<div id="restartbanner" hidden><span></span></div>
+
+<div id="controlbar">
+  <div class="cgroup">
+    <button class="btn" id="runbtn">Run<kbd>space</kbd></button>
+    <button class="btn" id="stepbtn">Step<kbd>.</kbd></button>
+    <span class="reqline" id="runline">—</span>
+  </div>
+  <div class="cgroup">
+    <label class="note" style="margin:0">speed</label>
+    <input type="range" id="speed" min="0.25" max="8" step="0.25" value="1" aria-label="requested speed factor" style="width:110px;flex:none">
+    <label class="toggle"><input type="checkbox" id="maxspeed"> max</label>
+    <span class="reqline" id="speedline">—</span>
+  </div>
+  <div class="cgroup">
+    <button class="btn" id="sleepbtn">Sleep now</button>
+    <span class="reqline" id="sleepline">—</span>
+  </div>
+</div>
+
+<main id="observe" role="tabpanel" aria-labelledby="tab-observe">
+  <section style="min-width:0">
+    <div class="panel" id="mapcard">
+      <div id="regionheads"></div>
+      <div id="mapbox">
+        <canvas id="map" tabindex="0" role="application" aria-label="Network map. Arrow keys move the cell cursor, Enter inspects the cell under it."></canvas>
+        <div id="framelabel">waiting for first frame</div>
+      </div>
+      <div class="legendrow">
+        <span><i class="swatch" style="background:var(--e)"></i>E</span>
+        <span><i class="swatch" style="background:var(--i)"></i>I</span>
+        <span id="leg-glow"><i class="swatch" style="background:#fff"></i>—</span>
+        <span><i class="swatch" style="border:1px solid var(--amber);background:rgba(255,180,84,.2)"></i>driven patch</span>
+        <label class="toggle"><input type="checkbox" id="synToggle"> sampled connections</label>
+        <label class="toggle" id="structlabel"><input type="checkbox" id="structToggle"> —</label>
+        <span id="synlabel">off</span>
+        <span id="sublabel" hidden></span>
+      </div>
+    </div>
+
+    <div class="panel" id="tlcard">
+      <div id="tlhead">
+        <h3>Activity timeline</h3>
+        <span class="note tight" id="tllegend">last 30 s of simulated time <span class="demotag">demo</span></span>
+      </div>
+      <canvas id="timeline"></canvas>
+      <div class="legendrow" style="margin-top:6px">
+        <span><i class="swatch sq" style="background:var(--amber)"></i>stimulus, confirmed span</span>
+        <span><i class="swatch sq" style="background:transparent;border:1px solid var(--amber);height:8px"></i>accepted, no ticks yet</span>
+        <span><i class="swatch sq" style="background:repeating-linear-gradient(45deg,#3a4457 0 2px,transparent 2px 4px);height:8px"></i>no observation</span>
+        <span><i class="swatch" style="background:var(--wake);border:1px solid #2f4a68"></i>wake</span>
+        <span><i class="swatch" style="background:var(--sleep);border:1px solid #4a3f72"></i>sleep</span>
+        <span id="tlnote"></span>
+      </div>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="panel sec">
+      <h2>Stimulate</h2>
+      <p class="note" id="patcaption">—</p>
+      <div class="patgrid" id="patgrid"></div>
+      <details class="inject">
+        <summary><span class="chev" aria-hidden="true"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M3 1.5 6 4.5 3 7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Custom injection (drag-select on the map)</summary>
+        <div class="ctlrow">
+          <label class="note" style="margin:0">amp mV <input type="number" id="injamp" value="8" step="0.5"></label>
+          <label class="note" style="margin:0">ticks <input type="number" id="injticks" value="50" step="10"></label>
+        </div>
+        <div class="ctlrow">
+          <button class="btn wide" id="injbtn" disabled>Inject 0 cells</button>
+          <button class="btn" id="injctx">Inject 60 ctx cells</button>
+        </div>
+        <p class="note" id="injnote">Drag a rectangle on the map to select cells.</p>
+      </details>
+      <h3 style="margin-top:16px">Command feedback</h3>
+      <p class="note tight" id="cmdcaption">Newest first · scripted <span class="demotag">demo</span></p>
+      <div id="cmdlist" role="log" aria-label="Command feedback"></div>
+    </div>
+
+    <div class="panel sec">
+      <h2>Phase schedule</h2>
+      <p class="note" id="schedline">—</p>
+    </div>
+  </aside>
+</main>
+
+<main id="diag" role="tabpanel" aria-labelledby="tab-diag" hidden>
+  <section class="panel sec">
+    <h2>This run</h2>
+    <p class="note">Every key of the current frame, exactly as received <span class="demotag">demo</span></p>
+    <div class="tblwrap"><table id="framekeys"><tbody></tbody></table></div>
+    <h3 style="margin-top:16px">Per-region raster</h3>
+    <p class="note tight" id="rasternote">spikes per tick, scrolling</p>
+    <div class="rasters" id="rasters"></div>
+    <h3 style="margin-top:16px">Config (simulator facts)</h3>
+    <p class="note tight">the worker's own parameters, from the config reply</p>
+    <pre id="cfgjson">—</pre>
+    <h3 style="margin-top:16px">Client display preferences</h3>
+    <p class="note tight" id="glowfull">display choices made by this page; not simulator parameters</p>
+    <pre id="dispjson">—</pre>
+    <h3 style="margin-top:16px">Command history (full, details expanded)</h3>
+    <p class="note tight" id="cmdfullcap">—</p>
+    <div id="cmdfull"></div>
+    <h3 style="margin-top:16px">Last inspect reply</h3>
+    <pre id="inspjson">none yet</pre>
+    <h3 style="margin-top:16px">Last region reply</h3>
+    <pre id="regjson">none yet</pre>
+    <h3 style="margin-top:16px">Message log</h3>
+    <p class="note tight">commands out, results and errors in · newest first</p>
+    <div id="log"></div>
+  </section>
+
+  <section class="panel sec">
+    <h2>How evidence reconciles</h2>
+    <p class="note">What is allowed to change a command's state, and in what order.</p>
+    <ol class="recon">
+      <li>A <b>result</b> sets the command's acceptance or rejection. Nothing else can.</li>
+      <li><b>stim_events</b> set start and end when they are observed. Absence from <b>stim_active</b> sets nothing.</li>
+      <li>A <b>gap</b> (sequence jump or tick discontinuity) marks every command that was accepted and not yet ended as "unknown since t = &lt;last observed tick&gt;", and the client requests <b>stimlog</b>.</li>
+      <li>A <b>stimlog</b> entry with a matching stim_id fills whatever is unknown; the row then says "recovered from stimlog".</li>
+      <li>If stimlog does not contain the stim_id — history expired, more than 64 newer stimuli, or a different run — the row reads "history expired; end never observed" and the timeline bar keeps its open "?" edge while it is in the window. Nothing is filled in.</li>
+      <li>On reconnect within the same run, layout, config, status and stimlog are re-requested; the unobserved span is a gap and rules 3 to 5 apply.</li>
+      <li>A result that arrives after the unconfirmed timeout replaces "unconfirmed". Nothing is ever resent automatically.</li>
+    </ol>
+  </section>
+
+  <section class="panel sec">
+    <h2>Rules</h2>
+    <p class="note">The equations the engine runs. Text, not a claim about outcomes.</p>
+    <ol class="rules">
+      <li><b>Membrane.</b> Leaky integrate-and-fire with an adaptive threshold: the threshold rises after each spike and relaxes back, so a cell that has just fired needs more drive to fire again.</li>
+      <li><b>Pair STDP, potentiation</b> — at a post-synaptic spike:
+        <div class="eq">w += g · a₊ · x_pre · (w_max − w)</div></li>
+      <li><b>Pair STDP, depression</b> — at delivery:
+        <div class="eq">w ← max(w · (1 − g · a₋ · y_post), 0)</div></li>
+      <li><b>Traces.</b> x_pre and y_post gain +1 per spike and decay by exp(−1/20) per ms.</li>
+      <li><b>Synaptic scaling.</b> Once per sweep, wake only, on excitatory synapses whose presynaptic cell fired in that sweep:
+        <div class="eq">factor = 1 + clip(0.1 · (r_target − rate) / r_target, ±0.1)</div></li>
+    </ol>
+  </section>
+
+  <section class="panel sec" id="recorded">
+    <h2>Recorded results</h2>
+    <p class="note">Hand-maintained record, not measured by this page. Real data from test runs.</p>
+    <div id="recgroups"></div>
+    <p class="note" style="margin-top:14px;color:var(--text)">A stable-looking live run does not change this record.</p>
+  </section>
+</main>
+
+<aside id="drawer" hidden aria-label="Inspector">
+  <header>
+    <h2 id="drawertitle">Inspector</h2>
+    <button id="drawerclose" type="button" aria-label="Close inspector (Escape)" title="Close · Escape">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 2l9 9M11 2l-9 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </button>
+  </header>
+  <div class="body" id="drawerbody"></div>
+</aside>
+
+<script>
+"use strict";
+
+/* ============================================================================
+   Seeded PRNG — the whole demo is deterministic from mulberry32(1).
+   ==========================================================================*/
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ============================================================================
+   DEMO WORKER — transport stub.
+   Everything in this section stands in for the WebSocket + Python worker.
+   It emits exactly the message shapes of the contract through deliver() ->
+   onMessage(). Production replaces this block with ws.onmessage; nothing in
+   the CLIENT section below knows it is talking to a script.
+   ==========================================================================*/
+const CFG = {
+  type:"config", dt_ms:1, batch_ticks:50, pattern_amp_mv:1.3, pattern_ticks:200,
+  wake_ticks:60000, sleep_ticks:20000, g_wake:1.0, g_sleep:0.3, sweep_ticks:1000,
+  rate_ema_alpha:0.4, frame_spike_cap:4000, v_trace_ticks:500, run_id:"run-7c1e"
+};
+const REGIONS = [
+  {name:"sense", id:0, n:200,  n_exc:200},
+  {name:"ctx",   id:1, n:2000, n_exc:1600},
+  {name:"hpc",   id:2, n:400,  n_exc:320}
+];
+
+const W = (function(){
+  const rng = mulberry32(1);
+  const N = REGIONS.reduce((a,r)=>a+r.n,0);
+  const x = new Float32Array(N), y = new Float32Array(N);
+  const regionOf = new Int32Array(N), isExc = new Uint8Array(N);
+  let k = 0;
+  for (const r of REGIONS){
+    for (let i=0;i<r.n;i++,k++){
+      x[k] = 0.04 + rng()*0.92; y[k] = 0.04 + rng()*0.92;
+      regionOf[k] = r.id; isExc[k] = i < r.n_exc ? 1 : 0;
+    }
+  }
+  const senseIds = []; for (let i=0;i<REGIONS[0].n;i++) senseIds.push(i);
+  const centres = [[0.25,0.25],[0.75,0.25],[0.25,0.75],[0.75,0.75]];
+  const PATCH = Math.round(REGIONS[0].n * 0.20);
+  const patterns = centres.map(([cx,cy]) =>
+    senseIds.slice().sort((a,b)=>
+      ((x[a]-cx)**2+(y[a]-cy)**2) - ((x[b]-cx)**2+(y[b]-cy)**2)).slice(0,PATCH).sort((a,b)=>a-b));
+  const ctxStart = REGIONS[0].n, ctxEnd = ctxStart + REGIONS[1].n;
+  const synapse_sample = [];
+  for (let i=0;i<3000;i++){
+    const pre = Math.floor(rng()*N), post = ctxStart + Math.floor(rng()*(N-ctxStart));
+    synapse_sample.push([i, pre, post]);
+  }
+
+  const S = {
+    run_id:CFG.run_id,
+    scenario:"live", t:0, seq:0, running:true, speed:1, reqSpeed:1,
+    phase:"wake", phaseClock:0, sleepLatch:false,
+    stims:[], stimlog:[], nextStim:1, pendingTicks:0,
+    nSyn:406920, bornTotal:0, diedTotal:0, spikeTotal:0,
+    watchId:null, vtrace:[], timer:null, socketOpen:true,
+    resultDelay:0, dropFromSeq:0, dropCount:0, stimlogDelay:0, staleAt:0, retry:0, retryTimer:null,
+    burstIn:37, elapsedWall:0, scriptTimers:[]
+  };
+  let deliver = ()=>{};
+
+  function now(){ return performance.now(); }
+  const RUN_TAGGED = new Set(["status","layout","config","frame","result","stimlog"]);
+  function emit(msg, delay){
+    if (RUN_TAGGED.has(msg.type)) msg.run_id = S.run_id;   // run identity on every evidence message
+    if (delay) { setTimeout(()=>{ if (S.socketOpen) deliver(msg); }, delay); }
+    else if (S.socketOpen) deliver(msg);
+  }
+  function layoutMsg(){
+    return {type:"layout",
+      regions:Object.fromEntries(REGIONS.map(r=>[r.name,{id:r.id,n:r.n,n_exc:r.n_exc}])),
+      x:Array.from(x), y:Array.from(y), region:Array.from(regionOf), is_exc:Array.from(isExc),
+      synapse_sample, patterns};
+  }
+  function statusMsg(){ return {type:"status", running:S.running, speed:S.speed, t:S.t}; }
+  function gated(){ return S.phase === "sleep"; }
+
+  /* ---- activity model (scripted, seeded) ---- */
+  function baseRate(rname){
+    const wake = S.phase === "wake";
+    if (rname === "sense") return wake ? 5.0 : 0.4;
+    if (rname === "ctx")   return wake ? 4.0 : 3.1;
+    return wake ? 1.0 : 1.4;
+  }
+  function advance(nTicks){
+    const t0 = S.t;
+    const events = [];
+    const perRegion = {}, spikes = [];
+    let total = 0;
+    const burst = (S.scenario === "live" && S.seq % 41 === 40) ? 9 : 1;
+    for (const r of REGIONS) perRegion[r.name] = {rate_hz:0, spikes_per_tick:new Array(nTicks).fill(0)};
+
+    // stimulus bookkeeping
+    const driven = new Set();
+    for (const st of S.stims){
+      if (st.done) continue;
+      if (nTicks > 0 && st.delivered === 0){
+        st.t_start = t0; events.push({stim_id:st.stim_id, event:"started", t:t0});
+      }
+      if (nTicks > 0) for (const id of st.cells) driven.add(id);
+    }
+    for (let d=0; d<nTicks; d++){
+      const tick = t0 + d + 1;
+      for (const r of REGIONS){
+        const idx0 = r.id === 0 ? 0 : (r.id === 1 ? ctxStart : ctxEnd);
+        let lambda = r.n * baseRate(r.name)/1000 * (r.name === "ctx" ? burst : 1);
+        if (driven.size && r.name === "sense") lambda += driven.size * 0.18;
+        if (driven.size && r.name === "ctx") lambda += 0.9;
+        let cnt = 0; for (let j=0;j<Math.ceil(lambda)+2;j++) if (rng() < lambda/(Math.ceil(lambda)+2)) cnt++;
+        perRegion[r.name].spikes_per_tick[d] = cnt;
+        total += cnt;
+        for (let j=0;j<cnt;j++){
+          if (spikes.length < CFG.frame_spike_cap){
+            let id;
+            if (r.name === "sense" && driven.size && rng() < 0.6){
+              const arr = Array.from(driven); id = arr[Math.floor(rng()*arr.length)];
+            } else id = idx0 + Math.floor(rng()*r.n);
+            spikes.push([id, d]);
+          }
+        }
+      }
+    }
+    S.t = t0 + nTicks;
+    for (const st of S.stims){
+      if (st.done) continue;
+      const take = Math.min(nTicks, st.ticks - st.delivered);
+      st.delivered += take;
+      if (st.delivered >= st.ticks){
+        st.done = true; st.t_end = S.t;
+        events.push({stim_id:st.stim_id, event:"ended", t:S.t});
+        const e = S.stimlog.find(l=>l.stim_id===st.stim_id);
+        if (e){ e.t_start = st.t_start; e.t_end = st.t_end; e.delivered_ticks = st.delivered; }
+      } else {
+        const e = S.stimlog.find(l=>l.stim_id===st.stim_id);
+        if (e){ e.t_start = st.t_start; e.delivered_ticks = st.delivered; }
+      }
+    }
+    S.stims = S.stims.filter(s=>!s.done || S.t - s.t_end < 3000);
+
+    // phase clock
+    S.phaseClock += nTicks;
+    const lim = S.phase === "wake" ? CFG.wake_ticks : CFG.sleep_ticks;
+    if (S.phaseClock >= lim && S.scenario !== "gated"){
+      S.phase = S.phase === "wake" ? "sleep" : "wake"; S.phaseClock = 0;
+    }
+    for (const r of REGIONS){
+      const sum = perRegion[r.name].spikes_per_tick.reduce((a,b)=>a+b,0);
+      perRegion[r.name].rate_hz = +(sum / r.n / (nTicks*CFG.dt_ms/1000)).toFixed(3);
+    }
+    const born = [], died = [];
+    const nb = Math.floor(rng()*6), nd = Math.floor(rng()*6);
+    for (let i=0;i<nb;i++) born.push([Math.floor(rng()*N), ctxStart+Math.floor(rng()*(N-ctxStart))]);
+    for (let i=0;i<nd;i++) died.push([Math.floor(rng()*N), ctxStart+Math.floor(rng()*(N-ctxStart))]);
+    S.bornTotal += nb; S.diedTotal += nd; S.nSyn += nb - nd; S.spikeTotal += total;
+    if (S.watchId != null){
+      for (let d=0;d<nTicks;d++){
+        S.vtrace.push(-65 + rng()*9 - (rng()<0.02?12:0));
+        if (S.vtrace.length > CFG.v_trace_ticks) S.vtrace.shift();
+      }
+    }
+    return {events, perRegion, spikes, total, truncated: total > CFG.frame_spike_cap, born, died, nb, nd};
+  }
+
+  function frameMsg(nTicks){
+    const a = advance(nTicks);
+    S.seq += 1;
+    const active = S.stims.filter(s=>s.delivered>0 && !s.done || (s.done && s.t_end === S.t))
+      .map(s=>({stim_id:s.stim_id, n_cells:s.cells.length, amp_mv:s.amp_mv,
+                t_start:s.t_start, t_end_planned:s.t_end_planned, delivered_ticks:s.delivered}));
+    const pausedAccepted = S.stims.filter(s=>s.delivered===0)
+      .map(s=>({stim_id:s.stim_id, n_cells:s.cells.length, amp_mv:s.amp_mv,
+                t_start:null, t_end_planned:s.t_end_planned, delivered_ticks:0}));
+    const simS = nTicks*CFG.dt_ms/1000;
+    const wallS = Math.max(0.001, (S.running ? (S.speed>0 ? simS/S.speed : simS/6.25) : 0.2));
+    return {type:"frame", t:S.t, phase:S.phase, age_s:+(S.t*CFG.dt_ms/1000).toFixed(2),
+      g: S.phase==="wake"?CFG.g_wake:CFG.g_sleep, g_struct:+(0.6+0.3*Math.sin(S.t/7000)).toFixed(3),
+      sense_gated:gated(), ticks:nTicks, n_syn_alive:S.nSyn,
+      syn_born_total:S.bornTotal, syn_died_total:S.diedTotal,
+      born_per_s:+(a.nb/Math.max(simS,0.001)).toFixed(1), died_per_s:+(a.nd/Math.max(simS,0.001)).toFixed(1),
+      spike_total:S.spikeTotal, syn_touched_mean:+(12+rng()*6).toFixed(1),
+      born_count:a.nb, died_count:a.nd, regions:a.perRegion,
+      spikes:a.spikes, truncated:a.truncated, born:a.born, died:a.died,
+      wall_ratio:+((simS/wallS)*(0.94+rng()*0.09)).toFixed(3),
+      growth_halted:{sense_E:false, ctx_E:false, ctx_I:false, hpc_E:false, hpc_I:false},
+      store_clamped:false,
+      stim_active: active.concat(pausedAccepted), stim_events:a.events, seq:S.seq};
+  }
+
+  /* ---- loop ---- */
+  function tickLoop(){
+    if (S.scenario === "stale" && S.staleAt && now() > S.staleAt) return schedule();
+    let f;
+    if (S.running){
+      f = frameMsg(CFG.batch_ticks);
+    } else if (S.pendingTicks > 0){
+      const n = Math.min(S.pendingTicks, CFG.batch_ticks);
+      S.pendingTicks -= n;
+      f = frameMsg(n);
+      for (const r of S.stepReqs.splice(0)) emit({type:"result", req:r.req, cmd:"step", t:S.t, status:"executed"});
+    } else {
+      f = frameMsg(0);
+    }
+    // frames produced but never sent are real drops: seq jumps, t jumps, the client sees a gap
+    if (S.dropFromSeq && S.seq >= S.dropFromSeq && S.dropCount > 0){ S.dropCount -= 1; }
+    else emit(f);
+    schedule();
+  }
+  S.stepReqs = [];
+  function schedule(){
+    clearTimeout(S.timer);
+    const ms = S.running ? (S.speed > 0 ? Math.max(10, CFG.batch_ticks/S.speed) : 10) : 200;
+    S.timer = setTimeout(tickLoop, ms);
+  }
+
+  /* ---- command handling ---- */
+  function handle(c){
+    const req = c.req, d = S.resultDelay;
+    const res = (o)=> emit(Object.assign({type:"result", req, cmd:c.cmd, t:S.t}, o), d);
+    if (c.cmd === "present" || c.cmd === "inject"){
+      let cells, amp, ticks;
+      if (c.cmd === "present"){
+        if (!(c.pattern >= 0 && c.pattern < patterns.length))
+          return res({status:"rejected", reason:"invalid: pattern out of range"});
+        cells = patterns[c.pattern].slice(); amp = CFG.pattern_amp_mv; ticks = c.ticks;
+      } else {
+        if (!Array.isArray(c.ids) || !c.ids.length)
+          return res({status:"rejected", reason:"invalid: ids must be a list of ints, length <= 5000"});
+        if (!(c.ticks >= 1 && c.ticks <= 100000))
+          return res({status:"rejected", reason:"invalid: ticks must be an int in [1, 100000]"});
+        cells = c.ids.slice(); amp = c.amp; ticks = c.ticks;
+      }
+      if (gated()) cells = cells.filter(id => id >= ctxStart);     // engine drops sense ids while gated
+      if (!cells.length) return res({status:"rejected", reason:"sense_gated"});
+      const st = {stim_id:S.nextStim++, cells, amp_mv:amp, ticks, delivered:0,
+                  t_accept:S.t, t_start:null, t_end:null, t_end_planned:S.t + ticks, done:false};
+      S.stims.push(st);
+      S.stimlog.unshift({stim_id:st.stim_id, cmd:c.cmd, req, n_cells:cells.length, amp_mv:amp,
+                         t_accept:st.t_accept, t_start:null, t_end:null, delivered_ticks:0});
+      S.stimlog = S.stimlog.slice(0,64);
+      if (S.scenario === "late" && !S.dropFromSeq){
+        // the frame carrying this stimulus' "ended" event is dropped
+        S.dropFromSeq = S.seq + Math.ceil(ticks/CFG.batch_ticks); S.dropCount = 4;
+      }
+      return res({status:"accepted", stim_id:st.stim_id, n_cells:cells.length, amp_mv:amp,
+                  t_accept:st.t_accept, t_end_planned:st.t_end_planned,
+                  delivered_ticks: S.running ? st.delivered : 0});
+    }
+    if (c.cmd === "step"){
+      const before = S.pendingTicks;
+      S.pendingTicks += c.ticks;
+      S.stepReqs.push({req});
+      return res({status:"accepted", t_accept:S.t, t_target:S.t + before + c.ticks});
+    }
+    if (c.cmd === "sleep"){
+      const before = S.phase;
+      const after = c.on ? "sleep" : "wake";
+      S.phase = after; S.phaseClock = 0;
+      return res({status:"accepted", phase_before:before, phase_after:after,
+                  changed: before !== after, phase_clock_reset:true});
+    }
+    if (c.cmd === "run" || c.cmd === "pause"){
+      S.running = c.cmd === "run";
+      res({status:"accepted"}); emit(statusMsg(), d); schedule(); return;
+    }
+    if (c.cmd === "speed"){
+      if (!(c.factor >= 0 && c.factor <= 64))
+        return res({status:"rejected", reason:"invalid: factor must be a finite float in [0, 64]"});
+      S.speed = c.factor;
+      res({status:"accepted", factor:S.speed}); emit(statusMsg(), d); schedule(); return;
+    }
+    if (c.cmd === "layout"){ emit(layoutMsg()); emit(CFG); emit(statusMsg()); return; }
+    if (c.cmd === "stimlog"){
+      emit({type:"stimlog", entries:S.stimlog.slice(0,64)}, S.stimlogDelay); return;
+    }
+    if (c.cmd === "watch"){ S.watchId = c.id; S.vtrace = []; return; }
+    if (c.cmd === "inspect"){
+      const r = REGIONS[regionOf[c.id]];
+      const top = [];
+      const rr = mulberry32(c.id + 1);
+      for (let i=0;i<10;i++) top.push([Math.floor(rr()*N), +(0.2 + rr()*0.8).toFixed(3)]);
+      for (let i=0;i<10;i++) top.push([Math.floor(rr()*N), -+(0.2 + rr()*0.7).toFixed(3)]);
+      emit({type:"inspect", id:c.id, region:r.name, is_exc:!!isExc[c.id],
+        v:+(-65+rr()*10).toFixed(2), theta:+(-52+rr()*4).toFixed(2),
+        rate_hz:+(baseRate(r.name)*(0.5+rr())).toFixed(2),
+        in_deg:Math.floor(120+rr()*180), out_deg:Math.floor(120+rr()*180),
+        top_in:top, v_trace: S.watchId === c.id ? S.vtrace.slice() : []});
+      return;
+    }
+    if (c.cmd === "region"){
+      const r = REGIONS.find(q=>q.name===c.name);
+      if (!r) { emit({type:"error", cmd:"region", msg:"unknown region"}); return; }
+      const rr = mulberry32(r.id + 7);
+      const wEdges = [], wCounts = [];
+      for (let i=0;i<=24;i++) wEdges.push(+(i/24).toFixed(3));
+      for (let i=0;i<24;i++) wCounts.push(Math.floor(400*Math.exp(-((i-6)**2)/26)*(0.7+rr()*0.6)));
+      const rEdges = [], rCounts = [];
+      for (let i=0;i<=20;i++) rEdges.push(+(i*0.8).toFixed(2));
+      for (let i=0;i<20;i++) rCounts.push(Math.floor(r.n/6*Math.exp(-((i-4)**2)/9)*(0.7+rr()*0.6)));
+      emit({type:"region", name:r.name, n:r.n, rate_hz:+(baseRate(r.name)*(0.8+rr()*0.4)).toFixed(2),
+        n_syn_in:Math.floor(S.nSyn*(r.n/N)), n_syn_out:Math.floor(S.nSyn*(r.n/N)*0.9),
+        w_hist:{edges:wEdges, counts:wCounts}, rate_hist:{edges:rEdges, counts:rCounts}});
+      return;
+    }
+    emit({type:"error", cmd:c.cmd, msg:"unknown command"});
+  }
+
+  /* ---- scenarios ---- */
+  function clearScript(){ for (const id of S.scriptTimers) clearTimeout(id); S.scriptTimers = []; }
+  function later(fn, ms){ S.scriptTimers.push(setTimeout(fn, ms)); }
+
+  function connectNow(){
+    S.socketOpen = true;
+    emit(layoutMsg()); emit(CFG); emit(statusMsg());
+    emit({type:"stimlog", entries:S.stimlog.slice(0,64)});
+    schedule();
+  }
+  function setScenario(name, client){
+    clearTimeout(S.timer); clearTimeout(S.retryTimer); clearScript();
+    Object.assign(S, {scenario:name, resultDelay:0, dropFromSeq:0, dropCount:0, stimlogDelay:0,
+      staleAt:0, retry:0, pendingTicks:0, stims:[], stepReqs:[]});
+    S.socketOpen = true;
+    if (name === "live"){ S.running = true; S.phase = "wake"; S.phaseClock = 0; }
+    if (name === "paused"){ S.running = false; S.phase = "wake"; }
+    if (name === "late"){
+      S.running = true; S.phase = "wake"; S.resultDelay = 1600; S.stimlogDelay = 3000;
+      later(()=>client.presentFromScript(1), 900);
+    }
+    if (name === "gated"){ S.running = true; S.phase = "sleep"; S.phaseClock = 0; }
+    if (name === "stale"){ S.running = true; S.phase = "wake"; S.staleAt = now() + 1200; }
+    if (name === "disconnected" || name === "restarted"){
+      S.running = true; S.phase = "wake";
+      later(()=>{ S.socketOpen = false; client.socketClosed(); }, 900);
+    }
+    emit(layoutMsg()); emit(CFG); emit(statusMsg());
+    schedule();
+  }
+  /* the client asks to reconnect; the third attempt succeeds */
+  function tryReconnect(client){
+    S.retry += 1;
+    if (S.retry < 3) return false;
+    if (S.scenario === "restarted"){
+      // the worker process died and came back: new run identity, counters from zero
+      S.run_id = "run-" + Math.floor(rng()*0xffff).toString(16).padStart(4,"0");
+      S.t = 0; S.seq = 0; S.stims = []; S.stimlog = []; S.nextStim = 1;
+      S.phase = "wake"; S.phaseClock = 0; S.spikeTotal = 0; S.bornTotal = 0; S.diedTotal = 0;
+    }
+    connectNow(); client.socketOpened(); return true;
+  }
+  return {
+    bind(fn){ deliver = fn; },
+    send(c){ if (S.socketOpen) handle(c); },
+    setScenario, tryReconnect, state:S, patterns, CFG
+  };
+})();
+
+/* ============================================================================
+   CLIENT — production wiring lives here. It only ever sees onMessage(msg)
+   and calls send(cmd). No engine constant is typed in this section; they all
+   come from the `config` message (C).
+   ==========================================================================*/
+/* ---- Client display preferences — not simulator parameters ----------------
+   Choices this page makes about how to draw and how long to wait. They never
+   come from the worker and are never presented as engine facts.             */
+const DISPLAY = {
+  TIMELINE_WINDOW_S: 30,      // how much simulated time the timeline shows
+  UNCONFIRMED_AFTER_MS: 1000, // when a sent command starts reading "unconfirmed"
+  GLOW_MS: 150,               // spike glow fade, wall time
+  STRUCT_FLASH_MS: 400,       // birth/death segment flash, wall time
+  CARD_HISTORY_MAX: 6,        // rows kept in the Observe feedback list
+  DETAILS_HISTORY_MAX: 64     // rows kept in the Diagnostics command history
+};
+
+/* ---- How evidence reconciles (mirrored in Diagnostics) --------------------
+   1. A `result` sets acceptance/rejection. Nothing else can.
+   2. `stim_events` set start/end when observed. Absence from `stim_active`
+      sets nothing.
+   3. A gap (seq jump or t discontinuity) marks every card accepted and not
+      ended as "unknown since t = <last observed tick>" and requests stimlog.
+   4. A stimlog entry with a matching stim_id fills what is unknown; the row
+      says "recovered from stimlog".
+   5. If stimlog has no such stim_id (history expired, or a different run) the
+      row reads "history expired; end never observed". Nothing is filled in.
+   6. On reconnect in the same run: layout, config, status and stimlog are
+      re-requested; the unobserved span is a gap; rules 3-5 apply.
+   7. A result after the unconfirmed timeout replaces "unconfirmed"; nothing
+      is ever resent automatically.                                          */
+
+const WINDOW_S = DISPLAY.TIMELINE_WINDOW_S;
+const UNCONFIRMED_MS = DISPLAY.UNCONFIRMED_AFTER_MS;
+/* one id per page load: production uses crypto.getRandomValues, the demo the seeded PRNG */
+const CLIENT_ID = (function(){ const r = mulberry32(20260911); let o = "";
+  for (let i=0;i<6;i++) o += "0123456789abcdef"[Math.floor(r()*16)]; return o; })();
+
+let C = null;                 // config message
+let L = null;                 // layout message
+const st = {
+  conn:"connecting", connSince:performance.now(), lastFrameAt:0, retryIn:0,
+  sim:"unknown", lastStatus:null, lastStatusAt:0,
+  reqRun:null, reqSpeed:1, reqSleep:null,
+  frames:[], gaps:[], cards:[], byReq:new Map(), byStim:new Map(),
+  lastFrame:null, prevT:null, prevSeq:null,
+  bright:null, N:0, px:null, py:null, boxes:{},
+  selected:null, selectedRegion:null, cursor:null, topIn:[], hoverPattern:null,
+  ripples:[], bornFlash:[], deathFlash:[],
+  drag:null, selection:[], synOn:false, syn:null,
+  log:[], tab:"observe", lastInspect:null, lastRegion:null, earlyEvents:[],
+  reqSeq:0, run_id:null, structOn:false, lineSegments:0, rowSig:"", fullSig:""
+};
+const $ = s => document.querySelector(s);
+const el = {
+  connpill:$("#connpill"), simpill:$("#simpill"), phasebadge:$("#phasebadge"),
+  hsimt:$("#hsimt"), hspeed:$("#hspeed"), cmdlist:$("#cmdlist"), framelabel:$("#framelabel"),
+  runbtn:$("#runbtn"), runline:$("#runline"), speedline:$("#speedline"), sleepline:$("#sleepline"),
+  schedline:$("#schedline"), patcaption:$("#patcaption"), patgrid:$("#patgrid"),
+  synlabel:$("#synlabel"), sublabel:$("#sublabel"), tlnote:$("#tlnote"),
+  drawer:$("#drawer"), drawerbody:$("#drawerbody"), drawertitle:$("#drawertitle"),
+  legGlow:$("#leg-glow"), tllegend:$("#tllegend"), rasternote:$("#rasternote")
+};
+const map = $("#map"), mctx = map.getContext("2d");
+const tlc = $("#timeline"), tctx = tlc.getContext("2d");
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function nextReq(){ return CLIENT_ID + "-" + (++st.reqSeq); }
+function fmtT(ticks){ return C ? (ticks*C.dt_ms/1000).toFixed(2) + " s" : ticks + " ticks"; }
+function fmtTk(t){ return C ? t.toLocaleString()+" ticks (" + (t*C.dt_ms/1000).toFixed(3) + " s)" : t + " ticks"; }
+function tickWord(n){ return n === 1 ? "1 tick" : n.toLocaleString() + " ticks"; }
+function msOf(n){ return C ? (n*C.dt_ms) : n; }
+
+/* ---- transport ---- */
+function send(cmd){
+  logMsg("out", cmd);
+  W.send(cmd);
+}
+function sendTracked(cmd, label){
+  const req = nextReq();
+  const c = Object.assign({req}, cmd);
+  const card = {req, cmd:cmd.cmd, label, status:"pending", sentAt:performance.now()};
+  st.cards.unshift(card); st.byReq.set(req, card);
+  st.cards = st.cards.slice(0, DISPLAY.DETAILS_HISTORY_MAX);
+  renderRows();
+  send(c);
+  return card;
+}
+W.bind(onMessage);
+
+/* ---- the single entry point ---- */
+function onMessage(msg){
+  logMsg("in", msg);
+  if (msg.run_id){
+    if (st.run_id == null) st.run_id = msg.run_id;
+    else if (msg.run_id !== st.run_id) handleRestart(msg.run_id);
+  }
+  if (msg.type === "config"){ C = msg; applyConfig(); return; }
+  if (msg.type === "layout"){ L = msg; applyLayout(); return; }
+  if (msg.type === "status"){
+    st.lastStatus = msg; st.lastStatusAt = performance.now();
+    st.sim = msg.running ? "running" : "paused";
+    renderHeader(); renderControls(); return;
+  }
+  if (msg.type === "frame"){ applyFrame(msg); return; }
+  if (msg.type === "result"){ applyResult(msg); return; }
+  if (msg.type === "stimlog"){ applyStimlog(msg); return; }
+  if (msg.type === "inspect"){ st.lastInspect = msg; renderNeuron(msg); return; }
+  if (msg.type === "region"){ st.lastRegion = msg; renderRegion(msg); return; }
+  if (msg.type === "error"){ renderRows(); return; }
+}
+
+/* A3: evidence from a different run is never attached to existing state. */
+function handleRestart(newRun){
+  st.run_id = newRun;
+  st.frames = []; st.gaps = []; st.cards = []; st.byReq = new Map(); st.byStim = new Map();
+  st.earlyEvents = []; st.prevT = null; st.prevSeq = null; st.lastFrame = null;
+  st.synHist = []; st.ripples = []; st.bornFlash = []; st.deathFlash = [];
+  st.rowSig = ""; st.fullSig = "";
+  const b = $("#restartbanner");
+  b.hidden = false;
+  b.firstElementChild.textContent =
+    `simulator restarted: new run ${newRun}, previous evidence cleared`;
+  renderRows(); renderHeader();
+  send({cmd:"layout"}); send({cmd:"stimlog"});
+}
+
+function applyConfig(){
+  const patchN = L && L.patterns ? L.patterns[0].length : null;
+  el.patcaption.textContent = patchN
+    ? `each drives a fixed patch of ${patchN} sense cells at ${C.pattern_amp_mv} mV for ` +
+      `${msOf(C.pattern_ticks)} ms; a stimulus location, not a learned concept`
+    : "—";
+  el.schedline.textContent =
+    `Phase schedule is automatic: ${msOf(C.wake_ticks)/1000} s wake, ${msOf(C.sleep_ticks)/1000} s sleep. ` +
+    `In sleep g = ${C.g_sleep} and sense input is gated. "Sleep now" enters sleep immediately and restarts the phase clock; it is not a latch.`;
+  el.rasternote.textContent = `spikes per tick (dt = ${C.dt_ms} ms), scrolling`;
+  el.tllegend.innerHTML = `last ${E(WINDOW_S)} s of simulated time <span class="demotag">demo</span>`;
+  $("#cfgjson").textContent = JSON.stringify(C, null, 1);
+  renderPatterns();
+}
+
+function applyLayout(){
+  st.N = L.x.length;
+  st.px = new Float32Array(st.N); st.py = new Float32Array(st.N);
+  if (!st.bright || st.bright.length !== st.N) st.bright = new Float32Array(st.N);
+  st.regionNames = Object.keys(L.regions);
+  layoutBoxes(); renderRegionHeads(); renderPatterns(); buildSyn();
+  buildRasters();
+}
+
+function layoutBoxes(){
+  const w = map.width / dpr(), h = map.height / dpr();
+  const weights = st.regionNames.map(n => Math.sqrt(L.regions[n].n));
+  const tot = weights.reduce((a,b)=>a+b,0);
+  let cx = 6;
+  st.boxes = {};
+  st.regionNames.forEach((n,i)=>{
+    const bw = (w - 12 - 8*(st.regionNames.length-1)) * weights[i]/tot;
+    st.boxes[n] = {x:cx, y:6, w:bw, h:h-12};
+    cx += bw + 8;
+  });
+  for (let i=0;i<st.N;i++){
+    const b = st.boxes[st.regionNames[L.region[i]]];
+    if (!b) continue;
+    st.px[i] = b.x + L.x[i]*b.w; st.py[i] = b.y + L.y[i]*b.h;
+  }
+  buildSyn();
+}
+function dpr(){ return Math.min(2, window.devicePixelRatio || 1); }
+
+function buildSyn(){
+  if (!L || !st.px) return;
+  const off = document.createElement("canvas");
+  off.width = map.width; off.height = map.height;
+  const o = off.getContext("2d"); o.scale(dpr(), dpr());
+  o.strokeStyle = "rgba(106,168,224,0.11)"; o.lineWidth = 1; o.beginPath();
+  for (const [,pre,post] of L.synapse_sample){
+    o.moveTo(st.px[pre], st.py[pre]); o.lineTo(st.px[post], st.py[post]);
+  }
+  o.stroke(); st.syn = off;
+}
+
+function applyFrame(f){
+  st.lastFrameAt = performance.now();
+  if (st.conn !== "live"){ st.conn = "live"; }
+  st.lastFrame = f;
+
+  // gap detection (rule 6)
+  if (st.prevT != null && (f.seq !== st.prevSeq + 1 || f.t - f.ticks !== st.prevT)){
+    const t0 = st.prevT, t1 = f.t - f.ticks;
+    if (t1 > t0) st.gaps.push({t0, t1});
+    onGap();
+  }
+  st.prevT = f.t; st.prevSeq = f.seq;
+  if (C){   // keep only gaps inside the displayed window
+    const cut = f.t - WINDOW_S*1000/C.dt_ms;
+    st.gaps = st.gaps.filter(g => g.t1 >= cut);
+  }
+
+  if (f.ticks > 0){
+    st.frames.push({t:f.t, ticks:f.ticks, seq:f.seq, phase:f.phase, truncated:!!f.truncated,
+      rates:Object.fromEntries(Object.entries(f.regions).map(([k,v])=>[k, v.rate_hz]))});
+    if (st.frames.length > 1200) st.frames.shift();
+  }
+  if (st.bright) for (const [id] of f.spikes) if (id < st.N) st.bright[id] = 1;
+  const nowW = performance.now();
+  if (st.structOn){
+    for (const [pre,post] of f.born.slice(0,300)) st.bornFlash.push({pre,post,at:nowW});
+    for (const [pre,post] of f.died.slice(0,300)) st.deathFlash.push({pre,post,at:nowW});
+  }
+
+  for (const ev of f.stim_events || []){
+    const card = st.byStim.get(ev.stim_id);
+    if (!card){ st.earlyEvents.push(ev); continue; }
+    applyStimEvent(card, ev, nowW);
+  }
+  for (const a of f.stim_active || []){
+    const card = st.byStim.get(a.stim_id);
+    if (card){
+      card.delivered = a.delivered_ticks; card.lastSeenT = f.t;
+      if (a.t_start != null && card.t_start == null) card.t_start = a.t_start;
+    }
+  }
+  markEndUnknown();
+  renderHeader(); renderFrameLabel(f); renderRows();
+  if (st.tab === "diag") { renderFrameKeys(f); pushRasters(f); }
+  else pushRasters(f);
+}
+
+function applyStimEvent(card, ev, nowW){
+  if (ev.event === "started"){
+    if (card.status !== "ended") card.status = "running";
+    card.t_start = ev.t;
+    if (!reduced && nowW) st.ripples.push({cells:card.cells || [], at:nowW});
+  } else if (ev.event === "ended"){
+    card.status = "ended"; card.t_end = ev.t;
+  }
+}
+
+function onGap(){
+  // rule 6: recover what was missed from the engine's own record
+  send({cmd:"stimlog"});
+}
+
+function markEndUnknown(){
+  const lastT = st.prevT;
+  for (const c of st.cards){
+    if (c.stim_id == null || c.status === "ended" || c.status === "rejected") continue;
+    if (c.t_end_planned == null || lastT == null) continue;
+    if (lastT < c.t_end_planned) continue;
+    const covered = st.gaps.some(g => g.t1 > c.t_end_planned - 1 && g.t0 < c.t_end_planned + 1);
+    if (covered && c.status !== "unknown" && c.status !== "expired"){
+      c.status = "unknown";              // start may also have been lost: c.t_start stays null
+      c.unknownSince = c.lastSeenT != null ? c.lastSeenT : (c.t_start != null ? c.t_start : c.t_accept);
+    }
+  }
+}
+
+function applyResult(r){
+  // A2: another client's result is evidence about the simulator, not about this
+  // client's commands. It stays in the Diagnostics message log only.
+  if (typeof r.req !== "string" || !r.req.startsWith(CLIENT_ID + "-")) return;
+  const c = st.byReq.get(r.req);
+  if (!c) return;
+  Object.assign(c, r);
+  if (r.status === "rejected"){ c.status = "rejected"; c.reason = r.reason; }
+  else if (r.status === "executed"){ c.status = "executed"; c.t_exec = r.t; }
+  else {
+    c.status = "accepted";
+    if (r.stim_id != null){
+      c.stim_id = r.stim_id; st.byStim.set(r.stim_id, c);
+      c.cells = c.cellsRequested || null;
+      c.delivered = r.delivered_ticks != null ? r.delivered_ticks : 0;
+      for (const ev of st.earlyEvents.filter(e=>e.stim_id === r.stim_id)) applyStimEvent(c, ev, performance.now());
+      st.earlyEvents = st.earlyEvents.filter(e=>e.stim_id !== r.stim_id);
+      markEndUnknown();
+    }
+  }
+  if (c.cmd === "run" || c.cmd === "pause" || c.cmd === "speed" || c.cmd === "sleep") renderControls();
+  renderRows();
+}
+
+function applyStimlog(m){
+  const seen = new Set();
+  for (const e of m.entries){
+    seen.add(e.stim_id);
+    const c = st.byStim.get(e.stim_id);
+    if (!c) continue;
+    if (e.t_start != null && c.t_start == null) c.t_start = e.t_start;
+    if (e.delivered_ticks != null) c.delivered = e.delivered_ticks;
+    if (e.t_end != null){ c.status = "ended"; c.t_end = e.t_end; c.fromLog = true; }
+  }
+  // rule 5: unknown and not in the bounded history -> nothing is ever filled in
+  for (const c of st.cards){
+    if (c.status === "unknown" && c.stim_id != null && !seen.has(c.stim_id)){
+      c.status = "expired"; c.historySize = m.entries.length;
+    }
+  }
+  renderRows();
+}
+
+/* ---- connection health (rule 5) ---- */
+function connectionTick(){
+  const nowW = performance.now();
+  if (st.conn === "disconnected"){
+    st.retryIn = Math.max(0, (st.retryAt - nowW)/1000);
+    if (st.retryIn <= 0){
+      const ok = W.tryReconnect(clientHooks);
+      if (!ok){
+        st.backoff = Math.min(8000, (st.backoff || 500) * 2);
+        st.retryAt = nowW + st.backoff;
+      }
+    }
+  } else if (st.lastFrameAt && nowW - st.lastFrameAt > 2000){
+    st.conn = "stale";
+  }
+  renderHeader(); renderRows();
+}
+const clientHooks = {
+  socketClosed(){
+    st.conn = "disconnected"; st.backoff = 500; st.retryAt = performance.now() + 500;
+    st.sim = st.sim === "unknown" ? "unknown" : st.sim;   // keep last known, dim it
+    renderHeader();
+  },
+  socketOpened(){
+    st.conn = "live";   // prevT/prevSeq kept: the unobserved span becomes a gap on the next frame
+    renderHeader();
+    send({cmd:"layout"});    // production: layout + config + status come back on this request
+    send({cmd:"stimlog"});   // recover the stimuli that ran while the socket was down
+  },
+  presentFromScript(i){ presentPattern(i); }
+};
+setInterval(connectionTick, 200);
+
+/* ---- header ---- */
+function renderHeader(){
+  const f = st.lastFrame;
+  const cp = el.connpill, t = cp.querySelector(".t");
+  cp.className = "pill";
+  if (st.conn === "live"){ cp.classList.add("live"); t.textContent = "live"; }
+  else if (st.conn === "stale"){
+    cp.classList.add("warn");
+    t.textContent = "stale " + Math.floor((performance.now() - st.lastFrameAt)/1000) + " s";
+  } else if (st.conn === "disconnected"){
+    cp.classList.add("bad");
+    t.textContent = "disconnected, retry in " + st.retryIn.toFixed(1) + " s";
+  } else t.textContent = "connecting";
+
+  const sp = el.simpill, s = sp.querySelector(".t");
+  sp.className = "pill";
+  if (st.sim === "running"){
+    sp.classList.add("live");
+    s.textContent = (f && f.ticks === 0 && st.conn === "live")
+      ? "running, 0 ticks in last frame" : "running";
+  } else if (st.sim === "paused"){ s.textContent = "paused"; }
+  else { s.textContent = "unknown"; }
+  if (st.conn === "stale" || st.conn === "disconnected"){
+    sp.classList.add("dimmed");
+    if (st.lastStatus) s.textContent += " · last status at t = " + fmtT(st.lastStatus.t);
+  }
+
+  if (f){
+    const ph = f.phase === "sleep" ? "sleep" : (f.phase === "wake" ? "wake" : "");
+    el.phasebadge.className = "badge " + ph;
+    el.phasebadge.innerHTML = E(f.phase) + (f.sense_gated
+      ? ' <svg width="10" height="11" viewBox="0 0 10 11" fill="none" aria-label="sense gated"><rect x="1" y="4.5" width="8" height="6" rx="1.4" stroke="currentColor" stroke-width="1.2"/><path d="M3 4.5V3a2 2 0 1 1 4 0v1.5" stroke="currentColor" stroke-width="1.2"/></svg>'
+      : "");
+    el.hsimt.textContent = (f.t*C.dt_ms/1000).toFixed(2);
+  }
+  const acc = st.lastStatus ? (st.lastStatus.speed === 0 ? "max" : st.lastStatus.speed + "x") : "—";
+  const meas = f && f.wall_ratio != null ? f.wall_ratio.toFixed(2) + "x" : "—";
+  const rq = st.reqSpeed === 0 ? "max" : st.reqSpeed + "x";
+  el.hspeed.innerHTML = `req <b>${E(rq)}</b> · acc <b>${E(acc)}</b> · meas <b>${E(meas)}</b>`;
+}
+
+function renderFrameLabel(f){
+  const syn = ` · +${f.born_count} / −${f.died_count} synapses this frame`;
+  if (f.ticks === 0){ el.framelabel.textContent = "heartbeat · 0 ticks" + syn; return; }
+  el.framelabel.textContent =
+    `frame #${f.seq} · ${tickWord(f.ticks)} · ${msOf(f.ticks)} ms` + syn +
+    (f.truncated ? " · spike list capped, counts exact" : "");
+}
+
+/* ---- region heads + patterns ---- */
+function renderRegionHeads(){
+  const subs = {
+    sense:"text-nerve prosthesis, no biological analog",
+    ctx:"recurrent pool, 1,600 E + 400 I",
+    hpc:"recurrent pool, 320 E + 80 I"
+  };
+  const host = $("#regionheads"); host.innerHTML = "";
+  for (const n of st.regionNames){
+    const r = L.regions[n];
+    const sub = n === "sense" ? subs.sense
+      : `recurrent pool, ${Number(r.n_exc).toLocaleString()} E + ${Number(r.n - r.n_exc).toLocaleString()} I`;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span class="rt">${E(n)} (${E(Number(r.n).toLocaleString())})</span><span class="rs">${E(sub)}</span>`;
+    b.onclick = ()=> selectRegion(n);
+    host.appendChild(b);
+  }
+}
+
+function renderPatterns(){
+  if (!C || !L || !L.patterns) return;
+  const host = el.patgrid;
+  if (host.childElementCount === L.patterns.length) return;
+  host.innerHTML = "";
+  ["A","B","C","D"].forEach((name,i)=>{
+    const b = document.createElement("button");
+    b.className = "patbtn"; b.type = "button"; b.dataset.pattern = i;
+    b.innerHTML = `${name}<span class="sub">present <kbd>${"asdf"[i]}</kbd></span>` +
+      `<span class="tip">Pattern ${name} drives a fixed patch of ${E(L.patterns[i].length)} sense cells, ` +
+      `${E(C.pattern_amp_mv)} mV for ${E(msOf(C.pattern_ticks))} ms. A stimulus location, not a learned concept.</span>`;
+    b.onclick = ()=> presentPattern(i);
+    b.onmouseenter = ()=> st.hoverPattern = i;
+    b.onmouseleave = ()=> { if (st.hoverPattern === i) st.hoverPattern = null; };
+    b.onfocus = ()=> st.hoverPattern = i;
+    b.onblur = ()=> { if (st.hoverPattern === i) st.hoverPattern = null; };
+    host.appendChild(b);
+  });
+}
+
+function presentPattern(i){
+  const card = sendTracked({cmd:"present", pattern:i, ticks:C.pattern_ticks},
+    `present ${"ABCD"[i]} · ${L.patterns[i].length} cells · ${msOf(C.pattern_ticks)} ms`);
+  card.cellsRequested = L.patterns[i];
+  card.isStim = true; card.letter = "ABCD"[i]; card.patternIndex = i;
+}
+
+/* ---- command feedback: one compact row per command (B2) -------------------
+   State comes only from results, stim_events and stimlog (see the
+   reconciliation rules above). Nothing here infers state from absence.      */
+function verbFor(c){ return c.cmd === "present" ? "presented" : (c.cmd === "inject" ? "injected" : "done"); }
+function rowChip(c){
+  if (c.letter) return {label:c.letter, cls:"pchip"};
+  if (c.cmd === "inject") return {label:"inj", cls:"pchip"};
+  return {label:c.cmd, cls:"pchip cmd"};
+}
+function obsMs(c){ return msOf(c.delivered || 0); }
+function plannedMs(c){ return msOf((c.t_end_planned != null && c.t_accept != null) ? c.t_end_planned - c.t_accept : 0); }
+function rowOutcome(c){
+  const nm = c.letter || (c.cmd === "inject" ? "Injection" : c.cmd);
+  const age = performance.now() - c.sentAt;
+  if (c.status === "pending")
+    return age > UNCONFIRMED_MS
+      ? {cls:"warn", text:`${nm} sent · unconfirmed after ${(age/1000).toFixed(1)} s · still waiting`}
+      : {cls:"", text:`${nm} sent · no reply yet`};
+  if (c.status === "rejected"){
+    const head = c.cmd === "present" ? "Not presented" : (c.cmd === "inject" ? "Not injected" : "Rejected");
+    const why = c.reason === "sense_gated"
+      ? "sensory input is gated during sleep"
+      : String(c.reason || "").replace(/^invalid:\s*/, "");
+    return {cls:"bad", text:`${head}: ${why}`};
+  }
+  if (c.status === "expired")
+    return {cls:"warn", text:`${nm} ${verbFor(c)} · history expired; end never observed`};
+  if (c.status === "unknown")
+    return {cls:"warn", text: c.t_start == null
+      ? `${nm} ${verbFor(c)} · start and end not observed`
+      : `${nm} ${verbFor(c)} · end not observed (frames missed)`};
+  if (c.status === "ended")
+    return {cls:"ok", text:`${nm} ${verbFor(c)} · ${plannedMs(c)} ms · started ${(c.t_start*C.dt_ms/1000).toFixed(2)} s`};
+  if (c.status === "running")
+    return {cls:"ok", text:`${nm} ${c.cmd === "inject" ? "injecting" : "presenting"} · ${obsMs(c)} of ${plannedMs(c)} ms observed`};
+  if (c.status === "executed") return {cls:"ok", text:`${nm} executed at ${(c.t_exec*C.dt_ms/1000).toFixed(2)} s`};
+  if (c.status === "accepted"){
+    if (c.stim_id != null){
+      if (st.sim === "paused") return {cls:"", text:`${nm} accepted · waiting for the simulator to run`};
+      if (st.sim === "unknown") return {cls:"warn", text:`${nm} accepted · simulator state unknown`};
+      return {cls:"", text:`${nm} accepted · waiting for the first tick`};
+    }
+    if (c.cmd === "sleep")
+      return {cls:"ok", text:`sleep now · ${c.phase_before} → ${c.phase_after} · changed: ${c.changed} · phase clock restarted`};
+    if (c.cmd === "speed")
+      return {cls:"ok", text:`speed accepted · ${c.factor === 0 ? "max" : c.factor + "x"}`};
+    if (c.cmd === "step") return {cls:"", text:"step accepted · not executed yet"};
+    return {cls:"ok", text:`${nm} accepted at ${(c.t*C.dt_ms/1000).toFixed(2)} s`};
+  }
+  return {cls:"", text:`${nm} sent`};
+}
+function detailLines(c){
+  const d = [["req", c.req], ["run_id", st.run_id || "—"], ["command", c.label]];
+  if (c.stim_id != null){
+    d.push(["stim_id", c.stim_id]);
+    d.push(["cells after gate", c.n_cells]);
+    d.push(["amp_mv", c.amp_mv]);
+    d.push(["accepted tick", fmtTk(c.t_accept)]);
+    d.push(["planned end", fmtTk(c.t_end_planned)]);
+    d.push(["observed start", c.t_start != null ? fmtTk(c.t_start) : "not observed"]);
+    d.push(["observed end", c.t_end != null ? fmtTk(c.t_end) : "not observed"]);
+    d.push(["delivered", `${c.delivered || 0} of ${c.t_end_planned - c.t_accept} ticks`]);
+    if (c.lastSeenT != null) d.push(["last seen at", fmtTk(c.lastSeenT)]);
+    if (c.status === "unknown") d.push(["unknown since", fmtTk(c.unknownSince != null ? c.unknownSince : c.t_accept)]);
+    if (c.status === "expired") d.push(["recovery", `stimlog returned ${c.historySize} entries, none for this stim_id; nothing filled in`]);
+    else if (c.fromLog) d.push(["recovery", "end recovered from stimlog"]);
+    else if (c.status === "ended") d.push(["recovery", "start and end observed in stim_events"]);
+  } else {
+    if (c.t_accept != null) d.push(["accepted tick", fmtTk(c.t_accept)]);
+    if (c.t_target != null) d.push(["target tick", fmtTk(c.t_target)]);
+    if (c.t_exec != null) d.push(["executed tick", fmtTk(c.t_exec)]);
+    else if (c.t != null) d.push(["result tick", fmtTk(c.t)]);
+    if (c.cmd === "step" && c.t_exec == null) d.push(["note", "a status reply never confirms a step"]);
+  }
+  d.push(["raw status", c.status + (c.reason ? " / " + c.reason : "")]);
+  return d;
+}
+function rowHTML(c, forceOpen){
+  const o = rowOutcome(c), ch = rowChip(c);
+  const open = forceOpen || !!c.expanded;
+  return `<div class="cmdrow" data-req="${E(c.req)}">` +
+    `<div class="line"><span class="${E(ch.cls)}">${E(ch.label)}</span>` +
+    `<span class="otext ${E(o.cls)}">${E(o.text)}</span>` +
+    (forceOpen ? "" : `<button class="detbtn" type="button" data-req="${E(c.req)}" aria-expanded="${open}">details</button>`) +
+    `</div><div class="det"${open ? "" : " hidden"}>` +
+    detailLines(c).map(([k,v])=>`<div><span>${E(k)}</span><span>${E(v)}</span></div>`).join("") +
+    `</div></div>`;
+}
+function renderRows(){
+  const list = st.cards.slice(0, DISPLAY.CARD_HISTORY_MAX);
+  const sig = list.map(c=>c.req + "|" + rowOutcome(c).text + "|" + (c.expanded?1:0)).join("~");
+  if (sig === st.rowSig) return;
+  st.rowSig = sig;
+  el.cmdlist.innerHTML = list.length
+    ? list.map(c=>rowHTML(c, false)).join("")
+    : '<div class="empty" style="padding:10px">No commands sent yet.</div>';
+}
+el.cmdlist.addEventListener("click", e=>{
+  const b = e.target.closest(".detbtn"); if (!b) return;
+  const c = st.byReq.get(b.dataset.req); if (!c) return;
+  c.expanded = !c.expanded; st.rowSig = ""; renderRows();
+  const nb = el.cmdlist.querySelector(`.detbtn[data-req="${CSS.escape(c.req)}"]`);
+  if (nb) nb.focus();
+});
+function renderCmdFull(){
+  const list = st.cards.slice(0, DISPLAY.DETAILS_HISTORY_MAX);
+  const sig = list.map(c=>c.req + "|" + rowOutcome(c).text).join("~");
+  if (sig === st.fullSig) return;
+  st.fullSig = sig;
+  $("#cmdfullcap").textContent =
+    `every command this client sent, newest first · last ${DISPLAY.DETAILS_HISTORY_MAX} · details always expanded`;
+  $("#cmdfull").innerHTML = list.length ? list.map(c=>rowHTML(c, true)).join("")
+    : '<div class="empty" style="padding:10px">No commands sent yet.</div>';
+}
+setInterval(()=>{ renderRows(); if (st.tab === "diag") renderCmdFull(); }, 250);
+
+/* ---- run controls ---- */
+function renderControls(){
+  const running = st.sim === "running";
+  el.runbtn.innerHTML = (st.sim === "unknown" ? "Run" : (running ? "Pause" : "Run")) + "<kbd>space</kbd>";
+  el.runbtn.setAttribute("aria-pressed", String(running));
+  const conf = st.lastStatus
+    ? `confirmed ${running ? "running" : "paused"} at t = ${fmtT(st.lastStatus.t)}`
+    : "no status yet · simulator state unknown";
+  el.runline.innerHTML = (st.reqRun != null && st.reqRun !== running)
+    ? `<span class="pend">requested ${st.reqRun ? "run" : "pause"} → pending</span> · ${E(conf)}`
+    : E(conf);
+  const accepted = st.lastStatus ? (st.lastStatus.speed === 0 ? "max" : st.lastStatus.speed + "x") : "—";
+  const req = st.reqSpeed === 0 ? "max" : st.reqSpeed + "x";
+  el.speedline.innerHTML = (st.lastStatus && st.lastStatus.speed !== st.reqSpeed)
+    ? `<span class="pend">requested ${E(req)} → pending</span> · accepted ${E(accepted)}`
+    : `requested ${E(req)} · accepted ${E(accepted)}` +
+      (st.lastFrame && st.lastFrame.wall_ratio != null
+        ? ` · measured ${E(Number(st.lastFrame.wall_ratio).toFixed(2))}x (simulated seconds per wall second, last ~1 s)` : "");
+}
+
+el.runbtn.onclick = ()=>{
+  const running = st.sim === "running";
+  st.reqRun = !running;
+  sendTracked({cmd: running ? "pause" : "run"}, running ? "pause" : "run");
+  renderControls();
+};
+$("#stepbtn").onclick = ()=>{
+  sendTracked({cmd:"step", ticks:1}, "step 1 tick");
+};
+$("#speed").oninput = (e)=>{
+  if ($("#maxspeed").checked) return;
+  st.reqSpeed = parseFloat(e.target.value);
+  sendTracked({cmd:"speed", factor:st.reqSpeed}, "speed " + st.reqSpeed + "x");
+  renderControls();
+};
+$("#maxspeed").onchange = (e)=>{
+  st.reqSpeed = e.target.checked ? 0 : parseFloat($("#speed").value);
+  sendTracked({cmd:"speed", factor:st.reqSpeed}, "speed " + (st.reqSpeed === 0 ? "max" : st.reqSpeed + "x"));
+  renderControls();
+};
+$("#sleepbtn").onclick = ()=>{
+  st.reqSleep = true;
+  const c = sendTracked({cmd:"sleep", on:true}, "sleep now");
+  el.sleepline.innerHTML = '<span class="pend">requested sleep → pending</span>';
+  setTimeout(()=>{
+    if (c.status === "accepted")
+      el.sleepline.textContent =
+        `${c.phase_before} → ${c.phase_after} · changed: ${c.changed} · phase clock restarted · confirmed at t = ${fmtT(c.t)}`;
+  }, 60);
+};
+$("#injbtn").onclick = ()=>{
+  if (!st.selection.length) return;
+  const amp = parseFloat($("#injamp").value) || 0, ticks = parseInt($("#injticks").value,10) || 0;
+  const card = sendTracked({cmd:"inject", ids:st.selection.slice(), amp, ticks},
+    `inject ${st.selection.length} cells · ${amp} mV · ${msOf(ticks)} ms`);
+  card.cellsRequested = st.selection.slice(); card.isStim = true;
+};
+$("#injctx").onclick = ()=>{
+  const ids = [];
+  const start = L.regions.ctx.id;
+  for (let i=0;i<st.N && ids.length<60;i++) if (L.region[i] === start && i % 17 === 0) ids.push(i);
+  const amp = parseFloat($("#injamp").value) || 0, ticks = parseInt($("#injticks").value,10) || 0;
+  const card = sendTracked({cmd:"inject", ids, amp, ticks}, `inject ${ids.length} ctx cells · ${amp} mV · ${msOf(ticks)} ms`);
+  card.cellsRequested = ids; card.isStim = true;
+};
+$("#structToggle").onchange = (e)=>{
+  st.structOn = e.target.checked;
+  if (!st.structOn){ st.bornFlash = []; st.deathFlash = []; }
+};
+$("#synToggle").onchange = (e)=>{
+  st.synOn = e.target.checked;
+  el.synlabel.textContent = st.synOn && L && st.lastFrame
+    ? `random sample of ${L.synapse_sample.length.toLocaleString()} of ${st.lastFrame.n_syn_alive.toLocaleString()} alive synapses`
+    : "off";
+};
+
+/* ---- map drawing ---- */
+function resize(){
+  for (const c of [map, tlc]){
+    const r = c.getBoundingClientRect();
+    c.width = Math.max(1, Math.round(r.width*dpr()));
+    c.height = Math.max(1, Math.round(r.height*dpr()));
+  }
+  for (const c of document.querySelectorAll("canvas.mini, canvas.raster")){
+    const r = c.getBoundingClientRect();
+    c.width = Math.max(1, Math.round(r.width*dpr()));
+    c.height = Math.max(1, Math.round(r.height*dpr()));
+  }
+  if (L) layoutBoxes();
+}
+window.addEventListener("resize", resize);
+
+function drawMap(){
+  const w = map.width/dpr(), h = map.height/dpr();
+  mctx.setTransform(dpr(),0,0,dpr(),0,0);
+  mctx.fillStyle = "#070a0e"; mctx.fillRect(0,0,w,h);
+  if (!L || !st.px) return;
+  if (st.synOn && st.syn){ mctx.setTransform(1,0,0,1,0,0); mctx.drawImage(st.syn,0,0); mctx.setTransform(dpr(),0,0,dpr(),0,0); }
+
+  for (const n of st.regionNames){
+    const b = st.boxes[n];
+    mctx.strokeStyle = "#1b222d"; mctx.lineWidth = 1;
+    mctx.strokeRect(b.x+.5, b.y+.5, b.w, b.h);
+  }
+  const nowW = performance.now();
+  let segs = 0;   // exposed for verification: long lines drawn this frame
+  if (st.structOn){
+    st.bornFlash = st.bornFlash.filter(f=>nowW-f.at < DISPLAY.STRUCT_FLASH_MS);
+    st.deathFlash = st.deathFlash.filter(f=>nowW-f.at < DISPLAY.STRUCT_FLASH_MS);
+    mctx.lineWidth = 1.4;
+    for (const [list, rgb] of [[st.bornFlash,"95,211,154"],[st.deathFlash,"255,112,112"]]){
+      for (const f of list){
+        mctx.strokeStyle = `rgba(${rgb},${(1-(nowW-f.at)/DISPLAY.STRUCT_FLASH_MS)*0.9})`;
+        mctx.beginPath(); mctx.moveTo(st.px[f.pre],st.py[f.pre]); mctx.lineTo(st.px[f.post],st.py[f.post]); mctx.stroke();
+        segs++;
+      }
+    }
+  }
+  if (st.synOn && st.syn) segs += L.synapse_sample.length;
+
+  // B4: the patch a pattern drives, on hover/focus and for its confirmed interval
+  const marks = [];
+  if (st.hoverPattern != null) marks.push({p:st.hoverPattern, strong:true});
+  for (const c of st.cards){
+    if (c.patternIndex == null) continue;
+    if (c.status === "running" || (c.status === "accepted" && c.stim_id != null))
+      marks.push({p:c.patternIndex, strong:false});
+  }
+  const donePatch = new Set();
+  for (const m of marks){
+    if (donePatch.has(m.p) && !m.strong) continue;
+    donePatch.add(m.p);
+    const cells = L.patterns[m.p];
+    let mx=0,my=0; for (const id of cells){ mx+=st.px[id]; my+=st.py[id]; }
+    mx/=cells.length; my/=cells.length;
+    let rad = 0; for (const id of cells) rad = Math.max(rad, Math.hypot(st.px[id]-mx, st.py[id]-my));
+    mctx.fillStyle = m.strong ? "rgba(255,180,84,0.15)" : "rgba(255,180,84,0.09)";
+    mctx.beginPath(); mctx.arc(mx,my,rad+7,0,6.283); mctx.fill();
+    mctx.strokeStyle = m.strong ? "rgba(255,180,84,0.95)" : "rgba(255,180,84,0.6)";
+    mctx.lineWidth = 1; mctx.beginPath(); mctx.arc(mx,my,rad+7,0,6.283); mctx.stroke();
+    mctx.lineWidth = 1.2;
+    for (const id of cells){ mctx.beginPath(); mctx.arc(st.px[id],st.py[id],3.2,0,6.283); mctx.stroke(); }
+    mctx.fillStyle = "rgba(255,196,120,0.95)";
+    mctx.font = "600 13px system-ui, sans-serif"; mctx.textAlign = "center"; mctx.textBaseline = "middle";
+    mctx.fillText("ABCD"[m.p], mx, my);
+    mctx.textAlign = "start"; mctx.textBaseline = "alphabetic";
+  }
+
+  // ripple (one authored motion moment)
+  st.ripples = st.ripples.filter(r=>nowW-r.at < 400);
+  for (const r of st.ripples){
+    if (!r.cells || !r.cells.length) continue;
+    let mx=0,my=0; for (const id of r.cells){ mx+=st.px[id]; my+=st.py[id]; }
+    mx/=r.cells.length; my/=r.cells.length;
+    const k = (nowW-r.at)/400, e = 1-Math.pow(1-k,3);
+    mctx.strokeStyle = `rgba(255,180,84,${(1-k)*0.85})`;
+    mctx.lineWidth = 2.5*(1-k)+0.5;
+    mctx.beginPath(); mctx.arc(mx,my,8+e*70,0,6.283); mctx.stroke();
+  }
+
+  // selection subset connections
+  if (st.selected != null && st.topIn.length){
+    mctx.lineWidth = 1;
+    for (const [pre,wv] of st.topIn){
+      if (pre >= st.N) continue;
+      segs++;
+      mctx.strokeStyle = wv >= 0 ? "rgba(106,168,224,.55)" : "rgba(224,138,106,.55)";
+      mctx.beginPath(); mctx.moveTo(st.px[pre],st.py[pre]); mctx.lineTo(st.px[st.selected],st.py[st.selected]); mctx.stroke();
+    }
+  }
+
+  const decay = reduced ? 0 : Math.pow(0.02, 16/DISPLAY.GLOW_MS);
+  for (let i=0;i<st.N;i++){
+    const b = st.bright[i], exc = L.is_exc[i];
+    const base = exc ? [106,168,224] : [224,138,106];
+    const r = Math.round(base[0]+(255-base[0])*b), g = Math.round(base[1]+(255-base[1])*b), bl = Math.round(base[2]+(255-base[2])*b);
+    mctx.fillStyle = `rgb(${r},${g},${bl})`;
+    mctx.beginPath(); mctx.arc(st.px[i], st.py[i], exc?1.25:1.9, 0, 6.283); mctx.fill();
+    if (b > 0.004) st.bright[i] = b*decay; else st.bright[i] = 0;
+  }
+  if (st.cursor != null && st.cursor !== st.selected){
+    mctx.strokeStyle = "rgba(234,244,255,.75)"; mctx.lineWidth = 1.2; mctx.setLineDash([2,2]);
+    mctx.beginPath(); mctx.arc(st.px[st.cursor], st.py[st.cursor], 5, 0, 6.283); mctx.stroke();
+    mctx.setLineDash([]);
+  }
+  if (st.selected != null){
+    mctx.strokeStyle = "#eaf4ff"; mctx.lineWidth = 1.6;
+    mctx.beginPath(); mctx.arc(st.px[st.selected], st.py[st.selected], 5.5, 0, 6.283); mctx.stroke();
+  }
+  if (st.drag){
+    mctx.strokeStyle = "rgba(234,244,255,.8)"; mctx.setLineDash([3,3]); mctx.lineWidth = 1;
+    mctx.strokeRect(st.drag.x, st.drag.y, st.drag.w, st.drag.h); mctx.setLineDash([]);
+  }
+  st.lineSegments = segs;
+  window.__lineSegments = segs;   // verification hook: 0 with both toggles off
+}
+
+/* ---- timeline (rule 6) ---- */
+function drawTimeline(){
+  const w = tlc.width/dpr(), h = tlc.height/dpr();
+  tctx.setTransform(dpr(),0,0,dpr(),0,0);
+  tctx.fillStyle = "#070a0e"; tctx.fillRect(0,0,w,h);
+  if (!C || !st.frames.length) return;
+  const winTicks = WINDOW_S*1000/C.dt_ms;
+  const tmax = st.frames[st.frames.length-1].t;
+  const tmin = tmax - winTicks;
+  const GUT = 54;
+  const X = t => GUT + (t - tmin)/winTicks * (w-GUT-8);
+  const stimH = 16, rowH = Math.max(16, (h - stimH - 16)/3);
+
+  // phase tint
+  for (const f of st.frames){
+    if (f.t < tmin) continue;
+    tctx.fillStyle = f.phase === "sleep" ? "rgba(150,120,220,.13)" : "rgba(106,168,224,.07)";
+    tctx.fillRect(X(f.t-f.ticks), stimH+4, Math.max(1, X(f.t)-X(f.t-f.ticks)), rowH*3);
+  }
+  // gaps
+  for (const g of st.gaps){
+    if (g.t1 < tmin) continue;
+    const x0 = X(Math.max(g.t0,tmin)), x1 = X(g.t1);
+    tctx.save();
+    tctx.beginPath(); tctx.rect(x0, 0, Math.max(2,x1-x0), h); tctx.clip();
+    tctx.strokeStyle = "#3a4457"; tctx.lineWidth = 1;
+    for (let x = x0-h; x < x1+h; x += 4){ tctx.beginPath(); tctx.moveTo(x,h); tctx.lineTo(x+h,0); tctx.stroke(); }
+    tctx.restore();
+  }
+  // stimulus bars
+  for (const c of st.cards){
+    if (c.stim_id == null) continue;
+    const y = 3, bh = stimH - 8;
+    tctx.font = "9px ui-monospace, monospace";
+    const barLetter = c.letter || (c.cmd === "inject" ? "i" : "");
+    if (c.t_start == null){
+      // no confirmed start: outline only, never a filled span
+      const x0 = X(c.t_accept), x1 = X(c.t_end_planned);
+      tctx.strokeStyle = "#ffb454"; tctx.lineWidth = 1;
+      tctx.strokeRect(x0+.5, y+.5, Math.max(2,x1-x0), bh);
+      if (c.status === "unknown" || c.status === "expired"){
+        tctx.fillStyle = "#ffb454";
+        tctx.fillText("?", x0+2, y+bh-1); tctx.fillText("?", Math.max(x0+9, x1-7), y+bh-1);
+      }
+      if (barLetter){ tctx.fillStyle = "#ffd79a"; tctx.font = "600 9px system-ui, sans-serif";
+        tctx.fillText(barLetter, x0+2, y-1); tctx.font = "9px ui-monospace, monospace"; }
+    } else {
+      // solid only as far as the stimulus was actually observed
+      const openEnd = c.status === "unknown" || c.status === "expired";
+      const lastObs = openEnd
+        ? (c.lastSeenT != null ? c.lastSeenT : c.t_start)
+        : (c.t_end != null ? c.t_end : Math.min(tmax, c.t_end_planned));
+      const x0 = X(c.t_start), x1 = X(lastObs);
+      tctx.fillStyle = "#ffb454"; tctx.fillRect(x0, y, Math.max(2,x1-x0), bh);
+      if (barLetter){ tctx.fillStyle = "#ffd79a"; tctx.font = "600 9px system-ui, sans-serif";
+        tctx.fillText(barLetter, x0+1, y-1); tctx.font = "9px ui-monospace, monospace"; }
+      if (openEnd){
+        tctx.fillStyle = "#0a0c10"; tctx.fillRect(x1-2, y, 2, bh);   // open right edge
+        tctx.fillStyle = "#ffb454"; tctx.fillText("?", x1+3, y+bh-1);
+      }
+    }
+  }
+  // region rate rows
+  st.regionNames.forEach((n,i)=>{
+    const y0 = stimH + 4 + i*rowH, hh = rowH - 4;
+    const vals = st.frames.filter(f=>f.t >= tmin).map(f=>f.rates[n]||0).sort((a,b)=>a-b);
+    // 95th percentile, so a single burst frame does not flatten the whole row
+    const mx = Math.max(0.5, vals[Math.floor(vals.length*0.95)] || 0.5);
+    tctx.fillStyle = "#9aa8bb"; tctx.font = "10px system-ui, sans-serif";
+    tctx.fillText(n, 4, y0 + 9);
+    tctx.fillStyle = "#7a889b"; tctx.font = "9px ui-monospace, monospace";
+    tctx.fillText(mx.toFixed(1) + " Hz", 4, y0 + hh - 1);
+    for (const f of st.frames){
+      if (f.t < tmin) continue;
+      const x0 = X(f.t-f.ticks), bw = Math.max(1, X(f.t)-x0);
+      const v = Math.min(1, (f.rates[n]||0)/mx);
+      tctx.fillStyle = i === 0 ? "rgba(255,180,84,.75)" : (i === 1 ? "rgba(106,168,224,.8)" : "rgba(180,160,230,.8)");
+      tctx.fillRect(x0, y0 + hh*(1-v), bw, Math.max(1, hh*v));
+      if (f.truncated && i === 0){
+        tctx.fillStyle = "#ffd79a"; tctx.fillRect(x0, stimH+1, Math.max(2,bw), 2);
+      }
+    }
+    tctx.strokeStyle = "#1b222d"; tctx.beginPath(); tctx.moveTo(GUT, y0+hh+.5); tctx.lineTo(w-8, y0+hh+.5); tctx.stroke();
+  });
+  // x axis in simulated seconds
+  tctx.fillStyle = "#7a889b"; tctx.font = "10px ui-monospace, monospace";
+  tctx.fillText((tmin*C.dt_ms/1000).toFixed(0)+" s", GUT, h-2);
+  const lbl = (tmax*C.dt_ms/1000).toFixed(1)+" s";
+  tctx.fillText(lbl, w-8-tctx.measureText(lbl).width, h-2);
+  const trunc = st.frames.filter(f=>f.t>=tmin && f.truncated).length;
+  const inWin = st.gaps.filter(g=>g.t1 >= tmin).length;
+  el.tlnote.textContent = (inWin ? inWin + " observation gap(s) in this window · " : "") +
+    (trunc ? trunc + " frame(s): spike list capped, counts exact" : "");
+}
+
+function raf(){
+  drawMap(); drawTimeline();
+  requestAnimationFrame(raf);
+}
+
+/* ---- map interaction ---- */
+function localPt(e){
+  const r = map.getBoundingClientRect();
+  return {x:e.clientX - r.left, y:e.clientY - r.top};
+}
+map.addEventListener("keydown", e=>{
+  if (!st.N) return;
+  const step = {ArrowRight:1, ArrowLeft:-1, ArrowDown:40, ArrowUp:-40}[e.key];
+  if (step != null){
+    e.preventDefault(); e.stopPropagation();
+    st.cursor = (( (st.cursor == null ? 0 : st.cursor) + step) % st.N + st.N) % st.N;
+  } else if (e.key === "Enter" && st.cursor != null){
+    e.preventDefault(); e.stopPropagation(); selectNeuron(st.cursor);
+  }
+});
+let down = null;
+map.addEventListener("pointerdown", e=>{ down = localPt(e); map.setPointerCapture(e.pointerId); });
+map.addEventListener("pointermove", e=>{
+  if (!down) return;
+  const p = localPt(e), dx = p.x-down.x, dy = p.y-down.y;
+  if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+  st.drag = {x:Math.min(p.x,down.x), y:Math.min(p.y,down.y), w:Math.abs(dx), h:Math.abs(dy)};
+  st.selection = [];
+  for (let i=0;i<st.N;i++)
+    if (st.px[i]>=st.drag.x && st.px[i]<=st.drag.x+st.drag.w && st.py[i]>=st.drag.y && st.py[i]<=st.drag.y+st.drag.h)
+      st.selection.push(i);
+  $("#injbtn").textContent = `Inject ${st.selection.length} cells`;
+  $("#injbtn").disabled = !st.selection.length;
+});
+map.addEventListener("pointerup", e=>{
+  if (!down) return;
+  const p = localPt(e);
+  if (Math.hypot(p.x-down.x, p.y-down.y) < 4){
+    let best = -1, bd = 49;
+    for (let i=0;i<st.N;i++){
+      const d = (st.px[i]-p.x)**2 + (st.py[i]-p.y)**2;
+      if (d < bd){ bd = d; best = i; }
+    }
+    if (best >= 0) selectNeuron(best);
+  }
+  st.drag = null; down = null;
+});
+
+function selectNeuron(id){
+  st.selected = id; st.selectedRegion = null;
+  send({cmd:"watch", id}); send({cmd:"inspect", id});
+  openDrawer("Neuron " + Number(id));
+  el.sublabel.hidden = false;
+  el.sublabel.textContent = "subset: 10 strongest excitatory + 10 strongest inhibitory inputs";
+}
+function selectRegion(name){
+  st.selectedRegion = name; st.selected = null; st.topIn = [];
+  el.sublabel.hidden = true;
+  send({cmd:"region", name});
+  openDrawer("Region " + String(name));
+}
+setInterval(()=>{
+  if (st.selected != null) send({cmd:"inspect", id:st.selected});
+  if (st.selectedRegion) send({cmd:"region", name:st.selectedRegion});
+}, 600);
+
+function openDrawer(title){
+  el.drawertitle.textContent = String(title);
+  el.drawer.hidden = false;
+  requestAnimationFrame(()=>el.drawer.classList.add("open"));
+  $("#drawerclose").focus();
+}
+function closeDrawer(){
+  el.drawer.classList.remove("open");
+  st.selected = null; st.selectedRegion = null; st.topIn = [];
+  setTimeout(()=>{ el.drawer.hidden = true; }, 220);
+}
+$("#drawerclose").onclick = closeDrawer;
+
+function field(k,v){ return `<div class="field"><span class="k">${E(k)}</span><span class="v">${E(v)}</span></div>`; }
+
+function renderNeuron(m){
+  if (st.selected !== m.id) return;
+  st.topIn = m.top_in;
+  const wmax = Math.max(0.001, ...m.top_in.map(t=>Math.abs(t[1])));
+  const bars = (rows)=> rows.map(([pre,wv])=>
+    `<div class="bar${wv<0?" inh":""}" style="width:${Math.max(6,Math.abs(Number(wv))/wmax*100)}%"><span>${E(pre)} · ${E(Number(wv).toFixed(2))}</span></div>`).join("");
+  el.drawerbody.innerHTML =
+    field("id", m.id) + field("region", m.region) + field("type", m.is_exc ? "excitatory" : "inhibitory") +
+    field("v", Number(m.v).toFixed(2) + " mV") +
+    `<p class="measure">Membrane potential right now, in millivolts.</p>` +
+    field("theta", Number(m.theta).toFixed(2) + " mV") +
+    `<p class="measure">The adaptive firing threshold right now, in millivolts.</p>` +
+    field("rate", Number(m.rate_hz).toFixed(2) + " Hz") +
+    `<p class="measure">Spike rate in hertz. EMA over sweeps, updated every ${E(C.sweep_ticks)} ticks; recent sweeps weighted more.</p>` +
+    field("in degree", m.in_deg) + field("out degree", m.out_deg) +
+    `<p class="measure">Alive incoming and outgoing synapses, counted now.</p>` +
+    `<h3 style="margin-top:12px">Membrane trace</h3>` +
+    `<p class="measure">Last ${E(C.v_trace_ticks)} ticks of membrane potential (${E(msOf(C.v_trace_ticks))} ms), only while this cell is watched.</p>` +
+    `<canvas class="mini" id="vtrace"></canvas>` +
+    `<h3 style="margin-top:12px">Strongest inputs</h3>` +
+    `<p class="measure">Subset: the 10 strongest excitatory and 10 strongest inhibitory inputs, by weight. Not all ${E(m.in_deg)} inputs.</p>` +
+    `<div class="bars">${bars(m.top_in.filter(t=>t[1]>=0))}${bars(m.top_in.filter(t=>t[1]<0))}</div>`;
+  const c = $("#vtrace");
+  if (c){
+    const r = c.getBoundingClientRect();
+    c.width = Math.round(r.width*dpr()); c.height = Math.round(r.height*dpr());
+    const g = c.getContext("2d"); g.setTransform(dpr(),0,0,dpr(),0,0);
+    const cw = c.width/dpr(), ch = c.height/dpr();
+    g.fillStyle = "#070a0e"; g.fillRect(0,0,cw,ch);
+    const tr = m.v_trace;
+    if (tr.length > 1){
+      const mn = Math.min(...tr), mx = Math.max(...tr, mn+1e-6);
+      g.strokeStyle = "#6aa8e0"; g.lineWidth = 1; g.beginPath();
+      tr.forEach((v,i)=>{
+        const x = i/(tr.length-1)*cw, y = ch - (v-mn)/(mx-mn)*ch;
+        i ? g.lineTo(x,y) : g.moveTo(x,y);
+      });
+      g.stroke();
+    } else {
+      g.fillStyle = "#7a889b"; g.font = "11px system-ui, sans-serif";
+      g.fillText("no trace yet — watching started this moment", 8, ch/2);
+    }
+  }
+  if (st.tab === "diag") $("#inspjson").textContent = JSON.stringify(Object.assign({},m,{v_trace:`[${m.v_trace.length} floats]`}), null, 1);
+}
+
+function renderRegion(m){
+  if (st.selectedRegion !== m.name) return;
+  const nb = m.w_hist.edges.length - 1;
+  el.drawerbody.innerHTML =
+    field("cells", Number(m.n).toLocaleString()) +
+    field("rate", Number(m.rate_hz).toFixed(2) + " Hz") +
+    `<p class="measure">Mean spike rate in hertz. EMA over sweeps, updated every ${E(C.sweep_ticks)} ticks; recent sweeps weighted more.</p>` +
+    field("synapses in", Number(m.n_syn_in).toLocaleString()) + field("synapses out", Number(m.n_syn_out).toLocaleString()) +
+    `<p class="measure">Alive synapses ending in and starting from this region, counted now.</p>` +
+    `<h3 style="margin-top:12px">Weight histogram</h3>` +
+    `<p class="measure">|w| of alive incoming synapses, ${E(nb)} bins.</p><canvas class="mini" id="whist"></canvas>` +
+    `<h3 style="margin-top:12px">Rate histogram</h3>` +
+    `<p class="measure">Per-cell rate in hertz across this region, ${E(m.rate_hist.edges.length-1)} bins.</p><canvas class="mini" id="rhist"></canvas>` +
+    `<h3 style="margin-top:12px">Alive synapses</h3>` +
+    `<p class="measure">Network-wide alive synapse count over observed time, one point per frame.</p><canvas class="mini" id="spark"></canvas>`;
+  hist("whist", m.w_hist.counts, "#6aa8e0");
+  hist("rhist", m.rate_hist.counts, "#b4a0e6");
+  spark("spark", st.synHist || []);
+  if (st.tab === "diag") $("#regjson").textContent = JSON.stringify(m, null, 1);
+}
+function sizeMini(id){
+  const c = $("#"+id); if (!c) return null;
+  const r = c.getBoundingClientRect();
+  c.width = Math.round(r.width*dpr()); c.height = Math.round(r.height*dpr());
+  const g = c.getContext("2d"); g.setTransform(dpr(),0,0,dpr(),0,0);
+  g.fillStyle = "#070a0e"; g.fillRect(0,0,c.width/dpr(),c.height/dpr());
+  return {c,g,w:c.width/dpr(),h:c.height/dpr()};
+}
+function hist(id, counts, color){
+  const o = sizeMini(id); if (!o) return;
+  const mx = Math.max(1, ...counts), bw = o.w/counts.length;
+  o.g.fillStyle = color;
+  counts.forEach((v,i)=>{ const hh = v/mx*(o.h-4); o.g.fillRect(i*bw, o.h-hh, Math.max(1,bw-1), hh); });
+}
+function spark(id, arr){
+  const o = sizeMini(id); if (!o) return;
+  if (arr.length < 2){ o.g.fillStyle = "#7a889b"; o.g.font="11px system-ui,sans-serif"; o.g.fillText("collecting…",8,o.h/2); return; }
+  const mn = Math.min(...arr), mx = Math.max(...arr, mn+1);
+  o.g.strokeStyle = "#ffb454"; o.g.lineWidth = 1; o.g.beginPath();
+  arr.forEach((v,i)=>{ const x=i/(arr.length-1)*o.w, y=o.h-(v-mn)/(mx-mn)*(o.h-4)-2; i?o.g.lineTo(x,y):o.g.moveTo(x,y); });
+  o.g.stroke();
+}
+
+/* ---- diagnostics ---- */
+st.synHist = [];
+function renderFrameKeys(f){
+  const rows = [];
+  const skip = new Set(["type","regions","spikes","born","died","stim_active","stim_events","growth_halted"]);
+  for (const k of Object.keys(f)){
+    if (skip.has(k)) continue;
+    rows.push([k, String(f[k])]);
+  }
+  for (const [g,v] of Object.entries(f.growth_halted)) rows.push(["growth_halted."+g, String(v)]);
+  for (const [n,r] of Object.entries(f.regions)) rows.push(["regions."+n+".rate_hz", r.rate_hz + " Hz over this frame (" + tickWord(f.ticks) + ")"]);
+  rows.push(["spikes", f.spikes.length + " ids" + (f.truncated ? " (capped at " + C.frame_spike_cap + "; per-tick counts exact)" : "")]);
+  rows.push(["born / died", f.born.length + " / " + f.died.length + " pairs"]);
+  rows.push(["stim_active", f.stim_active.length ? JSON.stringify(f.stim_active) : "[]"]);
+  rows.push(["stim_events", f.stim_events.length ? JSON.stringify(f.stim_events) : "[]"]);
+  $("#framekeys").querySelector("tbody").innerHTML =
+    rows.map(([k,v])=>`<tr><td class="val" style="color:var(--dim)">${E(k)}</td><td class="val">${E(v)}</td></tr>`).join("");
+}
+function buildRasters(){
+  const host = $("#rasters"); host.innerHTML = "";
+  for (const n of st.regionNames){
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `<div class="note tight" style="font-size:11px">${E(n)}</div><canvas class="raster" id="raster-${E(n)}"></canvas>`;
+    host.appendChild(wrap);
+  }
+  resize();
+}
+function pushRasters(f){
+  st.synHist.push(f.n_syn_alive);
+  if (st.synHist.length > 600) st.synHist.shift();
+  if (!f.ticks) return;
+  for (const [n,r] of Object.entries(f.regions)){
+    const c = document.getElementById("raster-"+n); if (!c) continue;
+    const g = c.getContext("2d");
+    const spt = r.spikes_per_tick, k = spt.length;
+    g.drawImage(c, -k, 0);
+    g.fillStyle = "#070a0e"; g.fillRect(c.width-k, 0, k, c.height);
+    const mx = Math.max(1, ...spt);
+    for (let i=0;i<k;i++){
+      const v = spt[i]/mx, hh = Math.round(v*c.height);
+      g.fillStyle = `rgba(106,168,224,${0.2+0.8*v})`;
+      g.fillRect(c.width-k+i, c.height-hh, 1, hh);
+    }
+  }
+}
+function logMsg(dir, m){
+  let text;
+  if (dir === "out") text = "→ " + JSON.stringify(m);
+  else if (m.type === "frame") text = `← frame seq ${m.seq} t ${m.t} ticks ${m.ticks} spikes ${m.spikes.length}${m.truncated?" TRUNCATED":""}`;
+  else if (m.type === "layout") text = `← layout (${m.x.length} cells, ${m.synapse_sample.length} sampled synapses, ${m.patterns.length} patterns)`;
+  else text = "← " + JSON.stringify(m).slice(0, 400);
+  st.log.unshift({dir, text, err:m.type === "error"});
+  if (st.log.length > 200) st.log.pop();
+}
+let logDirty = true;
+setInterval(()=>{
+  if (st.tab !== "diag") return;
+  $("#log").innerHTML = st.log.map(l=>`<div class="${l.err?"err":(l.dir==="out"?"out":"")}">${escapeHtml(l.text)}</div>`).join("");
+}, 400);
+function escapeHtml(s){
+  return String(s).replace(/[&<>"'`]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;","`":"&#96;"}[c]));
+}
+const E = escapeHtml;
+
+/* ---- recorded results (real, hand-maintained) ---- */
+const STAGE0 = {"schema":"stage0-results/1","updated":"2026-09-11",
+ "entries":[
+  {"test":"tests/test_rules.py::test_stdp_pre_before_post_potentiates","label":"K0.3 two-neuron, pre before post","outcome":"pass","tested_commit":"3060f23","date":"2026-09-11","evidence":"SPEC.md §7 K0.3; scratch log brainsim-k03-regress2.log"},
+  {"test":"tests/test_rules.py::test_stdp_post_before_pre_depresses","label":"K0.3 two-neuron, post before pre","outcome":"pass","tested_commit":"3060f23","date":"2026-09-11","evidence":"same"},
+  {"test":"tests/test_rules.py::test_k0_3_population_imposed_pairing","label":"K0.3 population selectivity, imposed pairing","outcome":"fail","tested_commit":"3060f23","date":"2026-09-11","evidence":"SPEC.md §7 K0.3 Result; tests/k03_pairing.py","note":"ratio 0.927, required ≥ 1.2; pairing established, selectivity not reached"},
+  {"test":"tests/test_kill_stage0.py::test_k0_2_stability_over_60s_wake","label":"K0.2 stability","outcome":"pass","tested_commit":"3060f23","date":"2026-09-11","evidence":"same log","note":"window 100-120 s only"},
+  {"test":"tests/test_kill_stage0.py::test_k0_11_scaling_skips_silent_presynaptic_input","label":"K0.11 scaling on used input","outcome":"pass","tested_commit":"3060f23","date":"2026-09-11","evidence":"same log"},
+  {"test":"tests/test_kill_stage0.py::test_k0_1_event_cost_and_silent_wall_time","label":"K0.1 event cost","outcome":"fail","tested_commit":"c4b8d6d","date":"2026-09-11","carried_forward":true,"evidence":"scratch log brainsim-suite-r5.log","note":"silent-network wall time 0.342 vs nominal 0.585 (same units, from the assertion); required ≤ 0.25× nominal"},
+  {"test":"tests/test_kill_stage0.py::test_k0_4_structural_turnover_over_240s","label":"K0.4 structural turnover","outcome":"fail","tested_commit":"c4b8d6d","date":"2026-09-11","carried_forward":true,"evidence":"SPEC.md §7 K0.4; brainsim-suite-r5.log","note":"alive count 406,920 at 90 s vs immature init 360,000; a ≥ 20 % fall was required"},
+  {"test":"tests/test_kill_stage0.py::test_k0_5_frames_match_engine_counters_over_10s","label":"K0.5 UI truth","outcome":"pass","tested_commit":"c4b8d6d","date":"2026-09-11","carried_forward":true,"evidence":"brainsim-suite-r5.log"},
+  {"test":"tests/test_kill_stage0.py::test_k0_6_sleep_gates_sense_and_keeps_ctx_active","label":"K0.6 sleep","outcome":"pass","tested_commit":"c4b8d6d","date":"2026-09-11","carried_forward":true,"evidence":"brainsim-suite-r5.log"},
+  {"test":"tests/test_rules.py::test_k0_7_isolated_neuron_rate_below_target","label":"K0.7 proxy calibration","outcome":"pass","tested_commit":"c4b8d6d","date":"2026-09-11","carried_forward":true,"evidence":"brainsim-suite-r5.log"},
+  {"test":"tests/test_rules.py::test_k0_8_conduction_delay","label":"K0.8 conduction delay","outcome":"pass","tested_commit":"c4b8d6d","date":"2026-09-11","carried_forward":true,"evidence":"brainsim-suite-r5.log"},
+  {"test":"tests/test_rules.py::test_k0_9_*","label":"K0.9 two-sign controller (4 tests)","outcome":"pass","tested_commit":"c4b8d6d","date":"2026-09-11","carried_forward":true,"evidence":"brainsim-suite-r5.log"},
+  {"test":"tests/test_rules.py::test_k0_10a/d, tests/test_kill_stage0.py::test_k0_10b","label":"K0.10 anti-windup (3 tests)","outcome":"pass","tested_commit":"c4b8d6d","date":"2026-09-11","carried_forward":true,"evidence":"brainsim-suite-r5.log"},
+  {"test":"tests/test_ui_truth.py (6 tests)","label":"UI one source of truth","outcome":"pass","tested_commit":"c4b8d6d","date":"2026-09-11","carried_forward":true,"evidence":"brainsim-suite-r5.log"}
+ ]};
+function renderRecorded(){
+  const groups = [
+    {head:"Run at 3060f23 (2026-09-11)", note:null, rows:STAGE0.entries.filter(e=>!e.carried_forward)},
+    {head:"Carried forward from c4b8d6d (2026-09-11), not rerun at 3060f23",
+     note:"engine code is unchanged between c4b8d6d and 3060f23 (only tests and SPEC changed); the results were still not rerun.",
+     rows:STAGE0.entries.filter(e=>e.carried_forward)}
+  ];
+  $("#recgroups").innerHTML = groups.map(g=>
+    `<h3 style="margin-top:16px">${E(g.head)}</h3>` +
+    (g.note ? `<p class="note tight">${E(g.note)}</p>` : "") +
+    `<div class="tblwrap"><table><thead><tr><th>outcome</th><th>test</th><th>node id</th><th>evidence</th></tr></thead><tbody>` +
+    g.rows.map(e=>
+      `<tr><td><span class="chip ${e.outcome==="pass"?"pass":"fail"}">${e.outcome==="pass"?"pass":"FAIL"}</span></td>` +
+      `<td>${E(e.label)}${e.note?`<div class="note tight" style="white-space:normal;max-width:46ch">${E(e.note)}</div>`:""}</td>` +
+      `<td class="val" style="color:var(--dim)">${escapeHtml(e.test)}</td>` +
+      `<td class="val" style="color:var(--dim);white-space:normal;max-width:30ch">${E(e.evidence)}</td></tr>`).join("") +
+    `</tbody></table></div>`).join("");
+}
+renderRecorded();
+
+/* ---- display-preference copy (never from the worker) ---- */
+function renderDisplayPrefs(){
+  el.legGlow.innerHTML =
+    `<i class="swatch" style="background:#fff"></i>glow = display fade, ${E(DISPLAY.GLOW_MS)} ms`;
+  el.legGlow.title =
+    `measured spikes: the dot brightens and fades over ${DISPLAY.GLOW_MS} ms of wall time; display only, not continued firing`;
+  const sl = $("#structlabel");
+  sl.lastChild.textContent =
+    ` structural changes (births/deaths, ${DISPLAY.STRUCT_FLASH_MS} ms flash, display)`;
+  el.tllegend.innerHTML =
+    `last ${E(DISPLAY.TIMELINE_WINDOW_S)} s of simulated time <span class="demotag">demo</span>`;
+  $("#cmdcaption").innerHTML =
+    `Newest first · last ${E(DISPLAY.CARD_HISTORY_MAX)} · scripted <span class="demotag">demo</span>`;
+  $("#dispjson").textContent = JSON.stringify(DISPLAY, null, 1);
+}
+renderDisplayPrefs();
+
+/* ---- tabs + keyboard ---- */
+function setTab(name){
+  st.tab = name;
+  $("#observe").hidden = name !== "observe";
+  $("#diag").hidden = name !== "diag";
+  $("#tab-observe").setAttribute("aria-selected", String(name === "observe"));
+  $("#tab-diag").setAttribute("aria-selected", String(name === "diag"));
+  if (name === "observe") requestAnimationFrame(resize);
+  if (name === "diag"){ renderCmdFull(); if (st.lastFrame) renderFrameKeys(st.lastFrame); }
+}
+$("#tab-observe").onclick = ()=>setTab("observe");
+$("#tab-diag").onclick = ()=>setTab("diag");
+$("#stagechip").onclick = ()=>{ setTab("diag"); $("#recorded").scrollIntoView({behavior: reduced?"auto":"smooth", block:"start"}); };
+
+const SCEN = ["live","paused","late","gated","stale","disconnected"];   // F6b is chosen from the demo strip
+addEventListener("keydown", e=>{
+  const tag = (e.target.tagName || "").toLowerCase();
+  const typing = tag === "input" || tag === "select" || tag === "textarea";
+  if (e.key === "Escape"){ closeDrawer(); return; }
+  if (/^F[1-6]$/.test(e.key)){ e.preventDefault(); setScenario(SCEN[+e.key.slice(1)-1]); return; }
+  if (typing) return;
+  if ((e.key === " " || e.key === "Enter") && (tag === "button" || tag === "summary" || tag === "a")) return;
+  if (e.key === "1"){ setTab("observe"); return; }
+  if (e.key === "2"){ setTab("diag"); return; }
+  const pi = "asdf".indexOf(e.key.toLowerCase());
+  if (pi >= 0 && L && C){ e.preventDefault(); presentPattern(pi); return; }
+  if (e.key === " "){ e.preventDefault(); el.runbtn.click(); return; }
+  if (e.key === "."){ e.preventDefault(); $("#stepbtn").click(); return; }
+});
+
+/* ---- scenarios ---- */
+function setScenario(name){
+  $("#scenario").value = name;
+  Object.assign(st, {frames:[], gaps:[], cards:[], byReq:new Map(), byStim:new Map(), earlyEvents:[],
+    lastFrame:null, prevT:null, prevSeq:null, lastStatus:null, sim:"unknown", earlyEvents:[],
+    conn:"connecting", lastFrameAt:0, ripples:[], synHist:[], log:[], reqRun:null});
+  el.sleepline.textContent = "—";
+  st.run_id = null; st.rowSig = ""; st.fullSig = ""; st.structOn = $("#structToggle").checked;
+  $("#restartbanner").hidden = true;
+  renderRows(); renderHeader(); renderControls();
+  W.setScenario(name, clientHooks);
+}
+$("#scenario").onchange = e=>setScenario(e.target.value);
+
+/* ---- boot ---- */
+resize();
+requestAnimationFrame(raf);
+setScenario("live");
+renderControls();
+</script>
+</body>
+</html>

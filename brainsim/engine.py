@@ -4,8 +4,8 @@ import numpy as np
 
 from . import encode
 from . import hetero
-from . import inhib
 from . import params as default_params
+from . import triplet
 from . import telemetry
 from .net import Network
 
@@ -38,14 +38,21 @@ class Engine:
         self.encode_record = None
         # SPEC 8.16 sweep-level heterosynaptic write on hpc afferents (labelled proxy).
         self.hetero_write = bool(getattr(params, "HETERO_WRITE", False))
+        self.hetero_additive = bool(getattr(params, "HETERO_ADDITIVE", False))
+        self.hetero_recurrent = bool(getattr(params, "HETERO_RECURRENT", False))
         self.hetero_last = None
-        # SPEC 8.17 inhibitory STDP on hpc E cells' inhibitory inputs, with those cells exempt
-        # from excitatory scaling and the rate-driven excitatory prune (labelled proxy).
-        self.inh_homeostat = bool(getattr(params, "INH_HOMEOSTAT", False))
-        self._inh_eta = inhib.eta(params)
-        self._hpc_e = np.zeros(n, bool)
-        if "hpc" in self.net.region_slice:
-            self._hpc_e[encode.hpc_e_ids(self.net)] = True
+        # SPEC 8.21 triplet rule on excitatory synapses (labelled proxy); runtime-switchable.
+        self.triplet_stdp = bool(getattr(params, "TRIPLET_STDP", False))
+        self._tri_k = None
+        self._tri_decay = tuple(np.float32(np.exp(-params.DT_MS / t)) for t in
+                                (triplet.TAU_PLUS_MS, triplet.TAU_MINUS_MS, triplet.TAU_Y_MS))
+        # SPEC 8.29 pending pair plasticity (labelled proxy); runtime-switchable. The tag exists
+        # only while the flag is on and starts at the weights; with the flag off nothing is read.
+        self.pending_stdp = bool(getattr(params, "PENDING_STDP", False))
+        # SPEC 8.30: with pending on, transmission uses the tag (the labile strength) instead of the weight.
+        self.pending_express = bool(getattr(params, "PENDING_EXPRESS", False))
+        self.w_tag = None
+        self.pending_last = dict(sweeps=0, strong_ctx=0, strong_hpc=0, committed=0, dropped=0)
         self._encode_w_hist = deque(maxlen=50)
         self.t = 0
         self.phase = "wake"
@@ -353,6 +360,20 @@ class Engine:
         bucket = self.ring[slot]
         self.ring[slot] = []
         touched = 0
+        tri = self.triplet_stdp
+        wt = wx = net.w
+        if self.pending_stdp:
+            if tri:
+                raise RuntimeError("pending_stdp and triplet_stdp are mutually exclusive")
+            if self.w_tag is None:
+                self.w_tag = net.w.copy()
+            wt = self.w_tag
+            if self.pending_express:
+                wx = wt
+        elif self.w_tag is not None:
+            self.w_tag = None
+        if tri and self._tri_k is None:
+            self._tri_k = self._triplet_k_vec()
         v = net.v
         np.multiply(v, self._m_decay, out=v)
         v += self._v_c
@@ -362,19 +383,17 @@ class Engine:
             d = d[net.alive[d]]
             if d.size:
                 post = net.post[d]
-                v += np.bincount(post, weights=net.w[d], minlength=net.n)
+                v += np.bincount(post, weights=wx[d], minlength=net.n)
                 de = d[net.is_exc[net.pre[d]]]
                 if de.size:
                     pd = net.post[de]
-                    net.w[de] = np.maximum(
-                        net.w[de] * (1.0 - self.g * net.a_minus_n[pd] * net.y_post[pd]), 0.0)
-                if self.inh_homeostat:
-                    di = d[~net.is_exc[net.pre[d]] & self._hpc_e[post]]
-                    if di.size:
-                        pi = net.post[di]
-                        net.w[di] = inhib.on_pre(
-                            net.w[di], net.y_post[pi], inhib.alpha(net.r_target[pi], p.TAU_TRACE_MS),
-                            net.w_max_n[pi] * p.I_GAIN, self._inh_eta, self.g)
+                    if tri:
+                        m = net.a_plus_n[pd] > 0
+                        net.w[de[m]] = triplet.on_pre(net.w[de[m]], net.o1[pd[m]], net.w_max_n[pd[m]],
+                                                      self._tri_k[pd[m]], self.g)
+                        de, pd = de[~m], pd[~m]
+                    wt[de] = np.maximum(
+                        wt[de] * (1.0 - self.g * net.a_minus_n[pd] * net.y_post[pd]), 0.0)
 
         if self._inj or self._inj_on:
             self._refresh_inj()
@@ -395,6 +414,10 @@ class Engine:
                 v[hit] = np.maximum(v[hit], th[hit] + np.float32(1.0))
         net.x_pre *= self._tr_decay
         net.y_post *= self._tr_decay
+        if tri:
+            net.r1 *= self._tri_decay[0]
+            net.o1 *= self._tri_decay[1]
+            net.o2 *= self._tri_decay[2]
 
         s = np.flatnonzero(v >= th)
         if s.size:
@@ -402,16 +425,15 @@ class Engine:
         if s.size:
             inc = _gather(net.in_ptr, net.in_ids, s)
             touched += inc.size
-            inc = inc[net.alive[inc]]
-            if self.inh_homeostat:
-                ii = inc[~net.is_exc[net.pre[inc]] & self._hpc_e[net.post[inc]]]
-                if ii.size:
-                    net.w[ii] = inhib.on_post(net.w[ii], net.x_pre[net.pre[ii]],
-                                              net.w_max_n[net.post[ii]] * p.I_GAIN, self._inh_eta, self.g)
-            inc = inc[net.is_exc[net.pre[inc]]]
+            inc = inc[net.alive[inc] & net.is_exc[net.pre[inc]]]
             if inc.size:
                 pp, qq = net.post[inc], net.pre[inc]
-                net.w[inc] += self.g * net.a_plus_n[pp] * net.x_pre[qq] * (net.w_max_n[pp] - net.w[inc])
+                if tri:
+                    m = net.a_plus_n[pp] > 0
+                    net.w[inc[m]] = triplet.on_post(net.w[inc[m]], net.r1[qq[m]], net.o2[pp[m]],
+                                                    net.w_max_n[pp[m]], self._tri_k[pp[m]], self.g)
+                    inc, pp, qq = inc[~m], pp[~m], qq[~m]
+                wt[inc] += self.g * net.a_plus_n[pp] * net.x_pre[qq] * (net.w_max_n[pp] - wt[inc])
 
             out = _gather(net.out_ptr, net.out_ids, s)
             if out.size:
@@ -430,6 +452,10 @@ class Engine:
             net.theta[s] += p.D_THETA_MV
             net.x_pre[s] += 1.0
             net.y_post[s] += 1.0
+            if tri:
+                net.r1[s] += 1.0
+                net.o1[s] += 1.0
+                net.o2[s] += 1.0
             net.t_last_spike[s] = self.t
             net.spike_count[s] += 1
             self.stats["spike_total"] += int(s.size)
@@ -483,6 +509,10 @@ class Engine:
         net.act[:] = (1 - a) * net.act + a * np.minimum(hz / p.ACT_REF_HZ, 1.0)
 
         if not net.homeostasis:
+            if self.pending_stdp:
+                alive = np.flatnonzero(net.alive)
+                self._pending_commit(counts, alive[net.is_exc[net.pre[alive]]])
+                self.w_tag[:] = net.w
             net.rebuild_index(self.t)
             return
         rt = np.maximum(net.r_target, 1e-6)
@@ -490,12 +520,13 @@ class Engine:
         err[net.r_target <= 0] = 0.0
         alive = np.flatnonzero(net.alive)
         exc_syn = alive[net.is_exc[net.pre[alive]]]
+        if self.pending_stdp:
+            self._pending_commit(counts, exc_syn)
         if self.hetero_write and self.phase != "sleep":
             self._hetero_sweep(counts, exc_syn)
         used = exc_syn[counts[net.pre[exc_syn]] > 0]
-        exempt = self._homeostat_exempt()
-        if exempt.any():
-            used = used[~exempt[net.post[used]]]
+        if self.encode_mask.any():
+            used = used[~self.encode_mask[net.post[used]]]
         if used.size and self.phase != "sleep":
             factor = 1.0 + np.clip(p.ETA_SCALING * (net.r_target - net.rate) / rt, -p.SCALING_CLIP, p.SCALING_CLIP)
             factor[net.r_target <= 0] = 1.0
@@ -520,6 +551,35 @@ class Engine:
         if room > 0:
             self._buf_died.extend(zip(weak_pre[:room].tolist(), weak_post[:room].tolist()))
         self.syn_sample = self._sample_synapses()
+        if self.pending_stdp:
+            self.w_tag[:] = net.w
+
+    def _pending_commit(self, counts, exc_syn):
+        """SPEC 8.29, first step of a sweep. Waking: an E cell of ctx or hpc with at least
+        PENDING_TRIGGER_SPIKES spikes is strong; the alive E synapses onto every other cell
+        take the tag, those onto a strong cell keep their weight (tag dropped). Sleep: all commit."""
+        net = self.net
+        strong = np.zeros(net.n, bool)
+        if self.phase != "sleep":
+            for r in ("ctx", "hpc"):
+                if r in net.region_slice:
+                    sl = net.region_slice[r]
+                    strong[sl] = net.is_exc[sl] & (counts[sl] >= self.p.PENDING_TRIGGER_SPIKES)
+        keep = strong[net.post[exc_syn]]
+        take = exc_syn[~keep]
+        net.w[take] = self.w_tag[take]
+        pl = self.pending_last
+        pl["sweeps"] += 1
+        pl["strong_ctx"] = int(strong[net.region_slice["ctx"]].sum()) if "ctx" in net.region_slice else 0
+        pl["strong_hpc"] = int(strong[net.region_slice["hpc"]].sum()) if "hpc" in net.region_slice else 0
+        pl["committed"], pl["dropped"] = int(take.size), int(keep.sum())
+
+    def pending_view(self):
+        """Engine truth for drivers (SPEC 8.29). Read-only, no RNG."""
+        pl = self.pending_last
+        return dict(on=bool(self.pending_stdp), express=bool(self.pending_stdp and self.pending_express), sweeps=pl["sweeps"],
+                    strong_ctx_last=pl["strong_ctx"], strong_hpc_last=pl["strong_hpc"],
+                    syn_committed_last=pl["committed"], syn_dropped_last=pl["dropped"])
 
     def _hetero_sweep(self, counts, exc_syn):
         """SPEC 8.16, in a wake sweep before scaling and the prunes. Every hpc E cell that
@@ -527,7 +587,11 @@ class Engine:
         its alive ctx E inputs: each input moves by HETERO_ETA * w_max * z, z the input's
         presynaptic spike count this sweep as a z-score over that cell's inputs (clipped),
         minus the cell's mean move so the cell's summed weight is unchanged up to the
-        clamps [HETERO_FLOOR_FRAC * w_max, w_max]. No RNG, no new or killed synapses."""
+        clamps [HETERO_FLOOR_FRAC * w_max, w_max]. No RNG, no new or killed synapses.
+        With hetero_additive (SPEC 8.40) the mean move is not subtracted and only positive z
+        adds weight, clamped at w_max; no weight is lowered.
+        With hetero_recurrent (SPEC 8.41) the written set also includes the cell's alive
+        excitatory inputs from hpc."""
         net = self.net
         trigger, eta, z_clip, floor_frac = hetero.constants(self.p)
         st = self.stats
@@ -543,14 +607,18 @@ class Engine:
         if not trig.any():
             return
         pre, post = net.pre[exc_syn], net.post[exc_syn]
-        idx = exc_syn[trig[post] & (pre >= cx.start) & (pre < cx.stop)]
+        src = (pre >= cx.start) & (pre < cx.stop)
+        if self.hetero_recurrent:
+            src |= (pre >= hp.start) & (pre < hp.stop)
+        idx = exc_syn[trig[post] & src]
         if idx.size == 0:
             return
         ps = net.post[idx]
         x = counts[net.pre[idx]].astype(np.float64)
         wm = net.w_max_n[ps].astype(np.float64)
         w0 = net.w[idx].astype(np.float64)
-        w1 = hetero.redistribute(x, ps, w0, wm, net.n, eta, z_clip, floor_frac)
+        w1 = hetero.redistribute(x, ps, w0, wm, net.n, eta, z_clip, floor_frac,
+                                   additive=self.hetero_additive)
         net.w[idx] = w1.astype(np.float32)
         dw = net.w[idx].astype(np.float64) - w0
         cells = np.flatnonzero(trig)
@@ -562,6 +630,17 @@ class Engine:
         self.hetero_last = dict(t=int(self.t), cells=cells.astype(np.int32), syn_ids=idx.astype(np.int32),
                                 pre=net.pre[idx].copy(), post=ps.copy(), born=net.born[idx].copy(),
                                 dw=dw.astype(np.float32), w_max=wm.astype(np.float32))
+
+    def _triplet_k_vec(self):
+        net, k = self.net, triplet.k_of(self.p)
+        out = np.zeros(net.n, np.float32)
+        for i, name in enumerate(net.region_names):
+            out[net.region == i] = k.get(name, 0.0)
+        return out
+
+    def triplet_view(self):
+        """Engine truth for drivers (SPEC 8.21). Read-only, no RNG."""
+        return dict(on=bool(self.triplet_stdp), k=triplet.k_of(self.p), mean_o2=float(self.net.o2.mean()))
 
     def hetero_view(self):
         """Engine truth for the frame's `hetero` key (SPEC 8.16). Read-only, no RNG."""
@@ -579,24 +658,6 @@ class Engine:
             out["net_dw_last"] = float((h["dw"] / h["w_max"]).sum())
         return out
 
-    def _homeostat_exempt(self):
-        """Cells whose excitatory inputs skip scaling and the rate-driven prune."""
-        return self.encode_mask | self._hpc_e if self.inh_homeostat else self.encode_mask
-
-    def inh_view(self):
-        """Engine truth for the inhibitory synapses onto hpc E (SPEC 8.17). Read-only, no RNG."""
-        net = self.net
-        s = np.flatnonzero(net.alive)
-        s = s[~net.is_exc[net.pre[s]] & self._hpc_e[net.post[s]]]
-        out = dict(on=bool(self.inh_homeostat), n_syn=int(s.size), mean_frac=0.0,
-                   frac_at_zero=0.0, frac_at_max=0.0)
-        if s.size:
-            m = -net.w[s].astype(np.float64)
-            mm = (net.w_max_n[net.post[s]] * self.p.I_GAIN).astype(np.float64)
-            out.update(mean_frac=float(np.mean(m / mm)), frac_at_zero=float(np.mean(m <= 0)),
-                       frac_at_max=float(np.mean(m >= mm * (1 - 1e-5))))
-        return out
-
     def structural_update(self, e):
         p, net = self.p, self.net
         e = np.asarray(e, np.float32)
@@ -612,7 +673,7 @@ class Engine:
         lo, hi = e > 0, e < 0
         ae = np.abs(e)
 
-        die = [self._prune_incoming(np.where(hi & grow_ok & ~self._homeostat_exempt(), G * ae * kE, 0.0), kE, True),
+        die = [self._prune_incoming(np.where(hi & grow_ok & ~self.encode_mask, G * ae * kE, 0.0), kE, True),
                self._prune_incoming(np.where(lo & grow_ok, G * e * excess, 0.0), excess, False)]
         died = np.concatenate(die)
         die_pre, die_post = net.pre[died].copy(), net.post[died].copy()

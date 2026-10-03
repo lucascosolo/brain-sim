@@ -1,0 +1,5 @@
+numpy
+fastapi
+uvicorn[standard]
+pytest
+httpx2  # test-only: fastapi.testclient
