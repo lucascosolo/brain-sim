@@ -66,7 +66,7 @@ job.
 
 ## What I conclude, and how sure I am
 
-- **Criterion 1.** The executive *itself* never did damage in 92 live runs: no test edits, no
+- **Criterion 1.** The executive *itself* never did damage in 84 live runs (80 guarded, 4 guard-off ablation): no test edits, no
   broken tests, no false "done". Its refusals (exact-once edits, scope guard, sandbox) caught
   every invented or wrong edit. Two real gaps surfaced, and both are fixed and re-tested:
   editing correct code to dodge the sandbox, and handing a contradiction to a weaker agent.
