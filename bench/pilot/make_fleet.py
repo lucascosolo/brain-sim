@@ -6,19 +6,24 @@ one held-out test per module. The single task "s01_refactor_fallout" breaks it t
 rename/move does: 12 modules lose their util import, 12 have a misspelled local, and 2 carry a
 real logic bug, so 26 visible tests fail.
 """
+import argparse
 import json
 import random
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-OUT = HERE / "fleet_clean"
 HELPERS = {"clamp": "def clamp(x, lo, hi):\n    return max(lo, min(hi, x))\n",
            "ratio": "def ratio(a, b):\n    return a / b if b else 0.0\n",
            "scale": "def scale(xs, k):\n    return [x * k for x in xs]\n"}
 
 
 def main():
-    rng = random.Random(20261003)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--seed", type=int, default=20261003)
+    ap.add_argument("--name", default="fleet")     # writes <name>_clean/ and <name>_tasks.json
+    args = ap.parse_args()
+    rng = random.Random(args.seed)
+    OUT = HERE / f"{args.name}_clean"
     (OUT / "fleet").mkdir(parents=True, exist_ok=True)
     (OUT / "tests").mkdir(exist_ok=True)
     (OUT / "tests_hidden").mkdir(exist_ok=True)
@@ -56,7 +61,7 @@ def main():
             mutations.append([rel, f"    adjusted = {call}\n", f"    adjusted = {call.replace('subtotal', 'subtotl').replace('values', 'valeus')}\n"])
         elif kind == "logic":
             mutations.append([rel, "len(values) - 1", "len(values) + 1"])
-    (HERE / "fleet_tasks.json").write_text(json.dumps(
+    (HERE / f"{args.name}_tasks.json").write_text(json.dumps(
         {"s01_refactor_fallout": {"expected_tier": "skill (24) + deliberation (2)", "mutations": mutations}}, indent=1))
     print(f"wrote {len(kinds)} modules; {len(mutations)} mutations: "
           + ", ".join(f"{k}={kinds.count(k)}" for k in ("import", "typo", "logic", "clean")))

@@ -118,3 +118,24 @@ if hybrid is correct in every run where the agent is, and costs less in total.
 **Predictions (scored, not steering).** The executive resolves 24 of 26 subgoals with no model
 and the 2 logic bugs with 1-2 deliberations each. Hybrid cost is at most 20% of agent cost in
 both E5h and E5s. Agents finish correctly but use at least 25 turns.
+
+## E5h result and E5b (predeclared 2026-10-03, after E5h, before E5b; replaces E5s)
+
+**E5h, by `analyze.py E5h`.** Both arms correct in 2/2 runs; no harm, no test edits, no false
+completion. Hybrid $0.33 vs $0.58 (−43%), 62 vs 131 LLM turns (−53%). Rules: all hold. But the
+executive completed 0/2 alone. `add_missing_import` refused all 12 missing imports, because
+the mutated files start with blank lines and it found no unique anchor. That is a correct
+refusal (no harm), but a brittle skill. The deliberation budget (4) went to some of those
+subgoals, and the handoff agent fixed the rest. Output: one hybrid run differs from the
+reference by 22 lines of style (relative `from .util import`, one blank line), with identical
+behaviour.
+
+**Change.** `add_missing_import` anchors on the leading blank lines plus the first unique line,
+and writes the import at the top followed by two blank lines (test added).
+
+**E5b.** To avoid fitting the fix to the corpus that exposed the bug, E5b runs on a **fresh
+corpus**, `fleet2_clean/` (`make_fleet.py --seed 20261004 --name fleet2`), with the same
+arms and limits as E5: **E5b-h** (Haiku agent and handoff) and **E5b-s** (Sonnet agent and
+handoff), 2 reps each. E5s is not run: the executive changed after E5h, so it would not test
+what was predeclared. Rules unchanged. Prediction: the executive completes alone in at least
+3 of 4 hybrid runs, and hybrid cost is at most 20% of agent cost.

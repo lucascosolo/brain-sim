@@ -40,6 +40,7 @@ CORPORA = {
     # corpus: (clean dir, tasks, agent max turns, agent budget haiku/sonnet, executive max steps)
     "ledger": (HERE / "ledger_clean", LEDGER_TASKS, 40, (1.0, 2.0), 40),
     "fleet": (HERE / "fleet_clean", json.loads((HERE / "fleet_tasks.json").read_text()), 80, (2.0, 4.0), 200),
+    "fleet2": (HERE / "fleet2_clean", json.loads((HERE / "fleet2_tasks.json").read_text()), 80, (2.0, 4.0), 200),
 }
 
 

@@ -170,3 +170,13 @@ def test_no_editable_evidence_means_no_model_call(dirs):
     ex.run()
     assert llm.calls == [] and ex.state["status"] == "blocked"
     assert [a["outcome"] for a in ex.goal["subgoals"][0]["attempts"]] == ["no_evidence"]
+
+
+def test_missing_import_in_a_file_with_no_imports_and_leading_blank_lines(dirs):
+    def build(root):
+        T._write(root, {"conftest.py": "", "pkg/__init__.py": "", "pkg/util.py": "def clamp(x, lo, hi):\n    return max(lo, min(hi, x))\n",
+                        "pkg/m.py": "\n\n\ndef f(x):\n    return clamp(x, 0, 9)\n",
+                        "tests/test_m.py": "from pkg.m import f\n\n\ndef test_f():\n    assert f(12) == 9\n"})
+    ex, m = run(dirs, build)
+    assert m["completed_verified"] and m["llm_calls"] == 0, m
+    assert (dirs[0] / "pkg" / "m.py").read_text() == "from pkg.util import clamp\n\n\ndef f(x):\n    return clamp(x, 0, 9)\n"

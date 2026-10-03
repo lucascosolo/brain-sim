@@ -8,14 +8,15 @@ from pathlib import Path
 
 RESULTS = Path(__file__).resolve().parents[1] / "results" / "pilot_2026-10-03.jsonl"
 CLEANS = {"ledger": Path(__file__).resolve().parent / "ledger_clean" / "ledger",
-          "fleet": Path(__file__).resolve().parent / "fleet_clean" / "fleet"}
+          "fleet": Path(__file__).resolve().parent / "fleet_clean" / "fleet",
+          "fleet2": Path(__file__).resolve().parent / "fleet2_clean" / "fleet"}
 
 
 def reference_diff(row) -> int | None:
     """Changed lines between the run's final ledger/ and the clean reference (addendum measure)."""
     corpus = row.get("corpus", "ledger")
     CLEAN = CLEANS[corpus]
-    final = Path(row["work_dir"]) / "repo" / corpus
+    final = Path(row["work_dir"]) / "repo" / CLEAN.name
     if not final.is_dir():
         return None
     n = 0

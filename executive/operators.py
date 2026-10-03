@@ -164,9 +164,14 @@ class AddMissingImport(Operator):
         anchor = _import_anchor(lines)
         stmt = f"from {module} import {bad}\n"
         if anchor is None:
-            if not lines:
-                return Applicability(False, "empty file")
-            old, new = lines[0], stmt + lines[0]
+            # No import block: insert before the first non-blank line that occurs exactly once,
+            # so the edit has a unique anchor (E5: files starting with blank lines were refused).
+            idx = next((i for i, l in enumerate(lines) if l.strip() and text.count(l) == 1), None)
+            if idx is None:
+                return Applicability(False, "no unique line to anchor the import on")
+            old = "".join(lines[:idx + 1])          # leading blank lines + the anchor: unique prefix
+            gap = "\n\n" if lines[idx].startswith(("def ", "class ", "async def ", "@")) else ""
+            new = stmt + gap + lines[idx]
         else:
             old, new = lines[anchor], lines[anchor] + stmt
         if text.count(old) != 1:

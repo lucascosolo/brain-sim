@@ -1,0 +1,137 @@
+{
+ "s01_refactor_fallout": {
+  "expected_tier": "skill (24) + deliberation (2)",
+  "mutations": [
+   [
+    "fleet/m00.py",
+    "    adjusted = ratio(subtotal, 2)\n",
+    "    adjusted = ratio(subtotl, 2)\n"
+   ],
+   [
+    "fleet/m02.py",
+    "from fleet.util import ratio\n\n\n",
+    "\n\n"
+   ],
+   [
+    "fleet/m03.py",
+    "from fleet.util import scale\n\n\n",
+    "\n\n"
+   ],
+   [
+    "fleet/m06.py",
+    "    adjusted = clamp(subtotal, 1, 31)\n",
+    "    adjusted = clamp(subtotl, 1, 31)\n"
+   ],
+   [
+    "fleet/m07.py",
+    "    adjusted = ratio(subtotal, 4)\n",
+    "    adjusted = ratio(subtotl, 4)\n"
+   ],
+   [
+    "fleet/m08.py",
+    "from fleet.util import scale\n\n\n",
+    "\n\n"
+   ],
+   [
+    "fleet/m09.py",
+    "    adjusted = sum(scale(values, 4))\n",
+    "    adjusted = sum(scale(valeus, 4))\n"
+   ],
+   [
+    "fleet/m10.py",
+    "    adjusted = sum(scale(values, 4))\n",
+    "    adjusted = sum(scale(valeus, 4))\n"
+   ],
+   [
+    "fleet/m11.py",
+    "from fleet.util import scale\n\n\n",
+    "\n\n"
+   ],
+   [
+    "fleet/m12.py",
+    "    adjusted = sum(scale(values, 5))\n",
+    "    adjusted = sum(scale(valeus, 5))\n"
+   ],
+   [
+    "fleet/m14.py",
+    "from fleet.util import ratio\n\n\n",
+    "\n\n"
+   ],
+   [
+    "fleet/m15.py",
+    "    adjusted = sum(scale(values, 4))\n",
+    "    adjusted = sum(scale(valeus, 4))\n"
+   ],
+   [
+    "fleet/m16.py",
+    "from fleet.util import ratio\n\n\n",
+    "\n\n"
+   ],
+   [
+    "fleet/m17.py",
+    "len(values) - 1",
+    "len(values) + 1"
+   ],
+   [
+    "fleet/m18.py",
+    "    adjusted = sum(scale(values, 4))\n",
+    "    adjusted = sum(scale(valeus, 4))\n"
+   ],
+   [
+    "fleet/m19.py",
+    "    adjusted = ratio(subtotal, 4)\n",
+    "    adjusted = ratio(subtotl, 4)\n"
+   ],
+   [
+    "fleet/m20.py",
+    "from fleet.util import scale\n\n\n",
+    "\n\n"
+   ],
+   [
+    "fleet/m21.py",
+    "    adjusted = sum(scale(values, 5))\n",
+    "    adjusted = sum(scale(valeus, 5))\n"
+   ],
+   [
+    "fleet/m22.py",
+    "from fleet.util import scale\n\n\n",
+    "\n\n"
+   ],
+   [
+    "fleet/m23.py",
+    "    adjusted = sum(scale(values, 2))\n",
+    "    adjusted = sum(scale(valeus, 2))\n"
+   ],
+   [
+    "fleet/m24.py",
+    "from fleet.util import clamp\n\n\n",
+    "\n\n"
+   ],
+   [
+    "fleet/m25.py",
+    "    adjusted = sum(scale(values, 2))\n",
+    "    adjusted = sum(scale(valeus, 2))\n"
+   ],
+   [
+    "fleet/m26.py",
+    "from fleet.util import clamp\n\n\n",
+    "\n\n"
+   ],
+   [
+    "fleet/m27.py",
+    "len(values) - 1",
+    "len(values) + 1"
+   ],
+   [
+    "fleet/m28.py",
+    "from fleet.util import ratio\n\n\n",
+    "\n\n"
+   ],
+   [
+    "fleet/m29.py",
+    "from fleet.util import ratio\n\n\n",
+    "\n\n"
+   ]
+  ]
+ }
+}
