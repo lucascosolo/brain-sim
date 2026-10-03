@@ -47,7 +47,8 @@ class Executive:
     def __init__(self, workspace_root: Path | str, state_dir: Path | str, memory_dir: Path | str,
                  deliberator=None, objective: str = "Make the test suite pass", priority: float = 0.9,
                  max_steps: int = 40, max_deliberations_per_subgoal: int = 2, max_deliberations_total: int = 4,
-                 protected: tuple[str, ...] = DEFAULT_PROTECTED, task_id: str | None = None, registry=None):
+                 protected: tuple[str, ...] = DEFAULT_PROTECTED, task_id: str | None = None, registry=None,
+                 env_guard: bool = True):
         self.state_dir = Path(state_dir)
         self.state_path = self.state_dir / "state.json"
         self.trace_path = self.state_dir / "trace.jsonl"
@@ -55,6 +56,7 @@ class Executive:
         self.registry = registry or default_registry()
         self.memory = Memory(memory_dir)
         self.deliberator = deliberator
+        self.env_guard = env_guard           # False only for the E6 ablation that shows what the guard prevents
         self.operators = [RecallVerifiedFix(), FixNameTypo(), AddMissingImport(), DeliberatePatch()]
         if self.state_path.exists():
             self.state = st.load(self.state_path)
@@ -216,6 +218,16 @@ class Executive:
             return
         sub = open_subs[0]
         failure = failures[sub["target"]]
+        if self.env_guard and "reflex sandbox:" in (failure.get("exc_message") or "") + (failure.get("longrepr") or "")[-2000:]:
+            # The test failed because the sandbox refused something (a subprocess, a write outside
+            # the run dir). That is the environment, not a code bug: editing code to dodge the
+            # sandbox would damage correct code. Hand off without touching anything.
+            sub["status"] = "abandoned"
+            sub["resolution"] = "handed off: environment, the sandbox refused an operation this test needs"
+            self.trace("decision", decision="abandon", subgoal=sub["id"], candidates=[],
+                       reason="sandbox denial is an environment limit, not a code bug")
+            self.trace("handoff", subgoal=sub["id"], target=sub["target"], reason="sandbox_denied")
+            return
         candidates = []
         for op in self.operators:
             a = op.applicable(self, sub, failure)

@@ -180,3 +180,15 @@ def test_missing_import_in_a_file_with_no_imports_and_leading_blank_lines(dirs):
     ex, m = run(dirs, build)
     assert m["completed_verified"] and m["llm_calls"] == 0, m
     assert (dirs[0] / "pkg" / "m.py").read_text() == "from pkg.util import clamp\n\n\ndef f(x):\n    return clamp(x, 0, 9)\n"
+
+
+def test_sandbox_denied_failure_is_handed_off_not_edited(dirs):
+    def build(root):
+        T._write(root, {"conftest.py": "", "pkg/__init__.py": "",
+                        "pkg/ver.py": "import subprocess\n\n\ndef version():\n    return subprocess.run(['true']).returncode\n",
+                        "tests/test_ver.py": "from pkg.ver import version\n\n\ndef test_version():\n    assert version() == 0\n"})
+    llm = T.good_model()
+    ex, m = run(dirs, build, deliberator=llm)
+    assert m["status"] == "blocked" and llm.calls == []
+    assert events(dirs[1], "handoff")[0]["reason"] == "sandbox_denied"
+    assert "subprocess.run" in (dirs[0] / "pkg" / "ver.py").read_text()
