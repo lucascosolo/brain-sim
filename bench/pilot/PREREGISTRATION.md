@@ -63,3 +63,14 @@ what this pilot tests).
 - Predictions (to be scored, not to steer): hybrid costs less in both experiments; t01 and t02
   need zero deliberations; the executive completes at least half the deliberation tasks alone
   with Haiku; no executive harm.
+
+## Addendum, 2026-10-03, written while E2 was running and before any E2 result was read
+
+Owner: task success and output should look about the same as, or better than, the LLM alone.
+Task success is already the primary quality rule (correct runs, held-out tests). Added as a
+**secondary output-quality measure**, computed from the run directories by `analyze.py`:
+- **matches_reference**: every file under `ledger/` is identical to `ledger_clean/` after the
+  run (the seeded bug was reverted exactly, nothing else changed);
+- **diff_lines_vs_reference**: changed lines between the final `ledger/` and `ledger_clean/`
+  (0 is ideal; larger means extra or different changes).
+Reported per arm next to the primary result. It does not change the decision rules above.
