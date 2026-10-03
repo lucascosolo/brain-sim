@@ -22,6 +22,7 @@ from pathlib import Path
 
 from reflex import EXECUTE_SANDBOXED, READ_ONLY, WRITE_WORKSPACE, Workspace, default_registry
 
+from . import gaming
 from . import state as st
 from .deliberation import PATCH_SCHEMA, DeliberationRequest, validate_patch
 from .memory import Memory
@@ -344,14 +345,14 @@ class Executive:
                 sub["resolution"] = f"handed off: {plan.replace('_', ' ')}"
                 self.trace("handoff", subgoal=sub["id"], target=sub["target"], reason=plan)
             return
-        if op.uses_llm:
-            too_big = self._out_of_scope(plan)
-            if too_big:
-                self._record_attempt(sub, op, plan, "out_of_scope", prediction_error=None, note=too_big)
-                sub["status"] = "abandoned"
-                sub["resolution"] = f"handed off: {too_big}"
-                self.trace("handoff", subgoal=sub["id"], target=sub["target"], reason=too_big)
-                return
+        too_big = (self._out_of_scope(plan) if op.uses_llm else None) or \
+            gaming.suspicious(self.ws.root, plan.edits, sub["target"])
+        if too_big:
+            self._record_attempt(sub, op, plan, "out_of_scope", prediction_error=None, note=too_big)
+            sub["status"] = "abandoned"
+            sub["resolution"] = f"handed off: {too_big}"
+            self.trace("handoff", subgoal=sub["id"], target=sub["target"], reason=too_big)
+            return
         self._apply(sub, op, plan, failure)
 
     @staticmethod

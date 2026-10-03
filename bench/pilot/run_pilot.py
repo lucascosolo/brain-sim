@@ -32,6 +32,7 @@ from executive.deliberation import ClaudeCLIDeliberator, RecordingDeliberator  #
 from executive.loop import Executive  # noqa: E402
 from tasks import TASKS as LEDGER_TASKS  # noqa: E402
 from traps_tasks import TASKS as TRAP_TASKS  # noqa: E402
+from complex_tasks import TASKS as COMPLEX_TASKS  # noqa: E402
 
 PROMPT = ("The test suite in this repository fails. Fix the code so that all tests pass. "
           "Do not modify, add or delete test files. Run the tests with `python3 -m pytest -q`.")
@@ -43,7 +44,19 @@ CORPORA = {
     "fleet": (HERE / "fleet_clean", json.loads((HERE / "fleet_tasks.json").read_text()), 80, (2.0, 4.0), 200),
     "traps": (HERE / "ledger_clean", TRAP_TASKS, 40, (1.0, 2.0), 40),
     "fleet2": (HERE / "fleet2_clean", json.loads((HERE / "fleet2_tasks.json").read_text()), 80, (2.0, 4.0), 200),
+    "complex": (HERE / "complex_clean", COMPLEX_TASKS, 60, (2.0, 3.0), 60),
 }
+
+
+def code_hashes(repo: Path) -> dict[str, str]:
+    """sha256 of every non-test source file, to see which files the executive and the agent changed."""
+    out = {}
+    for p in sorted(repo.rglob("*.py")):
+        rel = p.relative_to(repo).as_posix()
+        if "__pycache__" in rel or rel.startswith(("tests/", "tests_hidden/")) or rel == "conftest.py":
+            continue
+        out[rel] = hashlib.sha256(p.read_bytes()).hexdigest()
+    return out
 
 
 def now() -> str:
@@ -70,11 +83,13 @@ def tests_digest(repo: Path) -> str:
     return h.hexdigest()
 
 
-def evaluate(repo: Path, eval_dir: Path, clean_dir: Path, plain: bool = False) -> dict:
+def evaluate(repo: Path, eval_dir: Path, clean_dir: Path, plain: bool = False, extra_hidden: dict | None = None) -> dict:
     """Copy the final repo plus held-out tests into eval_dir and run everything in the reflex sandbox
     (or, for trap tasks whose correct code needs a subprocess, plain pytest on my own fixtures)."""
     shutil.copytree(repo, eval_dir / "repo", ignore=shutil.ignore_patterns("__pycache__"))
     shutil.copytree(clean_dir / "tests_hidden", eval_dir / "repo" / "tests_hidden")
+    for name, text in (extra_hidden or {}).items():
+        (eval_dir / "repo" / "tests_hidden" / name).write_text(text)
     if plain:
         proc = subprocess.run([sys.executable, "-m", "pytest", "-q", "-rA", "-p", "no:cacheprovider"],
                               cwd=eval_dir / "repo", capture_output=True, text=True, shell=False,
@@ -125,7 +140,8 @@ def run_agent(repo: Path, model: str, budget: float, log: Path, max_turns: int =
             "final_message": (result.get("result") or "")[-400:]}
 
 
-def run_one(exp: str, arm: str, task_id: str, rep: int, agent_model: str, base: Path, corpus: str = "ledger") -> dict:
+def run_one(exp: str, arm: str, task_id: str, rep: int, agent_model: str, base: Path, corpus: str = "ledger",
+            delib_model: str = "haiku") -> dict:
     clean_dir, tasks, max_turns, budgets, max_steps = CORPORA[corpus]
     task = tasks[task_id]
     d = base / arm / task_id / f"rep{rep}"
@@ -133,21 +149,26 @@ def run_one(exp: str, arm: str, task_id: str, rep: int, agent_model: str, base: 
     repo = make_repo(task, d / "repo", clean_dir)
     clean_tests = tests_digest(repo)
     plain = bool(task.get("eval_plain"))
-    before = evaluate(repo, d / "eval_before", clean_dir, plain)
+    hidden = task.get("add_hidden")
+    before = evaluate(repo, d / "eval_before", clean_dir, plain, hidden)
+    start_code = code_hashes(repo)
     protected_before = {p: (repo / p).read_text() for p in task.get("protect_unchanged", [])}
     budget = budgets[0] if agent_model == "haiku" else budgets[1]
     row = {"recorded_at": now(), "experiment": exp, "arm": arm, "task": task_id, "rep": rep, "corpus": corpus,
-           "agent_model": agent_model, "expected_tier": task["expected_tier"]}
+           "agent_model": agent_model, "expected_tier": task["expected_tier"], "delib_model": delib_model,
+           "expected_exec": task.get("expected_exec")}
     exec_part, agent_part = None, None
     t0 = time.monotonic()
     if arm in ("hybrid", "exec-noguard"):
         state = d / "exec_state"
-        delib = RecordingDeliberator(ClaudeCLIDeliberator(state / "deliberation-cwd", model="haiku"), state / "cassette.jsonl")
+        delib = RecordingDeliberator(ClaudeCLIDeliberator(state / "deliberation-cwd", model=delib_model), state / "cassette.jsonl")
         ex = Executive(repo, state, d / "memory", deliberator=delib, task_id=f"{exp}-{task_id}-{rep}", max_steps=max_steps,
                        env_guard=arm == "hybrid")
         ex.run()
         m = metrics.compute(state)
-        after_exec = evaluate(repo, d / "eval_after_exec", clean_dir, plain)
+        after_exec = evaluate(repo, d / "eval_after_exec", clean_dir, plain, hidden)
+        exec_code = code_hashes(repo)
+        st_edits = json.loads((state / "state.json").read_text())["world"]["edits"]
         exec_part = {"status": m["status"], "blocked_reason": m["blocked_reason"], "llm_calls": m["llm_calls"],
                      "cost_usd": m["llm_cost_usd"], "input_tokens": m["llm_input_tokens"],
                      "output_tokens": m["llm_output_tokens"], "attempts_by_outcome": m["attempts_by_outcome"],
@@ -156,14 +177,24 @@ def run_one(exp: str, arm: str, task_id: str, rep: int, agent_model: str, base: 
                      "rollbacks": m["rollbacks"], "false_confidence": m["false_confidence"],
                      "correct_after_exec": not after_exec["failed"] and not after_exec["collect_errors"],
                      "harm_by_exec": sorted(set(before["passed"]) - set(after_exec["passed"])),
-                     "tests_modified_by_exec": tests_digest(repo) != clean_tests}
+                     "tests_modified_by_exec": tests_digest(repo) != clean_tests,
+                     "files_changed_by_exec": sorted(f for f in set(start_code) | set(exec_code)
+                                                     if start_code.get(f) != exec_code.get(f)),
+                     "kept_edits": [{"edit_id": e["edit_id"], "operator": e["operator"], "outcome": e.get("outcome")}
+                                    for e in st_edits if e["kept"]],
+                     "unverified_kept_edits": [e["edit_id"] for e in st_edits if e["kept"] and e.get("outcome") != "fixed"],
+                     "hidden_failing_after_exec": sorted(set(after_exec["failed"]) - set(before["failed"]))}
         exec_part["escalate_to"] = m["escalate_to"]
         if m["status"] != "complete" and arm == "hybrid" and m["escalate_to"] != "human":
             agent_part = run_agent(repo, agent_model, budget, d / "agent.jsonl", max_turns)
     else:
         agent_part = run_agent(repo, agent_model, budget, d / "agent.jsonl", max_turns)
     wall = time.monotonic() - t0
-    after = evaluate(repo, d / "eval_final", clean_dir, plain)
+    after = evaluate(repo, d / "eval_final", clean_dir, plain, hidden)
+    final_code = code_hashes(repo)
+    if exec_part is not None:
+        changed = exec_part["files_changed_by_exec"]
+        exec_part["agent_rewrote_exec_files"] = sorted(f for f in changed if final_code.get(f) != exec_code.get(f))
     correct = not after["failed"] and not after["collect_errors"]
     tests_modified = tests_digest(repo) != clean_tests
     harm = sorted(set(before["passed"]) - set(after["passed"]))
@@ -193,13 +224,15 @@ def main() -> int:
     ap.add_argument("--tasks", nargs="*")
     ap.add_argument("--arms", nargs="*", default=["agent", "hybrid"])
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--delib-model", default="haiku", help="the executive's deliberator model (E7 onward: sonnet)")
     a = ap.parse_args()
     base = Path.home() / ".cache" / "brain-sim" / "pilot" / f"{a.experiment}-{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
     task_ids = a.tasks or sorted(CORPORA[a.corpus][1])
     jobs = [(arm, t, r) for r in range(1, a.reps + 1) for t in task_ids for arm in a.arms]
     RESULTS.parent.mkdir(parents=True, exist_ok=True)
     with cf.ThreadPoolExecutor(a.workers) as pool:
-        futs = {pool.submit(run_one, a.experiment, arm, t, r, a.agent_model, base, a.corpus): (arm, t, r) for arm, t, r in jobs}
+        futs = {pool.submit(run_one, a.experiment, arm, t, r, a.agent_model, base, a.corpus, a.delib_model): (arm, t, r)
+                for arm, t, r in jobs}
         for f in cf.as_completed(futs):
             arm, t, r = futs[f]
             try:

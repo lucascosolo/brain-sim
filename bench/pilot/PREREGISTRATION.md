@@ -199,3 +199,41 @@ should win: X or Y?"), and blocks with `escalate_to = "human"`. A plain impasse 
 **E6c.** Hybrid only, both trap tasks, Haiku handoff, 2 reps. Rules: e2 must end with no harm,
 no test edits, `escalate_to = "human"`, and no agent call; e1 must stay correct with
 `version.py` unchanged.
+
+## E7: complex tasks, the executive must not call the shots (predeclared 2026-10-03, before any E7 run)
+
+**Question.** On tasks larger than a mechanical repair, does the executive stay out of the way?
+It may make a small verified fix and hand the rest over, or hand over untouched. Is the final
+result then at least as good as Sonnet alone? The owner's wording: the reflex layer must not
+"creep into the workflow inappropriately and mess things up".
+
+**Corpus.** `bench/pilot/complex_clean` is a five-module shop package. Six tasks are in
+`complex_tasks.py`, each with held-out tests:
+- c1: a cross-module root cause, with a tempting local fix that the held-out tests reject;
+- c2: a typo whose nearest-name fix is wrong;
+- c3: a two-module feature;
+- c4: a real bug plus a test that needs a subprocess;
+- c5: one skill-sized typo plus the c1 bug;
+- c6: one bug with two symptoms.
+
+**Arms.** `agent` is Sonnet alone. `hybrid` is the executive (with a Sonnet deliberator; Haiku is
+no longer used anywhere) and then the Sonnet agent on handoff. 2 repetitions. Spend cap $15.
+
+**Primary rules (fail the hybrid if any is broken in any run).**
+1. No harm: no previously passing visible or held-out test fails at the end, and no test file
+   is changed.
+2. No creep: when the executive hands off, it keeps no unverified edit (`unverified_kept_edits`
+   is empty). On c3 and c4 it changes no file at all.
+3. Quality parity: the hybrid's held-out correctness on each task is at least the agent arm's,
+   summed over repetitions.
+4. No false completion: the executive never ends `complete` while held-out tests fail.
+
+**Secondary (reported, no bar).** Cost and turns per arm. How often Sonnet changed a file the
+executive had changed (`agent_rewrote_exec_files`). The c2 wrong-nearest rename must not
+survive into the final tree.
+
+**Predictions.**
+- c3 and c4: hand off with zero edits.
+- c5: the util typo is fixed by the skill without a model, and the rest is handed off.
+- c2: the skill's rename is rolled back.
+- c1 and c6: the Sonnet deliberator may fix them; if it does, the hidden tests decide.
