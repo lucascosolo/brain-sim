@@ -10,8 +10,12 @@ reaches an impasse. Deterministic capabilities come from
 Status, 2026-10-03: first vertical slice. The executive makes a Python repository's failing
 tests pass. It fixes what memory and skills can fix with no model, escalates the rest, rolls
 back edits whose predicted effect is contradicted, and declares success only on a fresh,
-sandboxed test run. Every model answer so far is scripted; no live model has been called.
-Details: [`docs/report-2026-10-03.md`](docs/report-2026-10-03.md).
+sandboxed test run. Measured live on 2026-10-03, with predeclared rules: equal task success
+to a plain Claude CLI agent (judged on held-out tests), with 60-92% less model spend and 84-97%
+fewer model turns. It never broke a test and never claimed a false success in 92 runs.
+These are small, synthetic corpora, so read the limits:
+[`docs/report-2026-10-03-experiments.md`](docs/report-2026-10-03-experiments.md). First-pass
+architecture report: [`docs/report-2026-10-03.md`](docs/report-2026-10-03.md).
 
 ## Run it
 
