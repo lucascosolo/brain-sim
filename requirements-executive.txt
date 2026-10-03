@@ -1,0 +1,4 @@
+# The executive (executive/) needs only the standard library plus reflex-layer and pytest.
+# Run from the brain-sim root with reflex-layer checked out beside it.
+-e ../reflex-layer
+pytest
