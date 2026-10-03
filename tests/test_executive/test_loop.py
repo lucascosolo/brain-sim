@@ -121,7 +121,10 @@ def test_resume_after_interruption_continues_from_persisted_state(dirs):
     T.task_typo(repo)
     Executive(repo, state, memory, max_steps=2).run()        # observe + apply, then the budget stops it
     s = json.loads((state / "state.json").read_text())
-    assert s["status"] == "blocked" and s["pending_prediction"]["operator"] == "fix_name_typo"
+    assert s["status"] == "blocked" and s["pending_prediction"] is None
+    # the unevaluated edit was handed back: a blocked task leaves the original tree (F5)
+    assert "return totl / len(xs)" in (repo / "calc" / "stats.py").read_text()
+    assert events(state, "restored_on_block")
     s["status"], s["blocked_reason"], s["goals"][0]["status"] = "active", None, "active"
     (state / "state.json").write_text(json.dumps(s))      # the human grants more budget
     ex = Executive(repo, state, memory, max_steps=10)
@@ -205,3 +208,59 @@ def test_repeated_identical_regressions_escalate_to_a_human(dirs):
 def test_plain_impasse_escalates_to_the_agent_tier(dirs):
     ex, m = run(dirs, T.task_logic_bug)
     assert m["escalate_to"] == "agent"
+
+
+def test_suite_that_exits_early_blocks_instead_of_completing(dirs):
+    """Review finding F3: a suite that calls os._exit(0) before a failing test must not read as complete."""
+    def build(root):
+        T.task_passing(root)
+        (root / "tests" / "test_zz_exit.py").write_text(
+            "import os\ndef test_exit():\n    os._exit(0)\ndef test_fails():\n    assert False\n")
+    ex, m = run(dirs, build)
+    assert m["status"] == "blocked" and not m["completed_verified"], m
+    assert "report_unverified" in m["blocked_reason"]
+
+
+def _model(edits, name):
+    from executive.deliberation import ScriptedDeliberator
+    return ScriptedDeliberator(lambda req: {"diagnosis": name, "confidence": 0.9, "edits": edits}, name)
+
+
+def test_editing_test_config_to_deselect_is_refused(dirs):
+    """Review finding F4 (A): `addopts = -k 'not median_even'` used to produce `complete`."""
+    def build(root):
+        T.task_logic_bug(root)
+        (root / "pytest.ini").write_text("[pytest]\n")
+    llm = _model([{"path": "pytest.ini", "old": "[pytest]\n", "new": "[pytest]\naddopts = -k 'not median_even'\n"}],
+                 "deselect")
+    ex, m = run(dirs, build, deliberator=llm)
+    assert not m["completed_verified"] and m["status"] == "blocked", m
+    assert (dirs[0] / "pytest.ini").read_text() == "[pytest]\n"
+    outcomes = [a["outcome"] for a in ex.goal["subgoals"][0]["attempts"]]
+    assert "edit_refused" in outcomes
+
+
+def test_library_side_skip_does_not_count_as_a_fix(dirs):
+    """Review finding F4 (B'): code under test that calls pytest.skip makes the failure vanish, not pass."""
+    llm = _model([{"path": "calc/stats.py", "old": "return (s[mid] + s[mid + 1]) / 2",
+                   "new": "return __import__('pytest').skip('gamed')"}], "skip")
+    ex, m = run(dirs, T.task_logic_bug, deliberator=llm)
+    assert not m["completed_verified"] and m["status"] == "blocked", m
+    assert "now skipped" in m["blocked_reason"]
+    assert "return (s[mid] + s[mid + 1]) / 2" in (dirs[0] / "calc" / "stats.py").read_text()
+    assert events(dirs[1], "restored_on_block")
+
+
+def test_blocked_task_hands_back_the_original_tree(dirs):
+    """Review finding F5 (D): a 'progressed' edit used to stay in the tree after the task blocked."""
+    llm = _model([{"path": "calc/stats.py", "old": "return (s[mid] + s[mid + 1]) / 2",
+                   "new": "return undefined_helper(s, mid)"}], "progress-only")
+    before = (T.task_logic_bug(dirs[0]) / "calc" / "stats.py").read_text()
+    ex = Executive(dirs[0], dirs[1], dirs[2], deliberator=llm, max_deliberations_per_subgoal=1)
+    ex.run()
+    m = metrics.compute(dirs[1])
+    assert m["status"] == "blocked", m
+    outcomes = [a["outcome"] for a in ex.goal["subgoals"][0]["attempts"]]
+    assert "progressed" in outcomes, outcomes
+    assert (dirs[0] / "calc" / "stats.py").read_text() == before
+    assert all(not e["kept"] for e in ex.state["world"]["edits"])

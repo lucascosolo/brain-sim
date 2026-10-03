@@ -29,7 +29,9 @@ from .operators import (TIER_NAMES, TIER_REFLEX, AddMissingImport, DeliberatePat
                         RecallVerifiedFix)
 from .signatures import context_hash, signature
 
-DEFAULT_PROTECTED = ("tests/*", "test_*.py", "*/test_*.py", "*_test.py", "conftest.py", "*/conftest.py")
+DEFAULT_PROTECTED = ("tests/*", "test_*.py", "*/test_*.py", "*_test.py", "conftest.py", "*/conftest.py",
+                     # test configuration decides what runs; editing it can "fix" by deselection (F4)
+                     "pytest.ini", "*/pytest.ini", "pyproject.toml", "setup.cfg", "tox.ini")
 PROJECTION_FILE_LINES = 150
 # Scope guard: a model-proposed change larger than this is outside what the executive can verify
 # cheaply. It is not applied; the subgoal is handed off (abandoned with a reason) instead.
@@ -113,6 +115,8 @@ class Executive:
             self.trace("decision", decision="observe", reason="test facts unknown" if not tests["known"]
                        else "workspace changed since the last observation")
             self._observe()
+        elif self._baseline_lost():
+            self._block(self._baseline_lost())
         elif self._satisfied():
             self.trace("decision", decision="complete", reason="fresh run: every collected test passes")
             self.goal["status"] = "satisfied"
@@ -127,9 +131,56 @@ class Executive:
 
     def _satisfied(self) -> bool:
         t = self.state["world"]["tests"]
-        return t["fresh"] and t["n_collected"] > 0 and not t["failed"] and not t["collect_errors"]
+        return (t["fresh"] and t["exit_meaning"] == "all_passed" and t["n_collected"] > 0
+                and not t["failed"] and not t["collect_errors"] and not self._baseline_lost())
+
+    def _baseline_lost(self) -> str | None:
+        """Tests that ran at the start must still be collected, and none may have become a skip.
+
+        Without this, an edit can make a suite "pass" by making tests vanish or skip
+        (review finding F4: a deselecting config; a library-side pytest.skip).
+        """
+        t = self.state["world"]["tests"]
+        base = t.get("baseline")
+        if not (t["fresh"] and base and t.get("exit_meaning") in ("all_passed", "tests_failed")):
+            return None
+        missing = sorted(set(base["collected"]) - set(t.get("collected") or []))
+        now_skipped = sorted(set(base["ran"]) & set(t.get("skipped") or []))
+        if missing:
+            return f"tests collected at the start are no longer collected: {missing[:5]}"
+        if now_skipped:
+            return f"tests that ran at the start are now skipped: {now_skipped[:5]}"
+        return None
+
+    def _restore_unverified_edits(self) -> None:
+        """On block, hand back the original tree unless every kept edit is a verified fix (F5).
+
+        All kept edits are restored, newest first, when any one of them is unverified: a later
+        edit may sit on top of an earlier one in the same file, so restoring only some of them
+        could leave a mixture that never existed.
+        """
+        kept = [e for e in self.state["world"]["edits"] if e["kept"]]
+        if not kept or all(e.get("outcome") == "fixed" for e in kept):
+            return
+        for e in reversed(kept):
+            for rec in reversed(e["write_records"]):
+                self.reflex("fs.restore", WRITE_WORKSPACE, write_record=rec)
+            e["kept"] = False
+            e["restored_on_block"] = True
+        pending = self.state["pending_prediction"]
+        if pending and pending.get("kind") == "edit":
+            # the restored edit was never evaluated: close its attempt so a resumed run re-observes
+            sub = self._subgoal(pending["subgoal"])
+            for a in sub["attempts"]:
+                if a["outcome"] == "pending":
+                    a["outcome"] = "restored_on_block"
+        self.state["pending_prediction"] = None
+        self.state["world"]["tests"]["fresh"] = False
+        self.trace("restored_on_block", edits=[e["edit_id"] for e in kept],
+                   unverified=[e["edit_id"] for e in kept if e.get("outcome") != "fixed"])
 
     def _block(self, reason: str) -> None:
+        self._restore_unverified_edits()
         self.state["status"] = "blocked"
         self.state["blocked_reason"] = reason
         conflict = any((s.get("resolution") or "").startswith("conflict") for s in self.goal["subgoals"])
@@ -148,12 +199,18 @@ class Executive:
         tests = self.state["world"]["tests"]
         tests.update(known=True, fresh=True, observed_at_step=self.state["step"], exit_meaning=d["exit_meaning"],
                      n_collected=d["n_collected"], passed=d["passed"], failed=d["failed"],
-                     collect_errors=d["collect_errors"], sandbox_denials=d["sandbox_denials"])
+                     collect_errors=d["collect_errors"], sandbox_denials=d["sandbox_denials"],
+                     collected=d.get("collected", []), skipped=d.get("skipped", []))
+        if tests.get("baseline") is None and d["exit_meaning"] in ("all_passed", "tests_failed"):
+            tests["baseline"] = {"collected": sorted(d.get("collected", [])),
+                                 "ran": sorted(set(d["passed"]) | set(d["failed"]))}
         self.trace("observation", exit_meaning=d["exit_meaning"], n_passed=len(d["passed"]),
                    failed=sorted(d["failed"]), collect_errors=[c["nodeid"] for c in d["collect_errors"]],
                    sandbox_denials=len(d["sandbox_denials"]), duration_ms=d["duration_ms"])
-        if d["exit_meaning"] in ("internal_error", "usage_error", "interrupted", "timed_out"):
-            self._block(f"test runner ended with {d['exit_meaning']}")
+        if d["exit_meaning"] not in ("all_passed", "tests_failed", "no_tests_collected"):
+            # an allowlist, so a new runner outcome (report_unverified, unknown) blocks by default
+            problems = "; ".join(d.get("integrity_problems") or [])
+            self._block(f"test runner ended with {d['exit_meaning']}" + (f": {problems}" if problems else ""))
             return
         pending = self.state["pending_prediction"]
         if pending is not None:
@@ -361,6 +418,7 @@ class Executive:
         error = max(target_error, 1.0 if regressions else 0.0)
         attempt = next(a for a in reversed(sub["attempts"]) if a["outcome"] == "pending")
         attempt.update(outcome=outcome, prediction_error=error, regressions=regressions)
+        next(e for e in self.state["world"]["edits"] if e["edit_id"] == p["edit_id"])["outcome"] = outcome
         op_name = p["operator"]
         self.memory.update_operator(op_name, p["signature_before"]["class"], outcome)
         self.trace("evaluation", evaluation_of="edit", edit_id=p["edit_id"], subgoal=sub["id"], outcome=outcome, prediction_error=error,

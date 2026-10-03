@@ -130,3 +130,28 @@ generator. The refusal is structural, through `Workspace.is_protected`, not an i
 
 **Revisit for** tasks whose goal is to write or fix tests. Those need a different verifier
 (for example mutation checks), not a removed guard.
+
+## 2026-10-03: the executive verifies against the start-of-task test set and hands back a clean tree on block
+
+**Decision.** Three changes, each closing a finding from the adversarial review.
+- Test configuration (`pytest.ini`, `pyproject.toml`, `setup.cfg`, `tox.ini`) is protected by
+  default, like tests. A model edit to it is refused (F4 A: a deselecting `addopts` used to
+  produce `complete`).
+- The first fresh observation records a baseline: the collected test ids and the ones that ran.
+  Completion now also requires every baseline test to be collected still and none that ran to
+  have become a skip. Otherwise the task blocks with the names (F4: a library-side
+  `pytest.skip` made the failure vanish and read as fixed).
+- On block, if any kept edit is not a verified fix, every kept edit is restored, newest first,
+  and the pending attempt is closed as `restored_on_block` (F5). Restoring all, not only the
+  unverified ones, avoids leaving a mixture of edits that never existed together. When every
+  kept edit is a verified fix, they stay, because the handoff agent benefits from them.
+- The executive blocks on any runner outcome outside `all_passed`, `tests_failed`,
+  `no_tests_collected`, and requires `all_passed` for completion. This picks up reflex-layer's
+  new `report_unverified` (F3) and anything added later.
+
+**Changed test.** The resume test used to assert that the pending edit survived the
+budget stop. That edit is now restored; the test asserts the original tree, then that a resumed
+run re-applies the fix and completes.
+
+**Not closed.** F4 C (a float subclass whose `__eq__` is always true) passes every test and
+needs the mutation half of CANDIDATES.md B4.

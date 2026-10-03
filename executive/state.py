@@ -43,7 +43,7 @@ def new_state(task_id: str, workspace_root: str, objective: str, priority: float
         "world": {
             "tests": {"known": False, "fresh": False, "observed_at_step": None, "exit_meaning": None,
                       "n_collected": 0, "passed": [], "failed": {}, "collect_errors": [],
-                      "sandbox_denials": []},
+                      "sandbox_denials": [], "collected": [], "skipped": [], "baseline": None},
             "edits": [],
         },
         "intention": None,
