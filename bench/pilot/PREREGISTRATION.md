@@ -237,3 +237,29 @@ survive into the final tree.
 - c5: the util typo is fixed by the skill without a model, and the rest is handed off.
 - c2: the skill's rename is rolled back.
 - c1 and c6: the Sonnet deliberator may fix them; if it does, the hidden tests decide.
+
+## E7 result and E7b (predeclared 2026-10-03, after E7 rep 1, before E7b)
+
+**E7 rep 1, from the result rows.** The agent arm (Sonnet alone) was correct on 6/6 at
+$0.03–0.06 a task. The hybrid was correct on 4/6. **Rules 3 and 4 fail.** On c1 and c5 the
+Sonnet deliberator was shown `orders.py` but not `tax.py`. Its own diagnosis said "tax.py wasn't
+shown, so I divide by 100 in Order.total. This is inferred, not run." It stated confidence 0.6.
+The executive applied that caller-side compensation, the visible tests passed, and it declared
+`complete` with a held-out test failing. That is the "reflex layer calling the shots" failure.
+- c3 and c4: handed off with zero edits, as predicted.
+- c6: fixed correctly by the deliberator.
+- c2: correct in the end.
+- Rules 1 and 2 held: no previously passing test broken by the hybrid before handoff, and no
+  unverified edit kept at a handoff.
+
+**Changes (brain-sim DECISIONS.md, 2026-10-03).**
+- The projection follows imports one hop further and truncates by priority, not by name. A
+  `from pkg import mod` import now resolves to the submodule. That bug alone hid `tax.py`.
+- A model edit is handed off, not applied, when the edited function calls into a workspace
+  module the model was not shown.
+- A model edit is handed off when the model's stated confidence is below 0.8.
+
+**E7b.** Same corpus, both arms, 2 repetitions (the agent arm's rep 1 is not reused, so the
+comparison is same-time). The rules are E7's four, unchanged. Prediction: the hybrid is
+correct on every task in both repetitions, either by a fix the deliberator could see, or by
+handing off to the agent.

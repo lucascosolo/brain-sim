@@ -39,6 +39,8 @@ PROJECTION_FILE_LINES = 150
 MAX_DELIBERATION_FILES = 2
 MAX_PROJECTION_FILES = 6
 MAX_DELIBERATION_CHANGED_LINES = 30
+# A model patch the model itself is unsure of is handed off with the patch as a hint, not applied.
+MIN_DELIBERATION_CONFIDENCE = 0.8
 PATH_LINE_RE = re.compile(r"^(?P<path>[\w./-]+\.py):(?P<line>\d+)")
 
 
@@ -355,8 +357,67 @@ class Executive:
             return
         self._apply(sub, op, plan, failure)
 
+    def _out_of_scope(self, plan: Plan) -> str | None:
+        conf = (plan.llm or {}).get("confidence")
+        if isinstance(conf, (int, float)) and conf < MIN_DELIBERATION_CONFIDENCE:
+            return f"the model's stated confidence {conf} is below {MIN_DELIBERATION_CONFIDENCE}"
+        unseen = self._unseen_callees(plan)
+        if unseen:
+            return ("the edited code calls into workspace modules the model was not shown "
+                    f"({', '.join(unseen[:3])}); a fix there cannot be judged from this view")
+        return self._too_large(plan)
+
+    def _unseen_callees(self, plan: Plan) -> list[str]:
+        """Workspace modules called from the functions an edit touches that were not in the projection."""
+        shown = getattr(self, "_shown_files", set())
+        unseen: set[str] = set()
+        for e in plan.edits:
+            try:
+                text = self.ws.read_text(e["path"])
+                tree = ast.parse(text)
+            except Exception:
+                continue
+            at = text.find(e["old"])
+            if at < 0:
+                continue
+            first = text.count("\n", 0, at) + 1
+            last = first + e["old"].count("\n")
+            bound = {}  # local name -> workspace module file, from the file's imports
+            for node in tree.body:
+                if isinstance(node, ast.Import):
+                    for a in node.names:
+                        f = self._module_file(a.name)
+                        if f:
+                            bound[a.asname or a.name.split(".")[0]] = f
+                elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
+                    for a in node.names:
+                        f = self._module_file(f"{node.module}.{a.name}") or self._module_file(node.module)
+                        if f:
+                            bound[a.asname or a.name] = f
+            scopes = [n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                      and n.lineno <= first and (n.end_lineno or n.lineno) >= last]
+            scope = min(scopes, key=lambda n: (n.end_lineno or n.lineno) - n.lineno) if scopes else tree
+            for node in ast.walk(scope):
+                if isinstance(node, ast.Call):
+                    root = node.func
+                    while isinstance(root, ast.Attribute):
+                        root = root.value
+                    if isinstance(root, ast.Name) and root.id in bound and bound[root.id] not in shown \
+                            and bound[root.id] != e["path"]:
+                        unseen.add(bound[root.id])
+        return sorted(unseen)
+
+    def _module_file(self, dotted: str) -> str | None:
+        for rel in (dotted.replace(".", "/") + ".py", dotted.replace(".", "/") + "/__init__.py"):
+            try:
+                if self.ws.resolve(rel).is_file():
+                    return rel
+            except Exception:
+                pass
+        return None
+
     @staticmethod
-    def _out_of_scope(plan: Plan) -> str | None:
+    def _too_large(plan: Plan) -> str | None:
         files = {e["path"] for e in plan.edits}
         changed = sum(max(e["old"].count("\n"), e["new"].count("\n")) + 1 for e in plan.edits)
         if len(files) > MAX_DELIBERATION_FILES:
@@ -487,9 +548,9 @@ class Executive:
         frames = [f for f in failure.get("frames") or [] if f.get("path")]
         for f in frames:
             files.setdefault(f["path"], []).append(f["line"])
+        imported: list[str] = []
         for path in list(files):
-            for mod in self._imported_workspace_modules(path):
-                files.setdefault(mod, [1])
+            imported += self._imported_workspace_modules(path)
         if frames:
             called = self.reflex("py.called_names", READ_ONLY, path=frames[-1]["path"], line=frames[-1]["line"])
             for name in (called.data["names"] if called.ok else []):
@@ -499,7 +560,14 @@ class Executive:
                 pick = tops if len(tops) == 1 else (defs if len(defs) == 1 else [])
                 for h in pick:                  # ambiguous names would need type resolution; skip them
                     files.setdefault(h["path"], []).append(h["line"])
-        return dict(sorted(files.items())[:MAX_PROJECTION_FILES]) if len(files) > MAX_PROJECTION_FILES else files
+        # One more hop: the modules that the code under suspicion imports. Without it the model
+        # patched a caller to compensate for a bug in a module it was never shown (E7 c1, c5).
+        for path in [p for p in list(files) if not self.ws.is_protected(p)]:
+            imported += self._imported_workspace_modules(path)
+        for mod in imported:
+            files.setdefault(mod, [1])
+        # Truncate by priority (insertion order: frames, called definitions, imports), never by name.
+        return dict(list(files.items())[:MAX_PROJECTION_FILES])
 
     def _imported_workspace_modules(self, path: str) -> list[str]:
         try:
@@ -508,8 +576,13 @@ class Executive:
             return []
         mods = set()
         for node in tree.body:
-            names = [node.module] if isinstance(node, ast.ImportFrom) and node.module and not node.level else \
-                [a.name for a in node.names] if isinstance(node, ast.Import) else []
+            if isinstance(node, ast.ImportFrom) and node.module and not node.level:
+                # `from shop import rates` imports the submodule shop/rates.py when it exists
+                names = [f"{node.module}.{a.name}" for a in node.names] + [node.module]
+            elif isinstance(node, ast.Import):
+                names = [a.name for a in node.names]
+            else:
+                names = []
             for m in names:
                 for rel in (m.replace(".", "/") + ".py", m.replace(".", "/") + "/__init__.py"):
                     try:
@@ -550,6 +623,7 @@ class Executive:
         if not any(f["editable"] for f in projection["files"]):
             # Asking for edits to code the model cannot see buys invented source text (E2).
             return "no_evidence"
+        self._shown_files = {f["path"] for f in projection["files"]}
         req = DeliberationRequest("propose_patch", projection, PATCH_SCHEMA)
         self.state["counters"]["deliberations"] += 1
         self.trace("deliberation_request", subgoal=sub["id"], deliberator=self.deliberator.name,

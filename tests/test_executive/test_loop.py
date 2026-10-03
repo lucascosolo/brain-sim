@@ -296,3 +296,51 @@ def test_swallowing_the_error_is_refused(dirs):
     ex, m = run(dirs, T.task_logic_bug, deliberator=llm)
     assert not m["completed_verified"], m
     assert "broad except" in ex.goal["subgoals"][0]["resolution"] or "literal" in ex.goal["subgoals"][0]["resolution"]
+
+
+def _shop(root):
+    """Two modules: the bug is in rates.py, the failing test only exercises orders.py."""
+    T._write(root, {
+        "conftest.py": "", "shop/__init__.py": "",
+        "shop/rates.py": "RATE = 7.25  # meant as a fraction: 0.0725\n\n\ndef tax_on(x):\n    return round(x * RATE, 2)\n",
+        "shop/orders.py": "from shop import rates\n\n\ndef total(x):\n    return round(x + rates.tax_on(x), 2)\n",
+        "tests/test_orders.py": "from shop.orders import total\n\n\ndef test_total():\n    assert total(100.0) == 107.25\n",
+    })
+
+
+def test_projection_shows_the_module_the_suspect_code_calls(dirs):
+    """E7 c1: the model was not shown the module holding the bug and patched the caller instead."""
+    seen = []
+
+    def answer(req):
+        seen.append([f["path"] for f in req.projection["files"]])
+        return {"diagnosis": "rate is a percent", "confidence": 0.9,
+                "edits": [{"path": "shop/rates.py", "old": "RATE = 7.25", "new": "RATE = 0.0725"}]}
+    from executive.deliberation import ScriptedDeliberator
+    ex, m = run(dirs, _shop, deliberator=ScriptedDeliberator(answer, "sees-rates"))
+    assert "shop/rates.py" in seen[0], seen
+    assert m["completed_verified"], m
+
+
+def test_patching_a_caller_of_unseen_code_is_handed_off(dirs):
+    """The evidence gate: an edit to code that calls a module the model was not shown is refused."""
+    import executive.loop as L
+    old_max = L.MAX_PROJECTION_FILES
+    L.MAX_PROJECTION_FILES = 2  # force rates.py out of the projection
+    try:
+        llm = _model([{"path": "shop/orders.py", "old": "x + rates.tax_on(x)", "new": "x + rates.tax_on(x) / 100"}],
+                     "compensate")
+        ex, m = run(dirs, _shop, deliberator=llm)
+    finally:
+        L.MAX_PROJECTION_FILES = old_max
+    assert not m["completed_verified"], m
+    assert "not shown" in ex.goal["subgoals"][0]["resolution"]
+    assert "/ 100" not in (dirs[0] / "shop" / "orders.py").read_text()
+
+
+def test_low_confidence_patch_is_handed_off_not_applied(dirs):
+    from executive.deliberation import ScriptedDeliberator
+    llm = ScriptedDeliberator(lambda req: {"diagnosis": "guess", "confidence": 0.6, "edits": [T.GOOD_FIX]}, "unsure")
+    ex, m = run(dirs, T.task_logic_bug, deliberator=llm)
+    assert not m["completed_verified"] and "confidence" in ex.goal["subgoals"][0]["resolution"]
+    assert "s[mid + 1]" in (dirs[0] / "calc" / "stats.py").read_text()

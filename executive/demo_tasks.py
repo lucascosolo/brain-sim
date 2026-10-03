@@ -200,5 +200,5 @@ def task_contradiction(root: Path) -> Path:
 
 def floor_mean_model() -> ScriptedDeliberator:
     """Satisfies the contradicting test by breaking test_mean, every time."""
-    return ScriptedDeliberator(lambda req: {"diagnosis": "mean is off by one", "confidence": 0.7, "edits": [
+    return ScriptedDeliberator(lambda req: {"diagnosis": "mean is off by one", "confidence": 0.9, "edits": [
         {"path": "calc/stats.py", "old": "return total / len(xs)", "new": "return total / len(xs) + 1"}]}, "scripted-plus-one")
