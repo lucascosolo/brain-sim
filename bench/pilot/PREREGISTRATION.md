@@ -94,3 +94,27 @@ per call.
 
 **E2b:** the same 10 tasks × 2 reps, both arms rerun (paired in time), agent model Haiku.
 The decision rules above are unchanged. **E3** then runs as predeclared, with the E2b executive.
+
+## E5: repair at scale (predeclared 2026-10-03, before any E5 run)
+
+Owner: test where the architecture should be better suited, and see whether it can actively
+beat the LLM. Hypothesis: when one change breaks many things mechanically (the fallout of a
+careless rename or move), deterministic skills fix most of it for free, and the model is
+needed only for the few real bugs. An agent instead pays a round trip per fix.
+
+**Corpus.** `make_fleet.py` (seed 20261003) → `fleet_clean/`: 30 modules over `fleet/util.py`,
+one visible and one held-out test each. Task `s01_refactor_fallout` (`fleet_tasks.json`) has
+12 dropped imports, 12 misspelled locals and 2 logic bugs, so 26 visible tests fail (verified
+on a fresh copy without bytecode). Each run starts from a fresh copy and an empty memory.
+
+**Arms.** Same prompt and tools as E2. Fair limits for the larger job: the agent gets 80 turns
+and $2 (Haiku) / $4 (Sonnet); the executive gets 200 steps and the E2b deliberation settings.
+- **E5h**: agent-Haiku vs hybrid with Haiku handoff, 2 reps each.
+- **E5s**: agent-Sonnet vs hybrid with Sonnet handoff (deliberation still Haiku), 2 reps each.
+
+**Rules.** The decision rules above, unchanged. The executive **beats** the agent on this task
+if hybrid is correct in every run where the agent is, and costs less in total.
+
+**Predictions (scored, not steering).** The executive resolves 24 of 26 subgoals with no model
+and the 2 logic bugs with 1-2 deliberations each. Hybrid cost is at most 20% of agent cost in
+both E5h and E5s. Agents finish correctly but use at least 25 turns.

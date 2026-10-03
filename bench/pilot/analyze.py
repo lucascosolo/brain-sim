@@ -7,12 +7,15 @@ import sys
 from pathlib import Path
 
 RESULTS = Path(__file__).resolve().parents[1] / "results" / "pilot_2026-10-03.jsonl"
-CLEAN = Path(__file__).resolve().parent / "ledger_clean" / "ledger"
+CLEANS = {"ledger": Path(__file__).resolve().parent / "ledger_clean" / "ledger",
+          "fleet": Path(__file__).resolve().parent / "fleet_clean" / "fleet"}
 
 
 def reference_diff(row) -> int | None:
     """Changed lines between the run's final ledger/ and the clean reference (addendum measure)."""
-    final = Path(row["work_dir"]) / "repo" / "ledger"
+    corpus = row.get("corpus", "ledger")
+    CLEAN = CLEANS[corpus]
+    final = Path(row["work_dir"]) / "repo" / corpus
     if not final.is_dir():
         return None
     n = 0
