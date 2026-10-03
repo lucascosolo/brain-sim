@@ -155,3 +155,34 @@ run re-applies the fix and completes.
 
 **Not closed.** F4 C (a float subclass whose `__eq__` is always true) passes every test and
 needs the mutation half of CANDIDATES.md B4.
+
+## 2026-10-03: the executive must not apply a model patch it cannot judge (E7)
+
+**What happened.** E7 rep 1 (six complex tasks with held-out tests) ran the hybrid against
+Sonnet alone. On two tasks the executive's Sonnet deliberator saw the caller (`orders.py`)
+but not the module holding the bug (`tax.py`). It said so in its diagnosis, at confidence
+0.6, and proposed dividing by 100 in the caller. The visible tests passed, and the executive
+declared the task complete. A held-out test failed. Sonnet alone fixed `tax.py` on both
+tasks. That is the failure the owner named: the executive calling the shots on work larger
+than it can judge.
+
+**Decision.** Three changes, all deterministic.
+- **Evidence.** The projection follows imports one hop further: the modules imported by the
+  editable files it already shows. `from pkg import mod` resolves to `pkg/mod.py`; it used to
+  resolve to `pkg/__init__.py`, which is how `tax.py` went missing. When over the file cap,
+  the projection keeps frames first, then called definitions, then imports. It used to keep
+  the alphabetically first files.
+- **Evidence gate.** A model edit is handed off, not applied, when the function it edits calls
+  into a workspace module that was not in the projection. The model cannot judge whether the
+  fix belongs there.
+- **Confidence gate.** A model edit whose stated confidence is below 0.8 is handed off. The
+  model's self-report is weak evidence, but when it says "inferred" and 0.6, applying the edit
+  overrules the only reviewer that saw the code.
+
+**Rejected.** Never applying model patches, with deliberation only as a hint for the agent.
+That would be safe, but E7's c6 and earlier E3 runs show correct, cheap deliberator fixes. E7b
+measures whether the gates keep those and stop the bad ones.
+
+**Rule restated for this project.** The executive takes a task only while it can verify it.
+Anything else is handed over untouched, apart from fixes the tests verified. Reflex-layer's
+capabilities stay tools that a model calls, with the model in charge.
