@@ -207,6 +207,15 @@ class Executive:
         self.trace("observation", exit_meaning=d["exit_meaning"], n_passed=len(d["passed"]),
                    failed=sorted(d["failed"]), collect_errors=[c["nodeid"] for c in d["collect_errors"]],
                    sandbox_denials=len(d["sandbox_denials"]), duration_ms=d["duration_ms"])
+        if d["exit_meaning"] == "sandbox_refused" and self.env_guard:
+            # Some tests cannot run in the sandbox, so their outcome is unknown and the goal
+            # cannot be verified here. Hand the task off before editing anything.
+            refused = sorted(d.get("refused") or {})
+            self.trace("handoff", subgoal=None, target=refused[:5], reason="sandbox_denied",
+                       events=sorted({x["event"] for x in d["sandbox_denials"]}))
+            self._block(f"the sandbox refused what {len(refused)} test(s) need ({refused[:3]}); "
+                        "their outcomes are unknown, so the goal cannot be verified here")
+            return
         if d["exit_meaning"] not in ("all_passed", "tests_failed", "no_tests_collected"):
             # an allowlist, so a new runner outcome (report_unverified, unknown) blocks by default
             problems = "; ".join(d.get("integrity_problems") or [])
