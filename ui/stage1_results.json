@@ -1,0 +1,298 @@
+{
+ "schema": "stage1-results/1",
+ "updated": "2026-10-01",
+ "updated_commit": "5e8af4f",
+ "note": "Stage 1 candidates and tests. On master: the heterosynaptic write (SPEC 8.16, passed its kill test on three seeds) with its off-by-default parent encode-mode (8.12) and the 8.15 diagnostics; both flags are off by default and the default plant is unchanged Stage 0. Rejected candidates stay on unmerged branches. K1.1 pattern completion still fails. The combined-mechanisms experiment (SPEC 8.17, inhibition as the hippocampal rate controller) was rejected on three seeds and is not merged. A diagnostic (SPEC 8.18) then traced the 8.17 readout loss to the cortex: the homeostat suppresses the answer to a stimulus within seconds of showing it. An ablation (SPEC 8.19) showed that slowing the homeostat removes most of that suppression and keeps the plant in band, but trained cells still do not answer more than untrained ones: on this plant the pair rule weakens synapses between co-active cells. An offline evaluation (SPEC 8.20) measured that directly and found that the published triplet rule (hippocampal set) would strengthen the driven pathway instead. Built and tested (SPEC 8.21), that rule was rejected on three seeds: trained cells did out-fire untrained ones for the first time and the plant stayed stable, but the gain was small and unspecific and weights piled up at their bound; not merged. A follow-up diagnostic (SPEC 8.22) confirmed that small gain with learning frozen during the readout, and screened two more published rules offline: neither qualified. The cause found: a stimulus raises almost the whole cortex, so no rule that works at a single synapse can tell the stimulus's inputs from the rest by more than about a factor of two. A ceiling test (SPEC 8.23) then set the existing connections to their maximum by hand: even so a half cue recalls only 8 to 11 of the 16 memory cells in the allowed time, and the same strong connections make them fire with no cue. On the present wiring the recall test cannot be passed by learning alone; the wiring or size has to change. What-if brains (SPEC 8.24): giving the memory region four times as many internal connections keeps it healthy and lets a half cue recall the memory within 200 ms at the ceiling, but not within the 50 ms the test allows; simply asking the cortex to be quieter made the brain unhealthy. A second-generation brain was then built on a branch only (SPEC 8.25): quieter cortex, denser memory-region wiring. Its activity is healthy on three seeds, but one Stage 0 test (a storage-capacity check with a fixed size) fails on it, so by the rule set in advance the branch is marked failed. At the hand-set ceiling a half cue recalls the memory within 200 ms on every seed, and within the official 50 ms on one seed of three; the official recall test K1.1 remains failed. The storage-capacity check was then rewritten on that branch to size itself from the brain's own wiring, and the second-generation brain passes the same health checks as today's (SPEC 8.26). Learned recall was then measured on it with the existing learning rules, beside a twin that was never trained: no rule gives recall from a half cue; the plain rule makes it worse than no training, and the triplet rule makes the brain run away on one seed. K1.1 remains failed. A follow-up diagnostic (SPEC 8.27) found why training hurts on the second-generation brain: the two seconds of training weaken the very connections from cortex onto the memory cells that the cue needs (from about 92 % to 70 % of their maximum). Swapping just those connections between the trained brain and its untrained twin moves the whole deficit. This explains a failure; it is not recall, and K1.1 remains failed. The next experiment (SPEC 8.28) tried a stand-in rule built from that finding: cells that fire strongly keep their input strengths from the pair rule. On three seeds the trained brain then answers a half cue with 7 to 8 more of its 16 memory cells than an untrained twin within 50 ms, without answering the wrong pattern or firing when idle; about half the gain is left after a sleep. This is a test-side stand-in, not yet a mechanism in the engine, and the official recall test K1.1 was not run and remains failed.",
+ "entries": [
+  {
+   "test": "tests/s10_triplet.py",
+   "label": "S1.0 population contrast, triplet-STDP candidate",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.0",
+   "tested_commit": "12d2774",
+   "date": "2026-09-12",
+   "evidence": "SPEC.md 8.0 result; log ~/.cache/scratch/brainsim-s1/s10_full_seed1.log; branch stage1-triplet never merged"
+  },
+  {
+   "test": "tests/s10_gated.py",
+   "label": "S1.0 population contrast, gated (three-factor) candidate",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.1",
+   "tested_commit": "8a71d56",
+   "date": "2026-09-12",
+   "evidence": "SPEC.md 8.1 result: REJECT (weight endpoint); recorded at 73e2eff; log ~/.cache/scratch/brainsim-gated/s10_full_seed1.log; branch stage1-gated never merged"
+  },
+  {
+   "test": "tests/test_k11_binding.py::test_k1_1_binding_pattern_completion",
+   "label": "K1.1 hpc binding / pattern completion",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.2",
+   "tested_commit": "fea6d10",
+   "date": "2026-09-12",
+   "evidence": "SPEC.md 8.2 result: FAIL on criterion 2 (recall 1/16 at 50 ticks for half cue, full A and none); log ~/.cache/scratch/brainsim-k11/k11_seed1_fea6d10.log"
+  },
+  {
+   "test": "tests/test_k11_prune_off.py::test_k1_1_binding_hpc_prune_off",
+   "label": "K1.1 rerun with hpc afferent-elimination exemption (struct_prune_exc off in hpc)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.3",
+   "tested_commit": "5099ad9",
+   "date": "2026-09-12",
+   "evidence": "SPEC.md 8.3 result: FAIL on criterion 2 (recall 0/15 half cue, 1/15 full A, 0/15 none at 50 and 200 ticks; ctx->hpc onto assembly 1,857 -> 1,860 synapses, mean 0.481 -> 0.403 w_max); log ~/.cache/scratch/brainsim-k11p/k11_prune_off_seed1.log; branch k11-hpc-prune not merged"
+  },
+  {
+   "test": "tests/test_k11_ltp_only.py::test_k1_1_binding_hpc_ltp_only",
+   "label": "K1.1 rerun with the hpc-afferent LTP-only-during-encode proxy (pair LTD off on E->hpc E synapses during the 2 s A only)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.4",
+   "tested_commit": "3210341",
+   "date": "2026-09-12",
+   "evidence": "SPEC.md 8.4 result: FAIL on criterion 2 and the write did not appear (assembly 20 cells; recall 0/20 half cue, 1/20 full A, 0/20 none at 50 ticks, 0/20 / 3/20 / 0/20 at 200; ctx->hpc onto assembly 1,247 -> 1,092 synapses, mean 0.712 -> 0.657 w_max vs 0.708 -> 0.587 default); log ~/.cache/scratch/brainsim-k11ltp/k11_ltp_only_seed1.log; branch k11-ltp-only not merged"
+  },
+  {
+   "test": "tests/test_k11_encode_window.py::test_k1_1_binding_hpc_encode_window",
+   "label": "K1.1 rerun with the hpc encode window proxy (during the 2 s A only, on E->hpc E synapses: pair LTD off, scaling off, rate-driven elimination off)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.5",
+   "tested_commit": "8fedf88",
+   "date": "2026-09-13",
+   "evidence": "SPEC.md 8.5 result: FAIL on criterion 2 (and criterion 1: assembly 39 cells); the write appeared (ctx->hpc onto the assembly 2,378 -> 2,378 synapses, mean 0.711 -> 0.757 w_max; within assembly 0.653 -> 0.701) but the half cue evoked 3/39 at 50 ticks and 13/39 at 200 (none: 2/39, 5/39); same-seed default control identical to fea6d10; log ~/.cache/scratch/brainsim-k11ew/k11_encode_window_seed1.log; branch k11-encode-window not merged"
+  },
+  {
+   "test": "tests/test_k11_sparse_write.py::test_k1_1_binding_sparse_write",
+   "label": "K1.1 rerun with the sparse co-fire write proxy on top of the hpc encode window (top-16 hpc E winners by the engine's own A counts, existing ctx-donor synapses onto them +0.15 w_max once at the end of A)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.6",
+   "tested_commit": "15ff858",
+   "date": "2026-09-13",
+   "evidence": "SPEC.md 8.6 result: FAIL on criterion 2 (and 1: assembly 39 cells); contrast appeared (ctx->hpc onto W 0.692 -> 0.874 w_max, 1,036 synapses flat; onto hpc E not in W 0.685 -> 0.686) and the readout follows it (full A evokes 11/16 of W at 50 ticks, none 0/16; half cue 12/16 at 200, none 5/16) but the half cue evokes 1/16 of W and 3/39 of the assembly at 50 ticks; same-seed default control identical to fea6d10; log ~/.cache/scratch/brainsim-k11sw/k11_sparse_write_seed1.log; branch k11-sparse-write not merged"
+  },
+  {
+   "test": "tests/test_k11_recurrent_write.py::test_k1_1_binding_recurrent_write",
+   "label": "K1.1 rerun with the W recurrent co-fire proxy on top of the encode window and the sparse co-fire write (existing W->W synapses +0.15 w_max once at the end of A)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.7",
+   "tested_commit": "e3cf583",
+   "date": "2026-09-13",
+   "evidence": "SPEC.md 8.7 result: FAIL on criterion 2 (and 1: assembly 39 cells); W->W mean rose (67 synapses, 0.672 -> 0.860 w_max; donor->W 0.692 -> 0.874; donor->non-W flat) but the trace now ignites with no cue: W recall 6/16 at 50 ticks under the half cue AND 6/16 with no stimulus (full A 8/16); a spontaneous attractor, not a cue-completed one; same-seed default control identical to fea6d10; log ~/.cache/scratch/brainsim-k11rw/k11_recurrent_write_seed1.log; branch k11-recurrent-write not merged"
+  },
+  {
+   "test": "tests/test_k11_restricted_donors.py::test_k1_1_binding_restricted_donors",
+   "label": "K1.1 rerun with the restricted donors proxy on the selective parent (encode window + sparse write onto W from the 64 ctx E cells with the highest A count; no W->W)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.8",
+   "tested_commit": "bf01095",
+   "date": "2026-09-13",
+   "evidence": "SPEC.md 8.8 result: FAIL on criterion 2 (and 1: assembly 39 cells); the write landed where written (156 donor->W synapses 0.699 -> 0.899 w_max, other ctx E->W 0.690 -> 0.746, non-W flat) but selectivity did not return: W recall 0/16 at 50 ticks under the half cue, 5/16 under full A, 2/16 with no stimulus; hpc E 2.0 Hz in the none arm (0.5 Hz at 8.6, 1.3 Hz at 8.7, unstimulated baseline bins 0.50 to 1.44 Hz); same-seed default control identical to fea6d10; log ~/.cache/scratch/brainsim-k11rd/k11_restricted_donors_seed1.log; branch k11-restricted-donors not merged"
+  },
+  {
+   "test": "tests/test_k11_window_on_w.py::test_k1_1_binding_window_on_w",
+   "label": "K1.1 rerun with the encode window on W only (16 cells from an identification pass on a discarded copy) plus the 8.6 sparse write onto W; no W->W",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.9",
+   "tested_commit": "9af848e",
+   "date": "2026-09-13",
+   "evidence": "SPEC.md 8.9 result: FAIL on criterion 2; criterion 1 passes again (assembly 19 cells, 5.9 %); the write landed (987 donor->W synapses 0.720 -> 0.876 w_max; W->W 47 -> 47 untouched at 0.627 -> 0.673; ctx->non-W pruned 16,971 -> 16,405) and the idle hpc is quiet (none 0/16 at 50 ticks, 0.94 Hz) but the readout is slower than 8.6: full A 3/16 of W at 50 ticks (11/16 at 100), half cue 0/16 at 50 and 7/16 at 200; ID-pass W overlaps the real top 16 at 15/16; same-seed default control identical to fea6d10; log ~/.cache/scratch/brainsim-k11wm/k11_window_on_w_seed1.log; branch k11-window-on-w not merged"
+  },
+  {
+   "test": "tests/test_k11_small_ww.py::test_k1_1_binding_small_ww",
+   "label": "K1.1 rerun with the small W->W proxy on the 8.9 plant (existing W->W synapses +0.05 w_max at the same moment as the afferent bump; window on W only; ID-pass W)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.10",
+   "tested_commit": "02b6fcb",
+   "date": "2026-09-13",
+   "evidence": "SPEC.md 8.10 result: FAIL on criterion 2; W->W 47 synapses 0.673 -> 0.718 w_max at the write (44 increased, 7 at w_max), nothing across the W boundary written; every spike-derived number identical to 8.9 (assembly 19, W recall half cue 0/16, full A 3/16, none 0/16 at 50 ticks, none arm 0.94 Hz); scratch check: the bump moved one hpc E spike by one tick and the first slow sweep after A eliminated 15 of the 47 W->W synapses (19 without the bump); same-seed default control identical to fea6d10; log ~/.cache/scratch/brainsim-k11ww/k11_small_ww_seed1.log; branch k11-small-ww not merged"
+  },
+  {
+   "test": "tests/test_k11_grace.py::test_k1_1_binding_grace",
+   "label": "K1.1 rerun with the post-write grace on W proxy on the 8.10 plant (scaling and elimination stay off on the 16 W cells through the 1 s delay only; cue with the default mop)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.11",
+   "tested_commit": "b841bc7",
+   "date": "2026-09-13",
+   "evidence": "SPEC.md 8.11 result: FAIL on criterion 2; both marks reached the cue intact (donor->W 987 synapses 0.876 -> 0.871 w_max, W->W 47 at 0.718, 0 killed; the same sweep without grace killed 44 and 15 on the same seed); the readout moved: full A 10/16 of W at 50 ticks (3/16 without grace), half cue 5/16 (0/16 without), none 2/16 at 50 rising to 8/16 at 200; none arm 1.06 Hz; assembly 19; same-seed default control identical to fea6d10; log ~/.cache/scratch/brainsim-k11gr/k11_grace_seed1.log; branch k11-grace not merged"
+  },
+  {
+   "test": "tests/test_k11_encode_mode.py::test_k1_1_binding_encode_mode",
+   "label": "K1.1 rerun under encode-mode: one labelled plant schedule replacing the 8.5 to 8.11 driver flags",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.12",
+   "tested_commit": "aa176fb",
+   "date": "2026-09-13",
+   "evidence": "SPEC.md 8.12 result: FAIL on criterion 2, identical to 8.11 (W recall half cue 5/16, full A 10/16, none 2/16 at 50 ticks; assembly 19; marks 987 and 47 intact at the cue); off path bit-identical to master (REFERENCE_DIGEST and the off-path digest script); log ~/.cache/scratch/brainsim-encode-mode/k11_encode_mode_seed1.log; on master since the 8.16 merge (2026-09-30) as the off-by-default parent mode"
+  },
+  {
+   "test": "tests/k813_slow_weights.py",
+   "label": "T1 two-timescale weights: a slow floor latch under the encode-mode write (candidate)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.13",
+   "tested_commit": "ae617db",
+   "date": "2026-09-30",
+   "evidence": "SPEC.md 8.13 result: REJECTED on its own kill test; the write is lost to the rate-driven elimination (44 of 987 donor->W at the first sweep, 244 by 135,000), which a weight floor cannot stop; logs ~/.cache/scratch/brainsim-tt/; branch two-timescale not merged"
+  },
+  {
+   "test": "tests/k814_protect_writes.py",
+   "label": "T2 write-tagged protection from the rate-driven prune (candidate)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.14",
+   "tested_commit": "5a14955",
+   "date": "2026-09-30",
+   "evidence": "SPEC.md 8.14 result: REJECTED on the amplitude criterion; the rows survived (4 of 987 killed against 244 in the twin) but scaling stripped the write to the rest weight (0.876 -> 0.771 w_max at 135,000, bar 0.82); log ~/.cache/scratch/brainsim-pw/t2_seed1.log; branch protect-writes not merged"
+  },
+  {
+   "test": "tests/k815_selective_write.py",
+   "label": "T3 selective-write contrast fixture on the default plant (diagnostic, not a mechanism)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.15",
+   "tested_commit": "9bfcb43",
+   "date": "2026-09-30",
+   "evidence": "SPEC.md 8.15 result: PASS on the predeclared bar (selective retention R_C 1.292 against 0.80, uniform 0.031), with the caveat that the retained contrast is wiring and not amplitude (survivors-only contrast 0.273 -> 0.021); never-trained control: every K1.1 readout so far sits within a few cells of the untrained response; logs ~/.cache/scratch/brainsim-sw/"
+  },
+  {
+   "test": "tests/k816_hetero_write.py",
+   "label": "T4 sweep-level heterosynaptic write on hpc afferents (engine mechanism, flag off by default)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.16",
+   "tested_commit": "81f5a36",
+   "date": "2026-09-30",
+   "evidence": "SPEC.md 8.16 result: PASS on seed 1 and the same five criteria hold on seeds 2 and 3 (16/16 cells self-select; written contrast 0.309 / 0.273 / 0.271; retention at 184,000 through sleep and B 1.221 / 1.240 / 1.259 against 0.80); what persists is wiring; the readout is above the never-trained baseline on seed 1 only and K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-hw/t4_seed{1,2,3}.log"
+  },
+  {
+   "test": "tests/k817_inh_homeostat.py",
+   "label": "T5 inhibitory plasticity as the hpc rate controller, with the heterosynaptic write (unmerged branch inh-homeostat)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.17",
+   "tested_commit": "888f60c",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.17 result: REJECTED on the readout on seeds 1, 2 and 3 (trained cells answering the trained stimulus 2 / 5 / 5 of 16 against 12 / 14 / 7 never-trained) and on the rate on seed 1 (hpc E 0.436 Hz, band 0.5 to 1.5); the written contrast did persist as amplitude (x0.83 through sleep and B against x0.17 on the default plant); logs ~/.cache/scratch/brainsim-inh/t5_seed{1,2,3}.log; branch inh-homeostat not merged"
+  },
+  {
+   "test": "tests/k818_drive_loss.py",
+   "label": "Diagnostic: where the drive onto the trained cells goes after a stimulus is shown (not a mechanism; unmerged branch drive-loss-diag)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.18",
+   "tested_commit": "c41f5d2",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.18 result: VALID on seeds 1, 2 and 3 (reproduces the 8.17 arms exactly); one second after a 2 s presentation the cortical cells that answer the stimulus give 0.19 to 0.35 of the never-presented twin's spikes, because the homeostat scaled their inputs down about 18 % and pruned up to a quarter of their wiring within three sweeps; same on the default plant; logs ~/.cache/scratch/brainsim-diag/d_seed{1,2,3}.log; branch drive-loss-diag not merged"
+  },
+  {
+   "test": "tests/k819_homeostat_ablation.py",
+   "label": "Diagnostic: which half of the homeostat suppresses a seen stimulus (ablation, not a mechanism; unmerged branch homeostat-ablation)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.19",
+   "tested_commit": "19051cb",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.19 result: VALID on seeds 1, 2 and 3; with rate-driven rewiring off and scaling ten times slower the cortex answers a just-seen stimulus at 0.95 / 0.95 / 0.68 of the never-presented twin (default 0.27 / 0.28 / 0.22) and rates stay in band to 300,000, but no condition met the predeclared eligibility rule on all three seeds and the trained cells answer no more than untrained ones (8 / 12 / 13 of 16 against 9 / 11 / 13); logs ~/.cache/scratch/brainsim-abl/a_seed{1,2,3}.log; branch homeostat-ablation not merged"
+  },
+  {
+   "test": "tests/k820_rule_eval.py",
+   "label": "Diagnostic: what the published triplet learning rule would do on this plant's own spike trains (offline, not a mechanism; unmerged branch rule-eval)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.20",
+   "tested_commit": "6127e36",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.20 result: VALID on seeds 1, 2 and 3 (shadow pair rule equals the engine's weight change to 4e-7 w_max); one presentation weakens the driven pathway by 6 to 14 % of w_max under the plant's pair rule; the Pfister-Gerstner hippocampal triplet set would strengthen it on every seed with background drift inside the bar, but fails the predeclared input-selectivity clause on two seeds, so it is not built as a stand-alone selective write; logs ~/.cache/scratch/brainsim-rule/r_seed{1,2,3}.log; branch rule-eval not merged"
+  },
+  {
+   "test": "tests/k821_triplet.py",
+   "label": "T6 triplet learning rule beside the heterosynaptic write, on the slowed homeostat (unmerged branch triplet)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.21",
+   "tested_commit": "fb9bade",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.21 result: REJECTED on seeds 1, 2 and 3 on saturation (0.29 to 0.38 of cortical excitatory synapses at the bound at 440,000, bar 0.20) and on delivered weight (trained / untrained 1.04, 1.14, 1.07, bar 1.20), and on seed 3 on persistence; the spike clause passed on every seed (1.26, 1.27, 1.30) and rates stayed in band to 440,000; logs ~/.cache/scratch/brainsim-tri/t6_seed{1,2,3}.log; branch triplet not merged"
+  },
+  {
+   "test": "tests/k822_rule_screen.py",
+   "label": "Readouts with learning frozen, and an offline screen of two further published learning rules (diagnostic, unmerged branch rule-screen)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.22",
+   "tested_commit": "e4e0bbe",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.22 result: a diagnostic, valid on seeds 1, 2 and 3 (passing means the measurement is valid, not that a mechanism worked). The 8.21 spike gain stands with learning frozen (trained / untrained 1.26, 1.29, 1.30). Neither the sliding-threshold triplet rule nor the calcium-threshold rule qualifies to be built; during the stimulus the 100 best cortical cells fire at 12 to 14 Hz and the rest of the cortex at 6 Hz, so the write is not specific; logs ~/.cache/scratch/brainsim-next/; branch rule-screen not merged"
+  },
+  {
+   "test": "tests/k823_ceiling.py",
+   "label": "Ceiling diagnostic: existing connections set to their maximum by hand, can a half cue recall the assembly? (unmerged branch ceiling)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.23",
+   "tested_commit": "63c4288",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.23 result: a diagnostic, run on seeds 1, 2 and 3 (passing means the measurement is valid, not that recall worked). No arm completes: with cortical inputs and recurrent inputs of the 16 assembly cells at the bound the half cue recalls 8 to 11 within 50 ticks (13 needed), and the cells also fire with no stimulus and under B. A memory cell has about two inputs from other memory cells; the half cue recruits 6 % of the cortex over a 19 % background; logs ~/.cache/scratch/brainsim-ceil/; branch ceiling not merged"
+  },
+  {
+   "test": "tests/k824_whatif.py",
+   "label": "What-if ceilings: denser hippocampal recurrence, a quieter cortex, both (diagnostic on branch-only plants, unmerged branch ceiling)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.24",
+   "tested_commit": "1d99567",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.24 result: a diagnostic, run on seeds 1, 2 and 3 (passing means the measurement is valid, not that recall worked). The unchanged plant reproduces 8.23 exactly. Four times the hippocampal recurrent in-degree: healthy; at the ceiling the half cue recalls 6 to 11 of 16 within 50 ticks (13 needed) and 13 to 16 within 200 ticks. Cortical rate target 1 Hz: unhealthy, void. No candidate plant; logs ~/.cache/scratch/brainsim-ceil/; branch ceiling not merged"
+  },
+  {
+   "test": "tests/k824_whatif.py",
+   "label": "Second-generation plant gen2 on a branch: Stage 0 health, then the ceiling probe (unmerged branch gen2)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.25",
+   "tested_commit": "687a1c4",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.25 result: health clause H1 fails as written on one test (K0.10b: its fixed 380,000-synapse store is smaller than gen2's initial wiring of 432,000; the same check with the store scaled in proportion runs clean, reported as a supplementary check only); rates healthy on seeds 1, 2 and 3 (cortex E 1.6 to 1.75 Hz, hippocampus E 0.85 to 0.88 Hz). Ceiling (oracle weights, labelled proxy), printed and not read as a verdict: K1.1 clause (half cue, 50 ticks, 13 of 16) 11.6 / 7.6 / 13.6; K1.1-200, a separate diagnostic that is never a K1.1 pass, 15.0 / 14.8 / 16.0; idle at most 1 cell in 50 ticks. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-gen2/; branch gen2 not merged"
+  },
+  {
+   "test": "tests/k826_learned.py",
+   "label": "Learned half cue on the second-generation plant gen2, with a never-trained control; K0.10b store size by rule (unmerged branch gen2)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.26",
+   "tested_commit": "b6462be",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.26 result: with K0.10b's store sized by rule (380/360 of the initial wiring) the Stage 0 suite is the same on both plants (20 pass; K0.1, K0.4, K0.13 red). Learned half cue, 50 ticks, W cells of 16, seeds 1 / 2 / 3, trained (never-trained): pair rule 2.6 / 0.6 / 3.8 (5.2 / 6.0 / 6.6); pair rule with the heterosynaptic write 5.2 / 3.2 / 3.4 (6.4 / 5.0 / 7.2); triplet with the write 5.8 / runaway / 15.0 (7.0 / 6.0 / 5.2), seed 3 non-selective (B 13.4). At 200 ticks the never-trained twin already answers with 12.6 / 12.8 / 13.2, so K1.1-200 is not a memory measure on this plant. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-gen2/; branch gen2 not merged"
+  },
+  {
+   "test": "tests/k827_transplant.py",
+   "label": "Where the training deficit lives on gen2: synapse-class transplant between the trained brain and its never-trained twin (diagnostic; unmerged branch deficit-diag)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.27",
+   "tested_commit": "b281328",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.27 result: diagnostic valid on seeds 1, 2 and 3 (deficit, trained minus never-trained, half cue at 50 ticks: -3.1 / -4.3 / -3.6 W cells of 16; identity transplant exact; all synapses swapped recovers 0.83 / 1.05 / 0.94). The cortical E synapses onto W alone recover 1.10 / 0.79 / 1.22 of the deficit and induce 1.22 / 1.02 / 1.10 of it in the twin (bar 0.60 both ways); training lowers them from 0.94 / 0.93 / 0.90 to 0.73 / 0.69 / 0.69 of the bound. A pass of the diagnostic, not of recall: K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-def/; branch deficit-diag not merged"
+  },
+  {
+   "test": "tests/k828_override.py",
+   "label": "Plateau override, a labelled test-side proxy on gen2: strongly driven cells are exempt from the pair rule (unmerged branch plateau-override)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.28",
+   "tested_commit": "5e8af4f",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.28 result: valid on seeds 1, 2 and 3. Trained minus never-trained, half cue, 50 ticks, W cells of 16, 40 paired draws: +7.2 / +8.2 / +8.4 (bar +2.0); the same difference for B -0.1 / -1.8 / -0.2 and for no stimulus +0.3 / -0.1 / +0.3. After a sleep and B: +4.1 / +4.3 / +5.1. A pass of this proxy's kill test only: the rule is applied from outside the engine, the hippocampal answer is broad (73 to 123 other cells fire), and tests/test_k11_binding.py was not run. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-po/; branch plateau-override not merged"
+  }
+ ]
+}

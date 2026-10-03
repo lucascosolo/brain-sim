@@ -1,0 +1,63 @@
+path	commit	date	kind	subject
+SPEC.md	3aac95b5	2026-10-01 17:46	fallback	SPEC 8.28: plateau-override proxy driver tests/k828_override.py
+brainsim/engine.py	647865d9	2026-10-01 05:37	fallback	SPEC 8.19 result: VALID; no condition eligible on all three seeds, C3 (no rate-d
+brainsim/inhib.py	647865d9	2026-10-01 05:37	fallback	SPEC 8.19 result: VALID; no condition eligible on all three seeds, C3 (no rate-d
+brainsim/params.py	f9411ab3	2026-10-01 23:27	fallback	Record SPEC 8.47 (the official K1.1 protocol on the 8.46 setting) from the unmer
+brainsim/worker.py	f9411ab3	2026-10-01 23:27	fallback	Record SPEC 8.47 (the official K1.1 protocol on the 8.46 setting) from the unmer
+tests/k816_hetero_write.py	3aac95b5	2026-10-01 17:46	fallback	SPEC 8.28: plateau-override proxy driver tests/k828_override.py
+tests/k817_inh_homeostat.py	5dbf34fd	2026-10-01 05:12	fallback	SPEC 8.18 contract: a diagnostic of the 8.17 readout loss (where the excitatory 
+tests/k826_learned.py	3aac95b5	2026-10-01 17:46	fallback	SPEC 8.28: plateau-override proxy driver tests/k828_override.py
+tests/k828_override.py	3aac95b5	2026-10-01 17:46	fallback	SPEC 8.28: plateau-override proxy driver tests/k828_override.py
+tests/test_inh_homeostat.py	5dbf34fd	2026-10-01 05:12	fallback	SPEC 8.18 contract: a diagnostic of the 8.17 readout loss (where the excitatory 
+tests/test_k11_window_on_w.py	44a6a84a	2026-09-13 15:19	fallback	K1.1 driver: labelled proxy "encode window on W only" (SPEC 8.9) on the 8.6 pare
+tests/test_kill_stage0.py	3aac95b5	2026-10-01 17:46	fallback	SPEC 8.28: plateau-override proxy driver tests/k828_override.py
+ui/stage1_results.json	67c8ddd0	2026-10-01 17:58	fallback	Record SPEC 8.28 (plateau override, a labelled test-side proxy on gen2) from the
+.gitignore	-	-	missing	
+brainsim/__init__.py	-	-	missing	
+brainsim/encode.py	-	-	missing	
+brainsim/hetero.py	-	-	missing	
+brainsim/net.py	-	-	missing	
+brainsim/telemetry.py	-	-	missing	
+pytest.ini	-	-	missing	
+requirements.txt	-	-	missing	
+run.py	-	-	missing	
+tests/conftest.py	-	-	missing	
+tests/k013_onset.py	-	-	missing	
+tests/k03_brief_volley.py	-	-	missing	
+tests/k03_pairing.py	-	-	missing	
+tests/k11_binding.py	-	-	missing	
+tests/k11_never_trained.py	-	-	missing	
+tests/k815_selective_write.py	-	-	missing	
+tests/k815_slot_reuse.py	-	-	missing	
+tests/k821_helpers.py	-	-	missing	
+tests/k821_triplet.py	-	-	missing	
+tests/k822_frozen_readout.py	-	-	missing	
+tests/k822_rule_screen.py	-	-	missing	
+tests/k822_rules.py	-	-	missing	
+tests/k823_ceiling.py	-	-	missing	
+tests/k824_whatif.py	-	-	missing	
+tests/k827_transplant.py	-	-	missing	
+tests/test_client_evidence.py	-	-	missing	
+tests/test_encode_mode.py	-	-	missing	
+tests/test_engine_determinism.py	-	-	missing	
+tests/test_gen2_profile.py	-	-	missing	
+tests/test_hetero_write.py	-	-	missing	
+tests/test_k03_instrument.py	-	-	missing	
+tests/test_k11_binding.py	-	-	missing	
+tests/test_k11_encode_mode.py	-	-	missing	
+tests/test_k11_encode_window.py	-	-	missing	
+tests/test_k11_sparse_write.py	-	-	missing	
+tests/test_k822_rules.py	-	-	missing	
+tests/test_results_record.py	-	-	missing	
+tests/test_rules.py	-	-	missing	
+tests/test_selective_fixture.py	-	-	missing	
+tests/test_server_clients.py	-	-	missing	
+tests/test_session_commands.py	-	-	missing	
+tests/test_stim_bookkeeping.py	-	-	missing	
+tests/test_triplet.py	-	-	missing	
+tests/test_ui_truth.py	-	-	missing	
+ui/app.js	-	-	missing	
+ui/evidence.js	-	-	missing	
+ui/index.html	-	-	missing	
+ui/stage0_results.json	-	-	missing	
+ui/style.css	-	-	missing	
