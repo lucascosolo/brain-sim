@@ -144,3 +144,49 @@ def sprawling_model() -> ScriptedDeliberator:
         return {"diagnosis": "rewrite the module", "confidence": 0.9,
                 "edits": [{"path": "calc/stats.py", "old": src, "new": src.replace("s[mid + 1]", "s[mid - 1]") + "\n" * 40}]}
     return ScriptedDeliberator(answer, "scripted-sprawling")
+
+
+def abstaining_model() -> ScriptedDeliberator:
+    """Returns no edits: the model's own abstention. The executive must hand off, not retry."""
+    return ScriptedDeliberator(lambda req: {"diagnosis": "cannot tell from this", "confidence": 0.2, "edits": []},
+                               "scripted-abstainer")
+
+
+METHOD_BUG_STATS = STATS + '''
+
+class Running:
+    def __init__(self):
+        self.items = []
+
+    def push(self, x):
+        self.items.append(x)
+
+    def total(self):
+        return sum(self.items) + 1
+'''
+
+METHOD_BUG_TESTS = '''\
+from calc.stats import Running
+
+
+def test_running_total():
+    r = Running()
+    r.push(2)
+    r.push(3)
+    assert r.total() == 5
+'''
+
+
+def task_method_bug(root: Path) -> Path:
+    files = base_files()
+    files["calc/stats.py"] = METHOD_BUG_STATS
+    files["tests/test_running.py"] = METHOD_BUG_TESTS
+    return _write(root, files)
+
+
+def method_fix_model() -> ScriptedDeliberator:
+    def answer(req: DeliberationRequest) -> dict:
+        assert "return sum(self.items) + 1" in _source(req, "calc/stats.py"), "method source not in projection"
+        return {"diagnosis": "total adds one", "confidence": 0.9,
+                "edits": [{"path": "calc/stats.py", "old": "return sum(self.items) + 1", "new": "return sum(self.items)"}]}
+    return ScriptedDeliberator(answer, "scripted-method-fix")

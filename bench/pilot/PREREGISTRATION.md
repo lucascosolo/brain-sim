@@ -74,3 +74,23 @@ Task success is already the primary quality rule (correct runs, held-out tests).
 - **diff_lines_vs_reference**: changed lines between the final `ledger/` and `ledger_clean/`
   (0 is ideal; larger means extra or different changes).
 Reported per arm next to the primary result. It does not change the decision rules above.
+
+## E2 result and E2b (predeclared 2026-10-03, after E2, before E2b)
+
+**E2, as scored by `analyze.py E2`.** 20/20 correct in both arms; no harm, no test edits, no
+false completion in either arm; hybrid 96 LLM turns against 151; hybrid **$0.90 against
+$0.55**. Criterion 1 holds, quality holds, **savings fails**. Cause, from the traces: for
+failures inside methods (t04, t05, t06, t09) the projection held only the test file, so Haiku
+invented source text. The exact-once edit guard refused all 15 such edits (no harm), and
+the run then paid for the handoff agent too. Default-effort Haiku spent 4k-12k output tokens
+per call.
+
+**Changes for E2b**, all in `executive/` with tests:
+1. Evidence: the projection also includes workspace modules imported by the files in the
+   traceback, and uniquely defined methods the failing frame calls.
+2. No editable file in evidence: no model call; hand off at once.
+3. The model returns no edits: treat as abstention; hand off without retrying.
+4. The deliberator runs `--effort low`.
+
+**E2b:** the same 10 tasks × 2 reps, both arms rerun (paired in time), agent model Haiku.
+The decision rules above are unchanged. **E3** then runs as predeclared, with the E2b executive.

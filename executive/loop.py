@@ -13,6 +13,7 @@ Only operator tier 5 (deliberation) calls a language model, and only from step 3
 """
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import re
@@ -33,6 +34,7 @@ PROJECTION_FILE_LINES = 150
 # Scope guard: a model-proposed change larger than this is outside what the executive can verify
 # cheaply. It is not applied; the subgoal is handed off (abandoned with a reason) instead.
 MAX_DELIBERATION_FILES = 2
+MAX_PROJECTION_FILES = 6
 MAX_DELIBERATION_CHANGED_LINES = 30
 PATH_LINE_RE = re.compile(r"^(?P<path>[\w./-]+\.py):(?P<line>\d+)")
 
@@ -243,6 +245,11 @@ class Executive:
         plan = choice["plan"] if not op.uses_llm else self._deliberate(sub, failure)
         if isinstance(plan, str):            # deliberation failed; plan holds the outcome name
             self._record_attempt(sub, op, None, plan, prediction_error=None, note="no edits applied")
+            if plan in ("no_evidence", "model_abstained"):
+                # Retrying cannot help: hand off now instead of spending more.
+                sub["status"] = "abandoned"
+                sub["resolution"] = f"handed off: {plan.replace('_', ' ')}"
+                self.trace("handoff", subgoal=sub["id"], target=sub["target"], reason=plan)
             return
         if op.uses_llm:
             too_big = self._out_of_scope(plan)
@@ -375,23 +382,48 @@ class Executive:
     def _implicated_files(self, failure: dict) -> dict[str, list[int]]:
         """Workspace files a failure implicates, with lines of interest.
 
-        Traceback frames first. Then cheap evidence: the functions the innermost frame calls,
-        resolved to their workspace definitions. An assertion in a test names no frame in the
-        code under test, so without this step the projection would not show the bug.
+        Traceback frames first. Then cheap evidence, all through reflexes: the workspace modules
+        imported by the files in the traceback, and the definitions of the names the innermost
+        frame calls (top-level functions, or methods when the name is defined once). An
+        assertion in a test names no frame in the code under test, so without this step the
+        projection would not show the bug (E2: the model then invented source text).
         """
         files: dict[str, list[int]] = {}
-        for f in failure.get("frames") or []:
-            if f.get("path"):
-                files.setdefault(f["path"], []).append(f["line"])
-        frames = failure.get("frames") or []
-        if frames and frames[-1].get("path"):
+        frames = [f for f in failure.get("frames") or [] if f.get("path")]
+        for f in frames:
+            files.setdefault(f["path"], []).append(f["line"])
+        for path in list(files):
+            for mod in self._imported_workspace_modules(path):
+                files.setdefault(mod, [1])
+        if frames:
             called = self.reflex("py.called_names", READ_ONLY, path=frames[-1]["path"], line=frames[-1]["line"])
             for name in (called.data["names"] if called.ok else []):
                 d = self.reflex("py.definitions", READ_ONLY, name=name)
-                tops = [h for h in (d.data["definitions"] if d.ok else []) if h["top_level"]]
-                if len(tops) == 1:              # ambiguous names would need type resolution; skip them
-                    files.setdefault(tops[0]["path"], []).append(tops[0]["line"])
-        return files
+                defs = d.data["definitions"] if d.ok else []
+                tops = [h for h in defs if h["top_level"]]
+                pick = tops if len(tops) == 1 else (defs if len(defs) == 1 else [])
+                for h in pick:                  # ambiguous names would need type resolution; skip them
+                    files.setdefault(h["path"], []).append(h["line"])
+        return dict(sorted(files.items())[:MAX_PROJECTION_FILES]) if len(files) > MAX_PROJECTION_FILES else files
+
+    def _imported_workspace_modules(self, path: str) -> list[str]:
+        try:
+            tree = ast.parse(self.ws.read_text(path))
+        except Exception:  # unreadable or unparsable: no import evidence from it
+            return []
+        mods = set()
+        for node in tree.body:
+            names = [node.module] if isinstance(node, ast.ImportFrom) and node.module and not node.level else \
+                [a.name for a in node.names] if isinstance(node, ast.Import) else []
+            for m in names:
+                for rel in (m.replace(".", "/") + ".py", m.replace(".", "/") + "/__init__.py"):
+                    try:
+                        if self.ws.resolve(rel).is_file():
+                            mods.add(rel)
+                            break
+                    except Exception:
+                        pass
+        return sorted(mods)
 
     def _projection(self, sub: dict, failure: dict) -> dict:
         files = []
@@ -419,7 +451,11 @@ class Executive:
         }
 
     def _deliberate(self, sub: dict, failure: dict):
-        req = DeliberationRequest("propose_patch", self._projection(sub, failure), PATCH_SCHEMA)
+        projection = self._projection(sub, failure)
+        if not any(f["editable"] for f in projection["files"]):
+            # Asking for edits to code the model cannot see buys invented source text (E2).
+            return "no_evidence"
+        req = DeliberationRequest("propose_patch", projection, PATCH_SCHEMA)
         self.state["counters"]["deliberations"] += 1
         self.trace("deliberation_request", subgoal=sub["id"], deliberator=self.deliberator.name,
                    fingerprint=req.fingerprint(), projection_bytes=len(json.dumps(req.projection)))
@@ -430,6 +466,9 @@ class Executive:
                    confidence=(resp.content or {}).get("confidence") if isinstance(resp.content, dict) else None)
         if not resp.ok:
             return "llm_error"
+        if isinstance(resp.content, dict) and resp.content.get("edits") == []:
+            self.trace("deliberation_abstained", subgoal=sub["id"], diagnosis=str(resp.content.get("diagnosis"))[:300])
+            return "model_abstained"
         problem = validate_patch(resp.content)
         if problem:
             self.trace("deliberation_rejected", subgoal=sub["id"], reason=problem)

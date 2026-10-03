@@ -146,3 +146,27 @@ def test_oversized_model_change_is_handed_off_not_applied(dirs):
     assert m["status"] == "blocked" and m["attempts_by_outcome"] == {"out_of_scope": 1}
     assert events(dirs[1], "handoff")[0]["reason"].startswith("proposed change spans")
     assert "s[mid + 1]" in (repo / "calc" / "stats.py").read_text()   # untouched
+
+
+def test_failure_in_a_method_shows_the_model_the_method(dirs):
+    llm = T.method_fix_model()
+    ex, m = run(dirs, T.task_method_bug, deliberator=llm)
+    assert m["completed_verified"] and m["llm_calls"] == 1, m
+
+
+def test_model_abstention_hands_off_without_retrying(dirs):
+    llm = T.abstaining_model()
+    ex, m = run(dirs, T.task_logic_bug, deliberator=llm)
+    assert m["status"] == "blocked" and len(llm.calls) == 1
+    assert m["attempts_by_outcome"] == {"model_abstained": 1}
+    assert events(dirs[1], "handoff")[0]["reason"] == "model_abstained"
+
+
+def test_no_editable_evidence_means_no_model_call(dirs):
+    repo = dirs[0]
+    T._write(repo, {"conftest.py": "", "tests/test_only.py": "def test_x():\n    assert 1 == 2\n"})
+    llm = T.good_model()
+    ex = Executive(repo, dirs[1], dirs[2], deliberator=llm)
+    ex.run()
+    assert llm.calls == [] and ex.state["status"] == "blocked"
+    assert [a["outcome"] for a in ex.goal["subgoals"][0]["attempts"]] == ["no_evidence"]

@@ -146,8 +146,9 @@ SYSTEM_PROMPT = (
 class ClaudeCLIDeliberator:
     """`claude -p` as a tool-less, schema-bound reasoning call.
 
-    Status: written against `claude --help` of CLI 2.1.288; not yet run live, because live calls
-    spend money and the owner's workflow requires an explicit yes for that. The flags it relies
+    Status: run live from 2026-10-03 (owner approved the pilot spend); `structured_output` carries
+    the schema result. Effort defaults to low: in E2, default-effort Haiku spent 4k-12k output
+    tokens (mostly thinking) per call. The flags it relies
     on: --print, --output-format json, --tools "" (no tools), --json-schema, --model,
     --max-budget-usd, --no-session-persistence, --system-prompt. It runs in `workdir`, an
     empty directory the caller owns (never the workspace), so no project instructions are
@@ -155,8 +156,9 @@ class ClaudeCLIDeliberator:
     """
 
     def __init__(self, workdir: Path | str, model: str = "haiku", max_budget_usd: float = 0.25,
-                 timeout_seconds: float = 180.0, executable: str = "claude"):
+                 timeout_seconds: float = 180.0, executable: str = "claude", effort: str | None = "low"):
         self.workdir = Path(workdir)
+        self.effort = effort
         self.model, self.max_budget_usd, self.timeout = model, max_budget_usd, timeout_seconds
         self.executable = shutil.which(executable) or executable
         self.name = f"claude-cli:{model}"
@@ -166,7 +168,7 @@ class ClaudeCLIDeliberator:
         argv = [self.executable, "-p", prompt, "--output-format", "json", "--model", self.model,
                 "--tools", "", "--json-schema", json.dumps(request.response_schema),
                 "--max-budget-usd", str(self.max_budget_usd), "--no-session-persistence",
-                "--system-prompt", SYSTEM_PROMPT]
+                "--system-prompt", SYSTEM_PROMPT] + (["--effort", self.effort] if self.effort else [])
         t0 = time.monotonic()
         self.workdir.mkdir(parents=True, exist_ok=True)
         try:
