@@ -1,4 +1,4 @@
-# brain-sim worktrees recovered from the ext4 journal (2026-10-04)
+# brain-sim worktrees recovered from the ext4 journal (2026-10-03)
 
 Source: `/mnt/sdcard/rebuilt/home/.cache/brain-sim-<name>/` (each was a worktree of `/home/lucas/Workspaces/brain-sim/.git`).
 Times are file mtimes in UTC from the journal inode records. Skipped: `__pycache__`, `.pytest_cache`, `*.pyc`, the `.git` pointer file.
