@@ -186,3 +186,24 @@ measures whether the gates keep those and stop the bad ones.
 **Rule restated for this project.** The executive takes a task only while it can verify it.
 Anything else is handed over untouched, apart from fixes the tests verified. Reflex-layer's
 capabilities stay tools that a model calls, with the model in charge.
+
+## 2026-10-04: reconciling the plant replaces content at frozen paths when the evidence is byte-exact
+
+**Decision.** The plant's paths stay where they are, but a file at a frozen path may be replaced
+by another recovered version when (a) that version is identified by blob id or is the only copy
+consistent with the code beside it, and (b) the replacement is its own commit, so one revert
+undoes it. Two files were replaced on that basis: `brainsim/net.py` (the triplet traces the
+tree's `engine.py` reads) and `ui/stage1_results.json` (master's 8.0-8.47 record in place of a
+stale 8.0-8.20 copy). Details and test counts: `docs/recovery/reconciliation-2026-10-04.md`.
+
+**Why.** The freeze exists so recovery can finish against stable paths; it does not oblige the
+tree to keep a copy that a better-identified recovery shows to be wrong. The 2026-10-03 merge
+ordered versions by mtime, which in this recovery records checkouts, not edits.
+
+**Kept as is.** The tree's branch-line `engine.py`, `params.py`, `hetero.py` and `encode.py`.
+They are supersets of master's with every added flag defaulting to master's path, and the
+tests pass on them; master's byte-exact copies are in `docs/recovery/variants/master-f9411ab3/`.
+Orphaned branch tests stay at their paths and keep failing: making them pass would mean merging
+the closed k11 proxy hunts and the rejected 8.17 line.
+
+**Revisit when** the owner declares recovery closed (then the `legacy/` move of 2026-10-03 applies).

@@ -1,0 +1,96 @@
+storage_path	git_blob	size_bytes	identical_copies	parses	path_named_in_file	path_in_tree	first_docstring_line
+/srv/recovery-2026-10-02/photorec2/recup.261/f341169640.py	b2987a3158	25975	1	yes	tests/k013_onset.py	yes	K0.3 (STDP) at unit level, plus structural primitives on Network.
+/srv/recovery-2026-10-02/photorec2/recup.197/f316607472.py	5a87d3380e	25671	1	yes	tests/k013_onset.py	yes	K0.3 (STDP) at unit level, plus structural primitives on Network.
+/srv/recovery-2026-10-02/photorec2/recup.197/f316606928.py	18172d32d0	25189	1	yes	tests/k013_onset.py	yes	K0.3 (STDP) at unit level, plus structural primitives on Network.
+/srv/recovery-2026-10-02/photorec2/recup.641/f610212544.py	9f38a1a068	40203	1	yes	tests/k03_pairing.py	yes	K0.3 population test: imposed pre-before-post pairing on a warmed network.
+/srv/recovery-2026-10-02/photorec2/recup.289/f353561408.py	0eafd32584	36273	1	yes	tests/k03_pairing.py	yes	K0.3 population test: imposed pre-before-post pairing on a warmed network.
+/srv/recovery-2026-10-02/photorec2/recup.261/f341170064.py	abdba961be	13208	1	yes	tests/k03_pairing.py	yes	Stage 1 contract (SPEC 8.0): triplet STDP candidate, unit tests + S1.0 wrapper.
+/srv/recovery-2026-10-02/photorec2/recup.197/f316607552.py	5780fe2dc2	3149	1	yes	tests/k03_pairing.py	yes	Update ui/stage0_results.json from the reruns at COMMIT (K0.3 fail, K0.2/K0.11 pass, non-kill suite 
+/srv/recovery-2026-10-02/photorec2/recup.640/f608862248.py	b406f04447	49435	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.406/f475008544.py	236739b793	47117	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.406/f475008448.py	08fe991e69	46337	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.406/f475008280.py	04319021ab	43524	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.557/f565370960.py	0bd9db7fd1	42974	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.437/f495563664.py	7335bcb8a6	42532	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.684/f640129104.py	03008faae7	39263	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.406/f475004928.py	9540f6ba2f	38734	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.707/f662269800.py	a512807734	37237	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.684/f640128784.py	0163e9d725	35951	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.683/f640038424.py	e6ea0d1c77	35864	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.450/f500296616.py	ed0d3098f2	35749	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.450/f500296544.py	2605f65fbf	35495	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.437/f495560112.py	e65a204953	34938	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.450/f500296472.py	888e5aabc3	34699	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.406/f475009712.py	7d2a687a1c	34290	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.405/f474965560.py	9b97fe834d	34003	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.405/f474878816.py	a044276f96	33629	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec3/recup.37/f10437976.py	ccd1c47297	33011	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.684/f640127408.py	1671a4ea07	32446	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.405/f474865664.py	e4b7636eff	32433	2	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.279/f349399248.py	337ddd801c	28361	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.405/f474816712.py	1a8f9b97ee	26444	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.707/f661887816.py	74a751250b	26259	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.279/f349398224.py	97d2bce126	24794	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.257/f340657120.py	f754013352	24754	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.707/f661885792.py	abde08a6d4	23786	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.707/f661887040.py	fd974bf28c	22804	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.271/f346220632.py	4a9192ce1e	21760	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.690/f647556888.py	77b9db419a	11719	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.690/f647556840.py	bc68fed37a	11586	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.690/f647556864.py	f1fc820566	11573	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.690/f647556816.py	f5e9becd45	11428	1	yes	tests/k11_binding.py	yes	K1.1 hpc binding / pattern completion (SPEC.md section 8.2).
+/srv/recovery-2026-10-02/photorec2/recup.707/f661887672.py	80feeb15bf	13602	1	yes	tests/k11_binding.py	yes	K1.1 rerun, hpc encode window proxy (SPEC.md section 8.5).
+/srv/recovery-2026-10-02/photorec2/recup.346/f365538920.py	fe8d208ade	10010	9	yes	tests/k11_binding.py	yes	SPEC 8.31: the official K1.1 protocol (tests/k11_binding.py run_experiment, unmodified) on the 8.30 
+/srv/recovery-2026-10-02/photorec2/recup.198/f316669384.py	9625660d35	15036	1	yes	tests/k814_protect_writes.py	no	SPEC 8.14 kill test T2: does the encode-mode write outlive a 5-sweep exemption from the
+/srv/recovery-2026-10-02/photorec2/recup.376/f410711400.py	d053ead236	14196	1	yes	tests/k817_inh_homeostat.py	yes	SPEC 8.17 kill test T5: inhibition as the hpc E rate controller, with the heterosynaptic write.
+/srv/recovery-2026-10-02/photorec2/recup.372/f407963696.py	bc681d0b20	20365	1	yes	tests/k822_rule_screen.py	yes	SPEC 8.22 Part B: offline screen of R1 (triplet as built), R3 (triplet with sliding depression thres
+/srv/recovery-2026-10-02/photorec2/recup.573/f571741064.py	486774a0ac	9662	1	yes	tests/k823_ceiling.py	yes	SPEC 8.23 ceiling diagnostic: can any weights on this wiring let a half cue recall the assembly?
+/srv/recovery-2026-10-02/photorec2/recup.792/f708318672.py	0b380cdbc9	10907	1	yes	tests/k824_whatif.py	yes	SPEC 8.24 what-if ceilings: the 8.23 diagnostic on a plant built with construction parameters overri
+/srv/recovery-2026-10-02/photorec2/recup.371/f407845832.py	9c80031209	11645	1	yes	tests/k828_override.py	yes	SPEC 8.28: plateau override, a labelled test-side PROXY, measured as trained minus never-trained on 
+/srv/recovery-2026-10-02/photorec2/recup.346/f365538896.py	d71600ee30	11546	9	yes	tests/k829_pending.py	no	SPEC 8.29: pending pair plasticity in the engine (Engine.pending_stdp), measured as trained minus ne
+/srv/recovery-2026-10-02/photorec3/recup.143/f41108488.py	b94e590840	11392	1	yes	tests/k829_pending.py	no	SPEC 8.29: pending pair plasticity in the engine (Engine.pending_stdp), measured as trained minus ne
+/srv/recovery-2026-10-02/photorec2/recup.350/f365643536.py	930b57f5d8	5018	1	yes	tests/k832_assembly_size.py	no	SPEC 8.32: where the size of the A assembly comes from, by plant and by rule. A diagnostic, no K1.1 
+/srv/recovery-2026-10-02/photorec2/recup.345/f365531384.py	4e6af3a417	8719	10	yes	tests/k834_recurrent_off.py	no	SPEC 8.34: memory-to-memory excitatory links switched off at recall only. A diagnostic, not a K1.1 r
+/srv/recovery-2026-10-02/photorec2/recup.346/f365538968.py	97c901ee1d	9434	9	yes	tests/k835_seat.py	no	SPEC 8.35: seat-finding transplants between the trained brain and its never-trained twin. A diagnost
+/srv/recovery-2026-10-02/photorec2/recup.346/f365538992.py	fa479fe3d5	8363	8	yes	tests/k836_ei_split.py	no	SPEC 8.36: 8.35's residual class split in five, swapped one at a time, in live and frozen probe mode
+/srv/recovery-2026-10-02/photorec2/recup.347/f365572896.py	2c862de341	6712	4	yes	tests/k837_ei_frozen.py	no	SPEC 8.37: the 8.30 mechanism with the pair rule switched off onto inhibitory cells during training.
+/srv/recovery-2026-10-02/photorec2/recup.798/f710467560.py	509c813a1a	6388	1	yes	tests/k837_ei_frozen.py	no	SPEC 8.37: the 8.30 mechanism with the pair rule switched off onto inhibitory cells during training.
+/srv/recovery-2026-10-02/photorec2/recup.346/f365539016.py	ab9b675858	6280	2	yes	tests/k837_ei_frozen.py	no	SPEC 8.37: the 8.30 mechanism with the pair rule switched off onto inhibitory cells during training.
+/srv/recovery-2026-10-02/photorec2/recup.346/f365540088.py	3c8c595594	5797	2	yes	tests/k837_ei_frozen.py	no	SPEC 8.37: the 8.30 mechanism with the pair rule switched off onto inhibitory cells during training.
+/srv/recovery-2026-10-02/photorec2/recup.346/f365539032.py	f27c60e30c	4137	7	yes	tests/k838_headroom.py	no	SPEC 8.38: a higher weight bound on the memory region's excitatory cells (test-side, at build), then
+/srv/recovery-2026-10-02/photorec2/recup.346/f365539048.py	3bb1838479	3572	6	yes	tests/k839_hetero_eta.py	no	SPEC 8.39: the heterosynaptic write step swept, bound x K on the memory region's excitatory cells, F
+/srv/recovery-2026-10-02/photorec2/recup.347/f365576000.py	affa398c6f	5185	3	yes	tests/k840_additive.py	no	SPEC 8.40: the potentiation-only heterosynaptic write (HETERO_ADDITIVE), bound x K, FZ arm of 8.37.
+/srv/recovery-2026-10-02/photorec2/recup.348/f365590800.py	176f5a85bf	4096	2	no (truncated)	tests/k847_official.py	no	SPEC 8.47: the official K1.1 protocol (unmodified k11.run_experiment) on the 8.46 setting.
+/srv/recovery-2026-10-02/photorec2/recup.299/f356784384.py	1381f42eda	21150	1	yes		no	
+/srv/recovery-2026-10-02/photorec2/recup.796/f709541240.py	e047f68f00	20757	1	yes		no	
+/srv/recovery-2026-10-02/photorec2/recup.796/f709533536.py	ab395a0924	624	1	yes		no	
+/srv/recovery-2026-10-02/photorec2/recup.289/f353591728.py	2d29818503	4884	1	yes		no	Corrected warm-up balance measurement (approximate, decision support only).
+/srv/recovery-2026-10-02/photorec2/recup.200/f317669448.py	70d88faf55	20466	1	yes		no	Encode-mode: one labelled plant schedule (SPEC.md section 8.12), branch
+/srv/recovery-2026-10-02/photorec2/recup.346/f365539280.py	1a5f818c4c	5836	10	yes		no	Expressed tag (SPEC.md section 8.30), branch `pending-express`.
+/srv/recovery-2026-10-02/photorec2/recup.347/f365573032.py	45c135d85b	6680	3	yes		no	Heterosynaptic write on the memory region's own excitatory inputs (SPEC.md section 8.41),
+/srv/recovery-2026-10-02/photorec2/recup.561/f567222480.py	4a21a0ce45	13560	1	yes		no	Intrinsic-homeostasis candidate (contract: ~/.cache/scratch/brainsim-ih/contract.md).
+/srv/recovery-2026-10-02/photorec2/recup.279/f348976136.py	fd0c2ccc3a	11969	1	yes		no	Intrinsic-homeostasis candidate (contract: ~/.cache/scratch/brainsim-ih/contract.md).
+/srv/recovery-2026-10-02/photorec2/recup.561/f567223264.py	e50c3ad695	11482	1	yes		no	K0.14: recovery from a wake-time perturbation, scaling vs. intrinsic homeostasis.
+/srv/recovery-2026-10-02/photorec2/recup.561/f567223312.py	7d1998825d	11388	1	yes		no	K0.14: recovery from a wake-time perturbation, scaling vs. intrinsic homeostasis.
+/srv/recovery-2026-10-02/photorec2/recup.561/f567223288.py	c23e9cbeb6	11375	1	yes		no	K0.14: recovery from a wake-time perturbation, scaling vs. intrinsic homeostasis.
+/srv/recovery-2026-10-02/photorec2/recup.289/f353563464.py	327ff6ebd9	11298	1	yes		no	K0.14: recovery from a wake-time perturbation, scaling vs. intrinsic homeostasis.
+/srv/recovery-2026-10-02/photorec2/recup.149/f311074696.py	296963a68a	18123	1	yes		no	K0.3 (STDP) at unit level, plus structural primitives on Network.
+/srv/recovery-2026-10-02/photorec2/recup.796/f709540248.py	0038ce1d8a	9421	1	yes		no	K0.3 (STDP) at unit level, plus structural primitives on Network.
+/srv/recovery-2026-10-02/photorec2/recup.259/f340836208.py	5e6fef5c1c	8127	1	yes		no	K0.3 (STDP) at unit level, plus structural primitives on Network.
+/srv/recovery-2026-10-02/photorec2/recup.698/f656831280.py	ce6fba5fa8	23497	1	yes		no	K0.3 population test: imposed pre-before-post pairing on a warmed network.
+/srv/recovery-2026-10-02/photorec2/recup.405/f474965016.py	c5ece53bf3	12866	1	yes		no	K1.1 rerun, W recurrent co-fire proxy on top of 8.5 and 8.6 (SPEC.md section 8.7).
+/srv/recovery-2026-10-02/photorec2/recup.707/f662418056.py	2f50585195	12832	1	yes		no	K1.1 rerun, W recurrent co-fire proxy on top of 8.5 and 8.6 (SPEC.md section 8.7).
+/srv/recovery-2026-10-02/photorec2/recup.557/f565371200.py	ee32ab10ba	21175	1	yes		no	K1.1 rerun, encode window on W only (SPEC.md section 8.9).
+/srv/recovery-2026-10-02/photorec2/recup.557/f565371144.py	57e5c68265	15469	1	yes		no	K1.1 rerun, labelled proxy "small W -> W" on the 8.9 plant (SPEC.md section 8.10).
+/srv/recovery-2026-10-02/photorec2/recup.406/f475022088.py	2bfa4453b6	13819	1	yes		no	K1.1 rerun, labelled proxy "small W -> W" on the 8.9 plant (SPEC.md section 8.10).
+/srv/recovery-2026-10-02/photorec2/recup.698/f656832656.py	374b97b4f9	5989	1	yes		no	PRD section 1: Engine stim bookkeeping (observation only).
+/srv/recovery-2026-10-02/photorec2/recup.346/f365539296.py	ccc742b360	10060	10	yes		no	Pending pair plasticity in the engine (SPEC.md section 8.29), branch `pending-stdp`.
+/srv/recovery-2026-10-02/photorec2/recup.346/f365547808.py	4c378aee96	8164	4	yes		no	Potentiation-only heterosynaptic write (SPEC.md section 8.40), branch `hetero-additive`.
+/srv/recovery-2026-10-02/photorec2/recup.271/f346219352.py	c5e50c6223	627	1	yes		no	Run S1.0 (full: 60 trials + K0.2 guard) on the stage1-gated worktree; pickle the result before repor
+/srv/recovery-2026-10-02/photorec2/recup.352/f365674720.py	7a8146874b	527	1	yes		no	SPEC 8.33: test-side plant lever. --ctx-hpc-k N rewrites the ctx -> hpc in-degree before any engine 
+/srv/recovery-2026-10-02/photorec2/recup.149/f311074688.py	df8255a415	3611	3	yes		no	SPEC.md section 6 'One source of truth, enforced mechanically' + section 10 frame contract.
+/srv/recovery-2026-10-02/photorec2/recup.286/f352697808.py	ca20ba81a5	2305	1	yes		no	SPEC.md section 6 'One source of truth, enforced mechanically' + section 10 frame contract.
+/srv/recovery-2026-10-02/photorec2/recup.796/f709533408.py	52d9fa18b6	6241	1	yes		no	Stage 0 kill tests K0.1, K0.2, K0.4, K0.5, K0.6 (SPEC.md section 7), seed=1 throughout.
+/srv/recovery-2026-10-02/photorec2/recup.198/f316668632.py	dc8f881aac	6861	1	yes		no	Two-timescale weights (SPEC.md section 8.13), branch `two-timescale`.
+/srv/recovery-2026-10-02/photorec2/recup.332/f362303128.py	d36ef62211	6859	1	yes		no	Two-timescale weights (SPEC.md section 8.13), branch `two-timescale`.
+/srv/recovery-2026-10-02/photorec2/recup.365/f404906128.py	3b18cca22e	8600	1	yes		no	Write-tagged protection from the rate-driven structural prune (SPEC.md

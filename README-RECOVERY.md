@@ -12,3 +12,11 @@ docs/recovery/carved-manifest-2026-10-03.tsv), so they may be older than master'
 docs/recovery/carved-commit-log-2026-10-03.md lists every carved commit with its full message and which
 blobs survived. Master c9863d6 and the branches gen2, pending-express, plateau-override, deficit-diag,
 joint-confirm and persist-dual were not among the carved objects.
+
+## 2026-10-04: reconciliation against carved blob ids
+
+Nine more files found byte-exact (eight tests and `brainsim/__init__.py`) in photorec carves
+and `~/.cache/scratch/brainsim-pend/` on the storage VPS; `brainsim/net.py` and
+`ui/stage1_results.json` replaced by better-identified copies. Plant suite 257 passed / 111
+failed before, 325 / 77 after, with no pass-to-fail change. Per-path provenance:
+docs/recovery/reconciliation-2026-10-04.{md,tsv}; unverified carves: docs/recovery/carve-candidates-2026-10-04.tsv.

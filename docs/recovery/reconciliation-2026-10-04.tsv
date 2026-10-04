@@ -1,0 +1,79 @@
+path	blob	matches_commit	commit_date_utc	newest_commit_blob	source	change_2026_10_04	note
+.gitignore	965717a8d5	f9411ab3	2026-10-01 23:27	965717a8d5@f9411ab3	worktree sw (2026-10-02 00:24 UTC)		
+SPEC.md	0430c3a03a			007c087d21@f9411ab3	worktree serve (2026-10-02 00:56 UTC)		newest content recovered (tops out at 8.49); master's blob 007c087d21 is lost
+brainsim/__init__.py	c7cf194658	f9411ab3	2026-10-01 23:27	c7cf194658@f9411ab3	carve named-home/.cache/scratch/brainsim-pend/old/brainsim/__init__.py	added	
+brainsim/encode.py	ccfc333650			c91e744fc4@f9411ab3	worktree tt (2026-09-30 22:15 UTC)		branch line (8.13 slow_weights reset); master's copy in docs/recovery/variants/master-f9411ab3/
+brainsim/engine.py	5c99c9bf56			6cc75b35f5@f9411ab3	worktree rep (2026-10-02 00:24 UTC)		branch line (8.21 triplet, 8.29/8.30 pending, 8.40/8.41 hetero flags, all default off); master's byte-exact copy is in docs/recovery/variants/master-f9411ab3/
+brainsim/hetero.py	cd83fad2cd			0d9854bf06@f9411ab3	worktree rep (2026-10-02 00:24 UTC)		branch line (8.40 additive write); master's copy in docs/recovery/variants/master-f9411ab3/
+brainsim/inhib.py	d178bba839	647865d9	2026-10-01 05:37	d178bba839@647865d9	carved git object @647865d9		SPEC 8.17 branch module (REJECTED, not merged); nothing in the engine imports it
+brainsim/net.py	b149b474b1			619ed21132@f9411ab3	worktree serve (2026-10-01 05:12 UTC)	replaced	named-home/.cache/scratch/brainsim-pend/old/brainsim/net.py (triplet-line net.py the tree's engine.py needs: adds r1/o1/o2); master copy kept at docs/recovery/variants/master-f9411ab3/
+brainsim/params.py	3d4883962e			a971964bcd@f9411ab3	worktree rep (2026-10-02 00:24 UTC)		branch line, superset of master's; master's copy in docs/recovery/variants/master-f9411ab3/
+brainsim/telemetry.py	16986c08e6	f9411ab3	2026-10-01 23:27	16986c08e6@f9411ab3	worktree seat (2026-10-01 23:16 UTC)		
+brainsim/triplet.py	41f3885584				worktree seat (2026-10-01 23:16 UTC)		SPEC 8.21 branch module; the tree's engine.py imports it
+brainsim/worker.py	dd4114e28c	f9411ab3	2026-10-01 23:27	dd4114e28c@f9411ab3	carved git object @f9411ab3		
+mockups/index.html	43f72420e3				worktree tt (2026-10-01 23:16 UTC)		listed in no carved commit: branch-only file or under a lost tree object
+mockups/viewer3d.html	3c33c9997c				transcripts (dc118a5)		listed in no carved commit: branch-only file or under a lost tree object
+pytest.ini	c7b23ecb14			a635c5c031@f9411ab3	worktree tt (2026-10-01 22:20 UTC)		= a635c5c031 plus `testpaths = tests`, added in this repo by 82f0a32 (2026-10-03)
+requirements.txt	4e94d2fda8	f9411ab3	2026-10-01 23:27	4e94d2fda8@f9411ab3	worktree tt (2026-10-01 22:20 UTC)		
+run.py	9af0f43f0e	f9411ab3	2026-10-01 23:27	9af0f43f0e@f9411ab3	worktree tt (2026-10-01 22:20 UTC)		
+server/app.py	fdc84d416e				worktree tt (2026-10-01 22:20 UTC)		listed in no carved commit: branch-only file or under a lost tree object
+tests/conftest.py	1d464bb499	3aac95b5	2026-10-01 17:46	1d464bb499@3aac95b5	worktree tt (2026-10-01 22:20 UTC)		
+tests/js/evidence.test.mjs	3dd1070824				worktree rs (2026-10-01 22:20 UTC)		listed in no carved commit: branch-only file or under a lost tree object
+tests/js/ui_helpers.test.mjs	793b199a11				worktree serve (2026-10-01 22:20 UTC)		listed in no carved commit: branch-only file or under a lost tree object
+tests/k013_onset.py	e2a0e4643b	3aac95b5	2026-10-01 17:46	e2a0e4643b@3aac95b5	worktree serve (2026-10-01 22:20 UTC)		
+tests/k03_brief_volley.py	d272115ccc	3aac95b5	2026-10-01 17:46	d272115ccc@3aac95b5	worktree tt (2026-10-01 22:20 UTC)		
+tests/k03_pairing.py	c6f781397b	3aac95b5	2026-10-01 17:46	c6f781397b@3aac95b5	worktree tt (2026-10-01 22:20 UTC)		
+tests/k11_binding.py	790e6ccdd1	3aac95b5	2026-10-01 17:46	790e6ccdd1@3aac95b5	worktree tt (2026-10-01 22:20 UTC)		
+tests/k11_never_trained.py	b4e92110eb	3aac95b5	2026-10-01 17:46	b4e92110eb@3aac95b5	worktree sw (2026-10-01 22:20 UTC)		
+tests/k815_selective_write.py	4b9daea93e	3aac95b5	2026-10-01 17:46	4b9daea93e@3aac95b5	worktree sw (2026-10-01 22:20 UTC)		
+tests/k815_slot_reuse.py	dd94140da0	3aac95b5	2026-10-01 17:46	dd94140da0@3aac95b5	worktree serve (2026-10-01 06:28 UTC)		
+tests/k816_hetero_write.py	587891508e	3aac95b5	2026-10-01 17:46	587891508e@3aac95b5	carved git object @3aac95b5		
+tests/k817_inh_homeostat.py	5f9478b8d5	5dbf34fd	2026-10-01 05:12	5f9478b8d5@5dbf34fd	carved git object @5dbf34fd		
+tests/k818_drive_loss.py	6660168d30				worktree diag (2026-10-01 05:14 UTC)		listed in no carved commit: branch-only file or under a lost tree object
+tests/k819_homeostat_ablation.py	b90db93334				worktree diag (2026-10-01 05:26 UTC)		listed in no carved commit: branch-only file or under a lost tree object
+tests/k820_rule_eval.py	f7d6ab004a				worktree diag (2026-10-01 05:41 UTC)		listed in no carved commit: branch-only file or under a lost tree object
+tests/k821_helpers.py	ab5771d840	3aac95b5	2026-10-01 17:46	ab5771d840@3aac95b5	carve photorec2/recup.353/f365800968.py	added	
+tests/k821_triplet.py	986936d581	3aac95b5	2026-10-01 17:46	986936d581@3aac95b5	carve photorec2/recup.353/f365800984.py	added	
+tests/k822_frozen_readout.py	83e02a5de1	3aac95b5	2026-10-01 17:46	83e02a5de1@3aac95b5	worktree rs (2026-10-01 06:28 UTC)		
+tests/k822_rule_screen.py	0b8c0a1ade	3aac95b5	2026-10-01 17:46	0b8c0a1ade@3aac95b5	worktree rs (2026-10-01 06:28 UTC)		
+tests/k822_rules.py	da27d02419	3aac95b5	2026-10-01 17:46	da27d02419@3aac95b5	worktree rs (2026-10-01 06:28 UTC)		
+tests/k823_ceiling.py	e07246d972	3aac95b5	2026-10-01 17:46	e07246d972@3aac95b5	carve photorec2/recup.354/f365801088.py	added	
+tests/k824_whatif.py	1febd69f57	3aac95b5	2026-10-01 17:46	1febd69f57@3aac95b5	carve photorec2/recup.354/f365801112.py	added	
+tests/k826_learned.py	4458f01ae5	3aac95b5	2026-10-01 17:46	4458f01ae5@3aac95b5	carved git object @3aac95b5		
+tests/k827_transplant.py	c9913a0a5f	3aac95b5	2026-10-01 17:46	c9913a0a5f@3aac95b5	carve photorec2/recup.354/f365801168.py	added	
+tests/k828_override.py	2b2033b488	3aac95b5	2026-10-01 17:46	2b2033b488@3aac95b5	carved git object @3aac95b5		
+tests/k848_persist_dual.py	218924a701				worktree pd (2026-10-02 00:25 UTC)		listed in no carved commit: branch-only file or under a lost tree object
+tests/s10_gated.py	4621c00299				worktree gated (2026-09-13 00:47 UTC)		listed in no carved commit: branch-only file or under a lost tree object
+tests/test_client_evidence.py	92d4c1d8b2	3aac95b5	2026-10-01 17:46	92d4c1d8b2@3aac95b5	worktree tt (2026-10-01 06:28 UTC)		
+tests/test_encode_mode.py	90d07b3430	3aac95b5	2026-10-01 17:46	90d07b3430@3aac95b5	worktree tt (2026-10-01 06:28 UTC)		
+tests/test_engine_determinism.py	dfa45f4a7d	3aac95b5	2026-10-01 17:46	dfa45f4a7d@3aac95b5	worktree tt (2026-10-01 06:28 UTC)		
+tests/test_gen2_profile.py	0b3a50aae0	3aac95b5	2026-10-01 17:46	0b3a50aae0@3aac95b5	carve photorec2/recup.350/f365642536.py	added	
+tests/test_hetero_write.py	ce7609163b	3aac95b5	2026-10-01 17:46	ce7609163b@3aac95b5	worktree serve (2026-10-01 06:28 UTC)		
+tests/test_inh_homeostat.py	7aa739dca4	5dbf34fd	2026-10-01 05:12	7aa739dca4@5dbf34fd	carved git object @5dbf34fd		orphaned branch test, expected to fail: SPEC 8.17 branch, REJECTED, not merged; its engine (inh_view) is the inh worktree's
+tests/test_k03_instrument.py	a4777f4d94			a91f5f3783@3aac95b5	worktree ih (2026-09-12 09:15 UTC)		orphaned branch test, expected to fail: worktree ih copy (2026-09-12) predates master's lost blob a91f5f3783
+tests/test_k11_binding.py	f0259ec899	3aac95b5	2026-10-01 17:46	f0259ec899@3aac95b5	worktree tt (2026-10-01 06:28 UTC)		
+tests/test_k11_encode_mode.py	5c2723d210	3aac95b5	2026-10-01 17:46	5c2723d210@3aac95b5	worktree tt (2026-10-01 06:28 UTC)		
+tests/test_k11_encode_window.py	ccbd8cb481	44a6a84a	2026-09-13 15:19	ccbd8cb481@44a6a84a	carve photorec2/recup.557/f565371112.py	added	orphaned branch test, expected to fail: SPEC 8.5 proxy branch; its k11_binding.py was not merged
+tests/test_k11_prune_off.py	aff744be73				worktree k11p (2026-09-13 02:28 UTC)		orphaned branch test, expected to fail: SPEC 8.3 proxy branch (k11p); its k11_binding.py/params were not merged
+tests/test_k11_restricted_donors.py	c9b52cc9dc				worktree k11rd (2026-09-13 14:44 UTC)		orphaned branch test, expected to fail: SPEC 8.8 proxy branch (k11rd); its k11_binding.py was not merged
+tests/test_k11_sparse_write.py	6d73512e21	44a6a84a	2026-09-13 15:19	6d73512e21@44a6a84a	carve photorec2/recup.557/f565371176.py	added	orphaned branch test, expected to fail: SPEC 8.6 proxy branch; its k11_binding.py was not merged
+tests/test_k11_window_on_w.py	f767149448	44a6a84a	2026-09-13 15:19	f767149448@44a6a84a	carved git object @44a6a84a		orphaned branch test, expected to fail: SPEC 8.9 proxy branch (k11wm); its k11_binding.py was not merged (closed hunt)
+tests/test_k822_rules.py	428c95d41f	3aac95b5	2026-10-01 17:46	428c95d41f@3aac95b5	worktree rs (2026-10-01 06:28 UTC)		
+tests/test_kill_stage0.py	64c45f0982	3aac95b5	2026-10-01 17:46	64c45f0982@3aac95b5	carved git object @3aac95b5		
+tests/test_results_record.py	f49dac54ab	3aac95b5	2026-10-01 17:46	f49dac54ab@3aac95b5	worktree tt (2026-10-01 06:28 UTC)		
+tests/test_rules.py	3888793261	3aac95b5	2026-10-01 17:46	3888793261@3aac95b5	worktree tt (2026-10-01 06:28 UTC)		
+tests/test_s10_gated.py	37be1111ec				worktree gated (2026-09-13 00:47 UTC)		orphaned branch test, expected to fail: SPEC 8.1 gated-plasticity branch; its engine (Engine.gate) was not recovered
+tests/test_scaling_hold.py	a1527f0753				worktree k03-hold (2026-09-12 07:19 UTC)		orphaned branch test, expected to fail: k03-hold branch; its engine (_scale_hold) was not recovered
+tests/test_selective_fixture.py	28b827db8d	3aac95b5	2026-10-01 17:46	28b827db8d@3aac95b5	worktree sw (2026-10-01 06:28 UTC)		
+tests/test_server_clients.py	0fcfd3b63d	3aac95b5	2026-10-01 17:46	0fcfd3b63d@3aac95b5	worktree tt (2026-10-01 06:28 UTC)		
+tests/test_session_commands.py	86c3885a7c	3aac95b5	2026-10-01 17:46	86c3885a7c@3aac95b5	worktree tt (2026-10-01 06:28 UTC)		
+tests/test_stim_bookkeeping.py	d5e7f8283c	3aac95b5	2026-10-01 17:46	d5e7f8283c@3aac95b5	worktree tt (2026-10-01 06:28 UTC)		
+tests/test_triplet.py	f378630d3c	3aac95b5	2026-10-01 17:46	f378630d3c@3aac95b5	worktree rs (2026-10-01 06:28 UTC)		
+tests/test_ui_truth.py	d59eacc506	3aac95b5	2026-10-01 17:46	d59eacc506@3aac95b5	worktree tt (2026-10-02 00:24 UTC)		
+tools/sync_serve.sh	e5628b40a0				worktree tt (2026-10-02 00:24 UTC)		listed in no carved commit: branch-only file or under a lost tree object
+ui/app.js	56f37c4af0	f9411ab3	2026-10-01 23:27	56f37c4af0@f9411ab3	worktree rs (2026-10-02 00:24 UTC)		
+ui/evidence.js	c9e96e5ee0	f9411ab3	2026-10-01 23:27	c9e96e5ee0@f9411ab3	worktree tt (2026-10-02 00:24 UTC)		
+ui/index.html	be8ad0f263	f9411ab3	2026-10-01 23:27	be8ad0f263@f9411ab3	worktree rs (2026-10-02 00:24 UTC)		
+ui/stage0_results.json	a00d7d0567	f9411ab3	2026-10-01 23:27	a00d7d0567@f9411ab3	worktree tt (2026-10-02 00:24 UTC)		
+ui/stage1_results.json	51ae71028f	f9411ab3	2026-10-01 23:27	51ae71028f@f9411ab3	worktree rs (2026-10-02 00:24 UTC)	replaced	photorec2/recup.347/f365569184.kept.txt (master f9411ab3, byte-exact); previous tree copy (worktree rs, entries 8.0-8.20 only) kept in git history
+ui/style.css	3e1b0749de	f9411ab3	2026-10-01 23:27	3e1b0749de@f9411ab3	worktree tt (2026-10-02 00:24 UTC)		

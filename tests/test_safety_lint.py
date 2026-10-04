@@ -1,6 +1,6 @@
 """brain-sim is linted by reflex-layer's safety_lint (the stricter suite version).
 
-The recovered plant's tests carry nine test-hygiene findings (they read recorded results from
+The recovered plant's tests carry twelve test-hygiene findings (they read recorded results from
 the owner's ~/.cache paths, and one list.remove trips the destructive-word check). They are
 legacy, recorded here by file so a new finding anywhere fails this test. None is a deletion.
 """
@@ -20,6 +20,8 @@ LEGACY_TEST_HYGIENE = {
     "tests/k03_pairing.py", "tests/k818_drive_loss.py", "tests/k819_homeostat_ablation.py",
     "tests/k822_frozen_readout.py", "tests/k822_rule_screen.py", "tests/k826_learned.py",
     "tests/k828_override.py", "tests/k848_persist_dual.py", "tests/test_client_evidence.py",
+    # recovered 2026-10-04; read recorded results from ~/.cache/scratch like the files above
+    "tests/k823_ceiling.py", "tests/k824_whatif.py", "tests/k827_transplant.py",
 }
 
 
