@@ -1,8 +1,8 @@
 {
  "schema": "stage1-results/1",
  "updated": "2026-10-01",
- "updated_commit": "6127e36",
- "note": "Stage 1 candidates and tests. On master: the heterosynaptic write (SPEC 8.16, passed its kill test on three seeds) with its off-by-default parent encode-mode (8.12) and the 8.15 diagnostics; both flags are off by default and the default plant is unchanged Stage 0. Rejected candidates stay on unmerged branches. K1.1 pattern completion still fails. The combined-mechanisms experiment (SPEC 8.17, inhibition as the hippocampal rate controller) was rejected on three seeds and is not merged. A diagnostic (SPEC 8.18) then traced the 8.17 readout loss to the cortex: the homeostat suppresses the answer to a stimulus within seconds of showing it. An ablation (SPEC 8.19) showed that slowing the homeostat removes most of that suppression and keeps the plant in band, but trained cells still do not answer more than untrained ones: on this plant the pair rule weakens synapses between co-active cells. An offline evaluation (SPEC 8.20) measured that directly and found that the published triplet rule (hippocampal set) would strengthen the driven pathway instead.",
+ "updated_commit": "5f42734",
+ "note": "Stage 1 candidates and tests. On master: the heterosynaptic write (SPEC 8.16, passed its kill test on three seeds) with its off-by-default parent encode-mode (8.12) and the 8.15 diagnostics; both flags are off by default and the default plant is unchanged Stage 0. Rejected candidates stay on unmerged branches. K1.1 pattern completion still fails. The combined-mechanisms experiment (SPEC 8.17, inhibition as the hippocampal rate controller) was rejected on three seeds and is not merged. A diagnostic (SPEC 8.18) then traced the 8.17 readout loss to the cortex: the homeostat suppresses the answer to a stimulus within seconds of showing it. An ablation (SPEC 8.19) showed that slowing the homeostat removes most of that suppression and keeps the plant in band, but trained cells still do not answer more than untrained ones: on this plant the pair rule weakens synapses between co-active cells. An offline evaluation (SPEC 8.20) measured that directly and found that the published triplet rule (hippocampal set) would strengthen the driven pathway instead. Built and tested (SPEC 8.21), that rule was rejected on three seeds: trained cells did out-fire untrained ones for the first time and the plant stayed stable, but the gain was small and unspecific and weights piled up at their bound; not merged. A follow-up diagnostic (SPEC 8.22) confirmed that small gain with learning frozen during the readout, and screened two more published rules offline: neither qualified. The cause found: a stimulus raises almost the whole cortex, so no rule that works at a single synapse can tell the stimulus's inputs from the rest by more than about a factor of two. A ceiling test (SPEC 8.23) then set the existing connections to their maximum by hand: even so a half cue recalls only 8 to 11 of the 16 memory cells in the allowed time, and the same strong connections make them fire with no cue. On the present wiring the recall test cannot be passed by learning alone; the wiring or size has to change. What-if brains (SPEC 8.24): giving the memory region four times as many internal connections keeps it healthy and lets a half cue recall the memory within 200 ms at the ceiling, but not within the 50 ms the test allows; simply asking the cortex to be quieter made the brain unhealthy. A second-generation brain was then built on a branch only (SPEC 8.25): quieter cortex, denser memory-region wiring. Its activity is healthy on three seeds, but one Stage 0 test (a storage-capacity check with a fixed size) fails on it, so by the rule set in advance the branch is marked failed. At the hand-set ceiling a half cue recalls the memory within 200 ms on every seed, and within the official 50 ms on one seed of three; the official recall test K1.1 remains failed. The storage-capacity check was then rewritten on that branch to size itself from the brain's own wiring, and the second-generation brain passes the same health checks as today's (SPEC 8.26). Learned recall was then measured on it with the existing learning rules, beside a twin that was never trained: no rule gives recall from a half cue; the plain rule makes it worse than no training, and the triplet rule makes the brain run away on one seed. K1.1 remains failed. A follow-up diagnostic (SPEC 8.27) found why training hurts on the second-generation brain: the two seconds of training weaken the very connections from cortex onto the memory cells that the cue needs (from about 92 % to 70 % of their maximum). Swapping just those connections between the trained brain and its untrained twin moves the whole deficit. This explains a failure; it is not recall, and K1.1 remains failed. The next experiment (SPEC 8.28) tried a stand-in rule built from that finding: cells that fire strongly keep their input strengths from the pair rule. On three seeds the trained brain then answers a half cue with 7 to 8 more of its 16 memory cells than an untrained twin within 50 ms, without answering the wrong pattern or firing when idle; about half the gain is left after a sleep. This is a test-side stand-in, not yet a mechanism in the engine, and the official recall test K1.1 was not run and remains failed. That stand-in was then built into the engine on a branch (SPEC 8.29): learning changes are held as tags and committed once a second, except in cells that fired strongly. On two of three seeds it reproduces the gain. On the third the brain's activity runs away, so the mechanism is rejected as built. K1.1 remains failed. One change fixed that (SPEC 8.30): the tag is the strength a connection actually transmits with, so a burst weakens its own connections at once. With it, on a branch, the engine rule passes its test on all three seeds: the trained brain answers a half cue with 7 to 9 more of its 16 memory cells than an untrained twin within 50 ms, without answering the wrong pattern or firing when idle, and activity stays healthy. About half the gain is left after a sleep. The official recall test K1.1 has not been run on it and remains failed. The official recall test K1.1 was then run on that mechanism, unchanged (SPEC 8.31, on a branch). Recall itself works: a half cue brings back 90 to 96 % of the memory within 50 ms on all three seeds, and all 16 of the most responsive memory cells, against 4 to 8 in an untrained twin. But the test also requires the memory to be small (at most 20 cells), and on the second-generation brain it is 86 to 134 cells. So K1.1 as written remains failed, on size and not on recall. A follow-up measurement (SPEC 8.32, on a branch) asked why the memory is so large. Mostly the wiring: with all learning switched off, the second-generation brain already answers the pattern with 52 to 78 memory cells, and the learning rules add 30 to 70 % more. So the size limit cannot be met by changing the learning rule alone; the memory region has to answer more sparsely first. A first attempt to make the memory smaller (SPEC 8.33, on a branch) gave each memory cell fewer cortex cells to listen to. It did not work: the brain's own rate-keeping turns fewer inputs into stronger inputs, so the memory stays at 90 to 190 cells; with very few inputs the memory region goes too quiet instead. Rejected. A check on what carries the recall (SPEC 8.34, on a branch) switched off the links between memory cells at recall time only. The trained brain still beat its untrained twin, by about half as much on two seeds and fully on the third, so the recall is not simply memory cells recalling each other. Undoing the learned changes in the memory-to-memory links, or in the cortex-to-memory links, did not remove the gain either. Where the learned recall is stored is therefore not yet known; it may be completed inside cortex. The follow-up (SPEC 8.35, on a branch) swapped each remaining part between the trained brain and its twin. The whole recall gain turned out to sit in the excitatory links onto inhibitory cells (plus the links from the sense cells): training on the pattern weakens the brakes that the pattern's own pathway pulls, so the half cue meets less inhibition. That is a learned loss of inhibition, not cells of the memory bound to each other, and it also makes a different pattern answer more. Splitting that class (SPEC 8.36, on a branch) showed the gain is spread over all four kinds of link onto inhibitory cells and none of it is in the links from the sense cells onto cortex's excitatory cells. No single kind carries it alone. The decisive check (SPEC 8.37, on a branch) trained the brain again with learning switched off on the links onto inhibitory cells. The recall gain vanished: the trained brain then answers the half cue slightly worse than its untrained twin. So the recall seen since 8.28 was entirely the weakened brakes, and the memory was also only half as large without them. A first idea for a memory that does not rest on weakened brakes (SPEC 8.38, on a branch): the links from cortex onto the memory cells were sitting at their maximum strength, so learning could only take away. Raising that maximum gave them room, and training then helped the half cue a little (about 2 cells of 16 on most seeds) without helping a different pattern. Not enough to pass, but the first gain of the right kind. Making that learning step bigger (SPEC 8.39, on a branch) did not turn the small gain into recall: the rule mostly takes strength away from the links that were silent during the pattern and adds little to the active ones. The trained brain becomes very choosy (it nearly stops answering a different pattern) but not much better at the half cue. Rejected. A learning step that only adds strength to the links that were active during the pattern (SPEC 8.40, on a branch, a labelled stand-in) gave the first consistent gain of the right kind: the trained brain beats its twin on the half cue by 3 to 5 cells of 16 on all three seeds, with no learning on the brakes. It is rejected because on one seed the trained memory cells also fire a little with no cue at all, and it is still short of 13 of 16. Letting that step also strengthen the links between the memory cells themselves (SPEC 8.41, on a branch) brought the half cue to 15 or 16 of 16 on every try, with no learning on the brakes: the memory cells finish the pattern for each other. But the same cells then also fire for a different pattern and with no cue at all, so it is rejected: the memory is real but too easy to set off. Making that step pay for what it adds, by taking strength from the links that were silent (SPEC 8.42, on a branch), gave recall and choosiness together on two seeds of three: the half cue brings back 12 to 14 of 16, a different pattern brings back fewer cells than in the untrained twin, and the cells stay quiet with no cue. On the remaining seed the memory cells still fire by themselves, so it is rejected. A gentler version of the same step (SPEC 8.43, on a branch) did not pass either: the recall gain shrinks with the step. It also showed that recall here is all-or-little on each try, so eight tries per setting are too few to rank neighbouring settings. Measured with 32 tries instead of 8 (SPEC 8.44, on a branch), the strongest setting brings back 13 or more of the 16 memory cells from half a cue on all three seeds, with a different pattern bringing back fewer than in the untrained twin. It is still rejected: on a few tries the memory cells light up with no cue at all, most often on seed 1. With a little less room on each link (SPEC 8.45, on a branch), one setting passed the round's own three checks on all three seeds for the first time without any learning onto inhibitory cells: the half cue brings back 4 to 7 more memory cells than in the untrained twin, a different pattern brings back fewer, and the cells stay about as quiet with no cue. It is a narrow pass and not the Stage-1 law: only one seed of three reaches 13 of 16 on average. Rerun on fresh tries and on three brains never used before (SPEC 8.46, on a branch), that setting held: on all six brains one showing of the pattern leaves the memory cells answering half a cue with 2 to 7 more cells than an untrained twin, answering a different pattern with fewer, and staying about as quiet with no cue. Four brains of six reach 13 of 16 on average; the Stage-1 law needs all of them, so K1.1 is still a fail. Read with the official memory test itself (SPEC 8.47, on a branch), that setting does not pass: the group of memory cells is still two to three times too large on every brain, and half a cue brings back enough of it on three brains of six.",
  "entries": [
   {
    "test": "tests/s10_triplet.py",
@@ -213,6 +213,276 @@
    "tested_commit": "6127e36",
    "date": "2026-10-01",
    "evidence": "SPEC.md 8.20 result: VALID on seeds 1, 2 and 3 (shadow pair rule equals the engine's weight change to 4e-7 w_max); one presentation weakens the driven pathway by 6 to 14 % of w_max under the plant's pair rule; the Pfister-Gerstner hippocampal triplet set would strengthen it on every seed with background drift inside the bar, but fails the predeclared input-selectivity clause on two seeds, so it is not built as a stand-alone selective write; logs ~/.cache/scratch/brainsim-rule/r_seed{1,2,3}.log; branch rule-eval not merged"
+  },
+  {
+   "test": "tests/k821_triplet.py",
+   "label": "T6 triplet learning rule beside the heterosynaptic write, on the slowed homeostat (unmerged branch triplet)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.21",
+   "tested_commit": "fb9bade",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.21 result: REJECTED on seeds 1, 2 and 3 on saturation (0.29 to 0.38 of cortical excitatory synapses at the bound at 440,000, bar 0.20) and on delivered weight (trained / untrained 1.04, 1.14, 1.07, bar 1.20), and on seed 3 on persistence; the spike clause passed on every seed (1.26, 1.27, 1.30) and rates stayed in band to 440,000; logs ~/.cache/scratch/brainsim-tri/t6_seed{1,2,3}.log; branch triplet not merged"
+  },
+  {
+   "test": "tests/k822_rule_screen.py",
+   "label": "Readouts with learning frozen, and an offline screen of two further published learning rules (diagnostic, unmerged branch rule-screen)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.22",
+   "tested_commit": "e4e0bbe",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.22 result: a diagnostic, valid on seeds 1, 2 and 3 (passing means the measurement is valid, not that a mechanism worked). The 8.21 spike gain stands with learning frozen (trained / untrained 1.26, 1.29, 1.30). Neither the sliding-threshold triplet rule nor the calcium-threshold rule qualifies to be built; during the stimulus the 100 best cortical cells fire at 12 to 14 Hz and the rest of the cortex at 6 Hz, so the write is not specific; logs ~/.cache/scratch/brainsim-next/; branch rule-screen not merged"
+  },
+  {
+   "test": "tests/k823_ceiling.py",
+   "label": "Ceiling diagnostic: existing connections set to their maximum by hand, can a half cue recall the assembly? (unmerged branch ceiling)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.23",
+   "tested_commit": "63c4288",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.23 result: a diagnostic, run on seeds 1, 2 and 3 (passing means the measurement is valid, not that recall worked). No arm completes: with cortical inputs and recurrent inputs of the 16 assembly cells at the bound the half cue recalls 8 to 11 within 50 ticks (13 needed), and the cells also fire with no stimulus and under B. A memory cell has about two inputs from other memory cells; the half cue recruits 6 % of the cortex over a 19 % background; logs ~/.cache/scratch/brainsim-ceil/; branch ceiling not merged"
+  },
+  {
+   "test": "tests/k824_whatif.py",
+   "label": "What-if ceilings: denser hippocampal recurrence, a quieter cortex, both (diagnostic on branch-only plants, unmerged branch ceiling)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.24",
+   "tested_commit": "1d99567",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.24 result: a diagnostic, run on seeds 1, 2 and 3 (passing means the measurement is valid, not that recall worked). The unchanged plant reproduces 8.23 exactly. Four times the hippocampal recurrent in-degree: healthy; at the ceiling the half cue recalls 6 to 11 of 16 within 50 ticks (13 needed) and 13 to 16 within 200 ticks. Cortical rate target 1 Hz: unhealthy, void. No candidate plant; logs ~/.cache/scratch/brainsim-ceil/; branch ceiling not merged"
+  },
+  {
+   "test": "tests/k824_whatif.py",
+   "label": "Second-generation plant gen2 on a branch: Stage 0 health, then the ceiling probe (unmerged branch gen2)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.25",
+   "tested_commit": "687a1c4",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.25 result: health clause H1 fails as written on one test (K0.10b: its fixed 380,000-synapse store is smaller than gen2's initial wiring of 432,000; the same check with the store scaled in proportion runs clean, reported as a supplementary check only); rates healthy on seeds 1, 2 and 3 (cortex E 1.6 to 1.75 Hz, hippocampus E 0.85 to 0.88 Hz). Ceiling (oracle weights, labelled proxy), printed and not read as a verdict: K1.1 clause (half cue, 50 ticks, 13 of 16) 11.6 / 7.6 / 13.6; K1.1-200, a separate diagnostic that is never a K1.1 pass, 15.0 / 14.8 / 16.0; idle at most 1 cell in 50 ticks. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-gen2/; branch gen2 not merged"
+  },
+  {
+   "test": "tests/k826_learned.py",
+   "label": "Learned half cue on the second-generation plant gen2, with a never-trained control; K0.10b store size by rule (unmerged branch gen2)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.26",
+   "tested_commit": "b6462be",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.26 result: with K0.10b's store sized by rule (380/360 of the initial wiring) the Stage 0 suite is the same on both plants (20 pass; K0.1, K0.4, K0.13 red). Learned half cue, 50 ticks, W cells of 16, seeds 1 / 2 / 3, trained (never-trained): pair rule 2.6 / 0.6 / 3.8 (5.2 / 6.0 / 6.6); pair rule with the heterosynaptic write 5.2 / 3.2 / 3.4 (6.4 / 5.0 / 7.2); triplet with the write 5.8 / runaway / 15.0 (7.0 / 6.0 / 5.2), seed 3 non-selective (B 13.4). At 200 ticks the never-trained twin already answers with 12.6 / 12.8 / 13.2, so K1.1-200 is not a memory measure on this plant. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-gen2/; branch gen2 not merged"
+  },
+  {
+   "test": "tests/k827_transplant.py",
+   "label": "Where the training deficit lives on gen2: synapse-class transplant between the trained brain and its never-trained twin (diagnostic; unmerged branch deficit-diag)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.27",
+   "tested_commit": "b281328",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.27 result: diagnostic valid on seeds 1, 2 and 3 (deficit, trained minus never-trained, half cue at 50 ticks: -3.1 / -4.3 / -3.6 W cells of 16; identity transplant exact; all synapses swapped recovers 0.83 / 1.05 / 0.94). The cortical E synapses onto W alone recover 1.10 / 0.79 / 1.22 of the deficit and induce 1.22 / 1.02 / 1.10 of it in the twin (bar 0.60 both ways); training lowers them from 0.94 / 0.93 / 0.90 to 0.73 / 0.69 / 0.69 of the bound. A pass of the diagnostic, not of recall: K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-def/; branch deficit-diag not merged"
+  },
+  {
+   "test": "tests/k828_override.py",
+   "label": "Plateau override, a labelled test-side proxy on gen2: strongly driven cells are exempt from the pair rule (unmerged branch plateau-override)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.28",
+   "tested_commit": "5e8af4f",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.28 result: valid on seeds 1, 2 and 3. Trained minus never-trained, half cue, 50 ticks, W cells of 16, 40 paired draws: +7.2 / +8.2 / +8.4 (bar +2.0); the same difference for B -0.1 / -1.8 / -0.2 and for no stimulus +0.3 / -0.1 / +0.3. After a sleep and B: +4.1 / +4.3 / +5.1. A pass of this proxy's kill test only: the rule is applied from outside the engine, the hippocampal answer is broad (73 to 123 other cells fire), and tests/test_k11_binding.py was not run. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-po/; branch plateau-override not merged"
+  },
+  {
+   "test": "tests/k829_pending.py",
+   "label": "Pending pair plasticity in the engine, the engine form of the 8.28 proxy, on gen2 (unmerged branch pending-stdp)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.29",
+   "tested_commit": "549e8b2",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.29 result: REJECTED. Flag-off digest equal to the reference; 14 unit tests written first, green. Trained minus never-trained, half cue, 50 ticks, W cells of 16: +8.4 / +9.4 / +8.3 on seeds 1 / 2 / 3, with B -0.4 / +1.8 / -0.1 and no stimulus +0.4 / -0.1 / +0.4; but seed 2 is invalid: population events from 5 s after training and runaway (never-trained twin 35 Hz cortex, 51 Hz hippocampus after B; 41 % of hippocampal cells in one tick). Seeds 1 and 3 valid and in band. Holding the weights for a whole sweep removes the within-sweep depression that damped bursts (inference). K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-pend/; branch pending-stdp not merged"
+  },
+  {
+   "test": "tests/k829_pending.py",
+   "label": "Pending pair plasticity with the tag expressed (engine, flags off by default) on gen2: restores the fast brake missing in 8.29 (unmerged branch pending-express)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.30",
+   "tested_commit": "c66f97f",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.30 result: valid on seeds 1, 2 and 3 (flag-off digest equal to the reference; 9 unit tests written first; between sweeps bit-identical to the plain pair rule; rates in band; largest one-tick fraction 0.08 / 0.16 / 0.10, seed 2 was 0.41 in 8.29). Trained minus never-trained, half cue, 50 ticks, W cells of 16: +6.6 / +8.7 / +8.9 (bar +2.0); B -0.1 / -1.8 / -0.2; no stimulus +0.1 / +0.2 / +0.5. After a sleep and B: +3.9 / +4.7 / +4.3. A pass of this round's kill test only: tests/test_k11_binding.py was not run, the hippocampal answer is broad (71 to 117 cells outside W against 30 to 37), one pattern. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-pex/; branch pending-express not merged"
+  },
+  {
+   "test": "tests/k831_k11_official.py",
+   "label": "The official K1.1 protocol (8.2, unmodified) on the 8.30 mechanism and the gen2 plant, with a never-trained twin (unmerged branch k11-on-pending-express)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.31",
+   "tested_commit": "5ac4af7",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.31 result: valid on seeds 1, 2 and 3. Criteria as coded: c1 assembly size 86 / 134 / 103 (bar 1 to 20): fails; c2 share of the assembly within 50 ticks of the half cue 0.90 / 0.96 / 0.91 (bar 0.80): met; c3 spurious excess 13.6 / 27.4 / 35.8 (limits 43 / 67 / 51.5): met. W cells of 16 on the official draw: 16 / 16 / 16 against 4 / 8 / 4 in a never-trained twin; reseeded repeats reaching 13: 5 / 8 / 8 of 8. Seed 2 answers B with 10 of 16 W cells. K1.1 remains FAIL (on sparseness, not on recall); logs ~/.cache/scratch/brainsim-k11o/; run on the unmerged branch k11-on-pending-express, never merged to master"
+  },
+  {
+   "test": "tests/k832_assembly_size.py",
+   "label": "Why the memory is too large: assembly size with nothing learning, with the pair rule, with the heterosynaptic write and with the 8.30 mechanism, on gen2 and on today's plant (diagnostic, unmerged branch assembly-size-diag)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.32",
+   "tested_commit": "9937366",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.32 result: a valid diagnostic on seeds 1, 2 and 3, not a K1.1 result. Assembly size on gen2: nothing learning 52 / 78 / 64, pair rule 73 / 101 / 90, plus heterosynaptic write 79 / 110 / 97, 8.30 mechanism 86 / 134 / 103 (reproduces 8.31); today's plant 11 / 24 / 23, 15 / 32 / 32, 21 / 41 / 35, 34 / 56 / 54. Bar is 20. Reading MIXED, mostly the plant (no-learning size is 0.60 / 0.58 / 0.62 of the full mechanism's). K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-asd/; run on the unmerged branch assembly-size-diag, never merged to master"
+  },
+  {
+   "test": "tests/k831_k11_official.py",
+   "label": "Making the memory sparser by giving each memory cell fewer cortex inputs: in-degree 15, 30, 45, 60 under the 8.30 mechanism on gen2 (unmerged branch sparse-hpc-indegree)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.33",
+   "tested_commit": "ed0a06c",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.33 result: no in-degree passes on seeds 1, 2 and 3. Official assembly size (bar 1 to 20): in-degree 15: 10 / 172 / 137 with the memory region resting at 0.53 to 0.58 Hz, out of band; 30: 105 / 191 / 115; 45: 100 / 133 / 93; 60: 86 / 134 / 103 (reproduces 8.31). With nothing learning: 4 / 84 / 108, 65 / 92 / 61, 60 / 74 / 66, 52 / 78 / 64. Trained minus never-trained on the half cue stays at +8 to +11 W cells at 30 to 60. Lever rejected; K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-shi/; run on the unmerged branch sparse-hpc-indegree, never merged to master"
+  },
+  {
+   "test": "tests/k834_recurrent_off.py",
+   "label": "Is the recall recurrent? Memory-to-memory excitatory links switched off at recall only, plus resets of the recurrent and the cortex-to-memory weights to the untrained twin's (diagnostic, unmerged branch recurrent-off-recall)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.34",
+   "tested_commit": "b59f599",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.34 result: valid on seeds 1, 2 and 3 (reproduces 8.31 exactly), but no clear attribution, so not a pass as a diagnostic. Trained minus never-trained W cells on the half cue at 50 ticks: links on +8.4 / +8.4 / +9.1; memory E to memory E silenced +4.4 / +8.1 / +4.9 (ratio 0.52 / 0.97 / 0.53; bars 0.25 and 0.75); trained brain with the twin's recurrent weights +8.4 / +8.5 / +9.1; with the twin's cortex-to-memory weights +8.9 / +8.5 / +9.1. The gain is in neither synapse class; its seat is not identified. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-rof/; run on the unmerged branch recurrent-off-recall, never merged to master"
+  },
+  {
+   "test": "tests/k835_seat.py",
+   "label": "Where the learned recall is stored: one class at a time swapped between the trained brain and its twin (cortex E to E, inhibitory, memory to cortex, cell state) (diagnostic, unmerged branch seat-transplant)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.35",
+   "tested_commit": "01542be",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.35 result: valid on seeds 1, 2 and 3 (reproduces 8.31; every swap bit-exact). Not a pass: none of the four named classes moves the trained minus never-trained half-cue gain (each within 0.13 of zero in both directions). The class reported beside them, the remaining excitatory synapses (onto inhibitory cells, and sense onto cortex), carries all of it: removed 1.25 / 1.30 / 1.01, induced 1.09 / 1.01 / 1.01 of the gain. Training weakens cortex-to-memory-inhibitory synapses from A-answering cells from about 0.97 to 0.67 of the bound: the recall is learned disinhibition, not an association. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-seat/; run on the unmerged branch seat-transplant, never merged to master"
+  },
+  {
+   "test": "tests/k836_ei_split.py",
+   "label": "Which synapses onto inhibitory cells carry the recall: 8.35's residual class split in five and swapped one at a time, live and frozen probes (diagnostic, unmerged branch ei-split)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.36",
+   "tested_commit": "66b87c2",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.36 result: valid on seeds 1, 2 and 3; mixed, so not a pass: no single sub-class reaches 0.60 both ways. Frozen-probe shares of the trained minus never-trained half-cue gain (removed | induced): sense onto cortex E about 0 | negative; sense onto cortex I 0.41 / 0.00 / 0.27 | 0.48 / 0.49 / 0.34; cortex E onto cortex I 0.16 / 0.01 / 0.00 | 0.08 / 0.46 / 0.25; cortex E onto memory I 0.48 / 0.03 / 0.22 | 0.57 / 0.55 / 0.49; memory E onto memory I 0.25 / 0.10 / 0.25 | 0.28 / 0.63 / 0.47; the four onto inhibitory cells together 1.36 / 1.27 / 1.31 | 1.25 / 1.01 / 1.00. The frozen-probe control confirms 8.35. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-eis/; run on the unmerged branch ei-split, never merged to master"
+  },
+  {
+   "test": "tests/k837_ei_frozen.py",
+   "label": "Does any recall survive when synapses onto inhibitory cells cannot learn by the pair rule: the 8.30 mechanism trained with and without that route (diagnostic, unmerged branch ei-frozen-training)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.37",
+   "tested_commit": "7f610e7",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.37 result: a valid diagnostic on seeds 1, 2 and 3 with a clear answer, not a K1.1 result. Trained minus never-trained W cells on the half cue at 50 ticks: reference +8.4 / +8.4 / +9.1 (reproduces 8.31); with the pair rule off onto inhibitory cells -1.5 / -3.1 / -0.9. The recall of 8.28 to 8.31 does not survive without the learned loss of inhibition. The assembly also halves (41 / 56 / 49 cells against 86 / 134 / 103). Resting rates in band. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-eif/; run on the unmerged branch ei-frozen-training, never merged to master"
+  },
+  {
+   "test": "tests/k838_headroom.py",
+   "label": "Room to strengthen: the weight bound of the memory region's excitatory cells raised 1.5x and 2x, with no pair rule onto inhibitory cells (unmerged branch weight-headroom)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.38",
+   "tested_commit": "b342075",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.38 result: neither setting passes on seeds 1, 2 and 3. Trained minus never-trained W cells on the half cue at 50 ticks with no learning onto inhibitory cells: bound x1 (8.37) -1.5 / -3.1 / -0.9; x1.5 +2.9 / -0.9 / +2.4 (healthy; seed 2 fails the +2.0 bar); x2 +1.5 / +2.4 / +2.3 (cortex rests under its band on seeds 2 and 3). B is lowered by training in every run. A small selective excitatory gain appears once the synapses are off their bound (0.5 to 0.6 of it against 0.86 to 0.89), far from 13 of 16. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-head/; run on the unmerged branch weight-headroom, never merged to master"
+  },
+  {
+   "test": "tests/k839_hetero_eta.py",
+   "label": "A stronger heterosynaptic write (step 0.15, 0.30, 0.60) with the bound at 1.5x and no pair rule onto inhibitory cells (unmerged branch hetero-eta)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.39",
+   "tested_commit": "ea6b8d4",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.39 result: no step passes on seeds 1, 2 and 3. Trained minus never-trained W cells on the half cue at 50 ticks: step 0.15 +2.9 / -0.9 / +2.4; 0.30 +3.5 / -0.1 / +2.3; 0.60 +4.4 / +4.1 / +1.0; 13 of 16 reached on one to three repeats of eight. The write is zero-sum: inputs onto W from A-answering cortex cells rise only from 0.60 to 0.72-0.79 of the bound while inputs from the other cortex cells fall to 0.11-0.36; B falls to about 1 of 16. Selective but not responsive enough. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-eta/; run on the unmerged branch hetero-eta, never merged to master"
+  },
+  {
+   "test": "tests/k840_additive.py",
+   "label": "A write that only adds: potentiation-only heterosynaptic write (HETERO_ADDITIVE, off by default), bound 1.5x, no pair rule onto inhibitory cells (unmerged branch hetero-additive)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.40",
+   "tested_commit": "90aad32",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.40 result: valid on seeds 1, 2 and 3; rejected on the no-stimulus clause. Trained minus never-trained W cells at 50 ticks, step 0.15: half cue +4.3 / +3.3 / +3.0 (bar +2.0, met), B +1.8 / +0.3 / 0.0 (met), none +1.5 / +0.1 / -0.3 (bar +0.5, seed 1 fails); step 0.30: half cue +4.6 / +5.0 / +3.0, none +1.1 / +1.0 / 0.0. 13 of 16 on 1 to 5 repeats of 8; mean half cue 8.6 to 11.6. First consistent gain with an excitatory seat (nothing learns onto inhibitory cells). Tests first: tests/test_hetero_additive.py, 18 pass, flag off bit-identical. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-add/; run on the unmerged branch hetero-additive, never merged to master"
+  },
+  {
+   "test": "tests/k840_additive.py",
+   "label": "The adding write on the memory region's own links too (HETERO_RECURRENT, off by default), bound 1.5x, no pair rule onto inhibitory cells (unmerged branch hetero-recurrent)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.41",
+   "tested_commit": "ffe7d69",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.41 result: valid on seeds 1, 2 and 3; rejected. Step 0.30: half cue 15.5 / 14.9 / 15.9 of 16 W cells at 50 ticks against 8.0 / 6.5 / 6.6 never-trained (13 of 16 on 8 of 8 repeats on every seed), but no stimulus 6.3 / 3.3 / 4.5 against about 1 (difference +5.4 / +2.9 / +3.1, bar +0.5) and B 8.8 / 11.8 / 13.6 against 3.0 / 4.9 / 7.9 (bar half of the half-cue gain, exceeded). Step 0.15: gain +4.3 / +5.6 / +6.8, no-stimulus difference +1.1 / +1.3 / +1.6. Excitatory seat (nothing learns onto inhibitory cells). Tests first: tests/test_hetero_recurrent.py, 12 pass, flag off bit-identical. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-rec/; run on the unmerged branch hetero-recurrent, never merged to master"
+  },
+  {
+   "test": "tests/k840_additive.py",
+   "label": "A zero-sum write over cortical and recurrent inputs together (existing flags: HETERO_RECURRENT on, HETERO_ADDITIVE off), bound 1.5x, no pair rule onto inhibitory cells (unmerged branch zero-sum-joint)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.42",
+   "tested_commit": "4dcd952",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.42 result: valid on seeds 1, 2 and 3; rejected on seed 1's no-stimulus clause. Step 0.30: trained minus never-trained on the half cue +5.1 / +4.0 / +4.5 W cells at 50 ticks, B -1.6 / -3.6 / -4.1, none +1.5 / +0.1 / -0.1 (bar +0.5). Step 0.60: +7.0 / +6.1 / +6.4, B +0.1 / -4.4 / -3.9, none +2.8 / -0.4 / -0.5. Half cue 11.5 to 14.6 of 16; 13 of 16 on 5 or 6 repeats of 8 on every seed. Seeds 2 and 3 pass all three clauses at both steps with an excitatory seat. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-zs/; run on the unmerged branch zero-sum-joint, never merged to master"
+  },
+  {
+   "test": "tests/k840_additive.py",
+   "label": "The zero-sum write over cortical and recurrent inputs at smaller steps (0.05, 0.10, 0.15), bound 1.5x, no pair rule onto inhibitory cells (unmerged branch zero-sum-step)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.43",
+   "tested_commit": "0bee1e4",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.43 result: valid on seeds 1, 2 and 3; no step passes on all three. Trained minus never-trained on the half cue, W cells at 50 ticks: step 0.05 +1.0 / +0.8 / +0.8; step 0.10 +3.9 / +2.0 / +1.9 with none +1.0 on seed 1; step 0.15 +5.3 / +1.3 / +4.6. B at or below the twin at every step. W-to-W links 0.45 to 0.76 of the bound (0.9 in 8.42). Repeats split into caught (13 to 16) and not caught (3 to 9), so a mean of eight moves by about 1.5 cells by chance. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-zst/; run on the unmerged branch zero-sum-step, never merged to master"
+  },
+  {
+   "test": "tests/k840_additive.py",
+   "label": "The zero-sum write over cortical and recurrent inputs measured with 32 repeats per probe (steps 0.15, 0.30, 0.60), bound 1.5x, no pair rule onto inhibitory cells (unmerged branch more-repeats)",
+   "outcome": "reject",
+   "stage": 1,
+   "spec": "8.44",
+   "tested_commit": "6f066b6",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.44 result: valid on seeds 1, 2 and 3; rejected, at every step one or two seeds exceed the no-stimulus bar of +0.5 (0.15: +0.7 on seed 3; 0.30: +0.9 and +0.7 on seeds 1 and 3; 0.60: +1.4 on seed 1). Trained minus never-trained on the half cue, W cells at 50 ticks, 32 repeats: +3.6 / +3.1 / +4.6 (0.15), +5.7 / +5.9 / +5.6 (0.30), +7.2 / +6.8 / +6.5 (0.60), each +/- about 0.6. At 0.60 the half cue reaches 15.3 / 13.3 / 13.7 of 16 on average (13 of 16 on 29 / 25 / 27 repeats of 32), B below the twin; the W set catches with no stimulus on 6 / 3 / 1 repeats of 32 (twin 0). K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-rep/; run on the unmerged branch more-repeats, never merged to master"
+  },
+  {
+   "test": "tests/k840_additive.py",
+   "label": "The zero-sum write over cortical and recurrent inputs at weight bound 1.0x and 1.25x, 32 repeats, no pair rule onto inhibitory cells (unmerged branch joint-bound)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.45",
+   "tested_commit": "e1685e8",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.45 result: valid on seeds 1, 2 and 3; this round's fixed three-clause test passes at bound 1.25x, step 0.30: trained minus never-trained on the half cue +4.4 / +4.1 / +7.4 W cells at 50 ticks (32 repeats), B -3.3 / -2.7 / -3.8, none -0.1 / +0.3 / +0.4 (bar +0.5; seed 3's standard error is 0.6). Not a K1.1 pass: the half cue averages 10.7 / 11.2 / 14.6 of 16 (13 of 16 on 15 / 14 / 27 repeats of 32). At 1.25x step 0.60 seed 3 fails the no-stimulus clause (+1.6); at 1.0x the gain is negative on seeds 1 and 2. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-jb/; run on the unmerged branch joint-bound, never merged to master"
+  },
+  {
+   "test": "tests/k840_additive.py",
+   "label": "Confirmation of the 8.45 setting (zero-sum write over cortical and recurrent inputs, bound 1.25x, step 0.30, no pair rule onto inhibitory cells) with 96 repeats on seeds 1 to 6 (unmerged branch joint-confirm)",
+   "outcome": "pass",
+   "stage": 1,
+   "spec": "8.46",
+   "tested_commit": "73c3385",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.46 result: valid on six seeds; confirmed, all six meet the round's three clauses with 96 repeats. Trained minus never-trained on the half cue, W cells at 50 ticks: +5.1 / +4.0 / +7.0 on seeds 1 to 3 and +2.4 / +5.0 / +4.7 on the new seeds 4 to 6 (standard errors 0.3 to 0.4); B -3.0 / -2.5 / -3.0 / -1.9 / -0.7 / -1.8; none -0.2 / +0.4 / +0.45 / -0.4 / 0.0 / -0.2 (bar +0.5). Not a K1.1 pass: the half cue averages 11.5 / 11.1 / 14.9 / 13.7 / 14.1 / 13.3 of 16, and the assembly is 40 to 61 cells. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-jc/; run on the unmerged branch joint-confirm, never merged to master"
+  },
+  {
+   "test": "tests/k847_official.py",
+   "label": "The official K1.1 protocol on the 8.46 setting (zero-sum write over cortical and recurrent inputs, bound 1.25x, step 0.30, no pair rule onto inhibitory cells), seeds 1 to 6 (unmerged branch official-on-joint)",
+   "outcome": "fail",
+   "stage": 1,
+   "spec": "8.47",
+   "tested_commit": "5f42734",
+   "date": "2026-10-01",
+   "evidence": "SPEC.md 8.47 result: valid on six seeds; K1.1 as coded is not met. c1 fails on every seed (assembly 50 / 51 / 51 / 61 / 40 / 49 cells against 20). c2, the half cue recalling at least 0.80 of the assembly in 50 ticks: 0.72 / 0.57 / 0.86 / 0.92 / 0.78 / 0.90, met on seeds 3, 4 and 6 only. c3 met on every seed. The 8.30 mechanism read by the same test (8.31) had c2 0.90 / 0.96 / 0.91 on seeds 1 to 3. K1.1 remains FAIL; logs ~/.cache/scratch/brainsim-oj/; run on the unmerged branch official-on-joint, never merged to master"
   }
  ]
 }

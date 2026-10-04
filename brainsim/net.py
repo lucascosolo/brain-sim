@@ -21,6 +21,9 @@ class Network:
         self.theta = np.zeros(n, np.float32)
         self.x_pre = np.zeros(n, np.float32)
         self.y_post = np.zeros(n, np.float32)
+        self.r1 = np.zeros(n, np.float32)  # SPEC 8.21 triplet traces: tau+, tau-, tau_y
+        self.o1 = np.zeros(n, np.float32)
+        self.o2 = np.zeros(n, np.float32)
         self.rate = np.zeros(n, np.float32)
         self.act = np.zeros(n, np.float32)
         self.t_last_spike = np.full(n, -10_000, np.int32)
