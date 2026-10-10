@@ -244,3 +244,30 @@ synchrony, no hand-set weights presented as learning, no bar lowered or rewritte
 
 **Supersedes** the first 2026-10-03 entry's statement of the repository's purpose (the
 executive it described moved to reflex-layer that day). Its plant paragraphs stand.
+
+## 2026-10-10: P2-E2 tests threshold accommodation, next to a closed gate (flagged to the owner)
+
+**Decision.** P2-E2 (`docs/plant2/P2-E2-accommodation.md`) gives plant2's memory cells a spike
+threshold that slowly tracks each cell's own mean membrane potential (tau 10 s, additive). J is
+calibrated on a held-out seed, and two void controls must hold: a fixed threshold at the same J
+must fail, and a random store must fail.
+
+**Why.** P2-E1's capacity curve and the independent review (`review/plant2/P2-E1/`) show that
+no fixed threshold works across loads, because background from other memories sets each cell's
+excitability. Two of the three reviewers proposed this mechanism independently. The third
+proposed load-balanced plateau allocation. That proposal is deferred: it narrows hub variance
+but does not fix slow recall at low load, and it reads per-cell load as an instructive
+selector.
+
+**The gate.** The owner's closed gates include "rejected intrinsic homeostasis as previously
+run" (K0.14: a rate-setpoint threshold homeostat replacing synaptic scaling in the plant).
+P2-E2's mechanism has no setpoint and no spike count, and it does not stand in for a synaptic
+homeostat. The contract lists the differences. **This needs the owner's ruling.** If the owner
+counts it under the gate, the P2-E2 result is withdrawn from the plant2 line and kept in the
+record.
+
+**Rejected for P2-E2** (reviewers' exploratory evidence):
+- feedback k-WTA: it always picks winners, so unlearned cues ignite;
+- recurrent links: they run away without a stabiliser;
+- synaptic-count normalisation: it acts on written synapses, the plant's failure;
+- Vogels iSTDP: the owner's wall.
