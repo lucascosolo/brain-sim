@@ -59,4 +59,4 @@ and working memory are the north star's additions.
 
 | id | stage | mechanism | contract | result |
 |---|---|---|---|---|
-| P2-E1 | 1 | behavioural-timescale plasticity (BTSP), binary synapses, random plateau gating | `docs/plant2/P2-E1-btsp.md` | pending |
+| P2-E1 | 1 | behavioural-timescale plasticity (BTSP), binary synapses, random plateau gating | `docs/plant2/P2-E1-btsp.md` | **FAIL** on C1 (completion 0.81-0.86 against 0.90) on 5/5 seeds; specificity and the unlearned-cue control pass. Diagnosis: no load-independent operating point (C1 0.61 at M = 250; everything ignites at M = 2,000). |

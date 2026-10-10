@@ -173,4 +173,86 @@ own contract.
 
 ## Result
 
-(appended after the run)
+**FAIL (2026-10-10, commit 749caee, contract digest 1f2dcf7f19bf7073, all five seeds valid).**
+C1 fails on every seed. C4 fails on its recall half, and C5 fails because C1 fails again after
+the 60 s. C2 and C3 pass on every seed. Records: `bench/results/plant2.jsonl` (`kind`
+`kill_test_seed`, `kill_test_verdict`, `capacity_point`). Log and per-item arrays:
+`~/.cache/brain-sim/plant2/p2_e1/`. Wall time is about 55 s per seed on 4 cores.
+
+| seed | C1 (bar 0.90) | C2 | C3 | C4 recall / spurious | C5: C1 / C2 / C3 after 60 s | median recall at 25 / 50 / 100 ms | half / full latency, ms | median spurious, ignition | hubs |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | **0.840** | 0.925 | 0.955 | **0.820** / 0.940 | **0.835** / 0.940 / 0.950 | 0.42 / 0.929 / 1.00 | 27 / 10 | 2 / 2 | 10 |
+| 2 | **0.845** | 0.935 | 0.980 | **0.830** / 0.950 | **0.840** / 0.950 / 0.965 | 0.44 / 0.920 / 1.00 | 26 / 10 | 2 / 2 | 5 |
+| 3 | **0.860** | 0.950 | 0.970 | **0.890** / 0.950 | **0.880** / 0.955 / 0.990 | 0.46 / 0.941 / 1.00 | 26 / 10 | 2 / 2 | 8 |
+| 4 | **0.810** | 0.925 | 0.945 | **0.820** / 0.920 | **0.825** / 0.960 / 0.940 | 0.48 / 0.929 / 1.00 | 25 / 10 | 2 / 2 | 10 |
+| 5 | **0.850** | 0.905 | 0.945 | **0.880** / 0.930 | **0.845** / 0.900 / 0.970 | 0.45 / 0.923 / 1.00 | 26 / 10 | 2 / 2.5 | 13 |
+
+**Validity.**
+- Eligible fraction 0.987-0.988 (bar 0.95).
+- Mean |A| 19.74-19.98 (bar 18.5-21.5).
+- The strong-synapse set was bit-identical before and after both test phases and the 60 s.
+- The never-trained twin answered 0 cells to every one of its 20 half cues on every seed.
+
+**Predictions against outcome.**
+
+| prediction | outcome |
+|---|---|
+| Store size about 1.0 x 10^6 | 0.92-0.93 x 10^6 |
+| About 250 strong synapses per cell | 230-234 |
+| Mean |A| 20.0 | 19.74-19.98 |
+| Eligibility 0.986 | 0.987 |
+| Median recall 0.90-0.95 | 0.920-0.941 |
+| C1 the criterion most at risk | right: it is the criterion that failed |
+| Half-cue first spikes about 25 ms after onset | median latency 25-27 ms |
+| Full-cue latency 10-15 ms | 10 ms |
+| Spurious and ignition about 3 | median 2 |
+| Old items within 0.03 of the rest | 0.907-0.946 against 0.915-0.929 |
+| C2 and C3 fail first as M grows (capacity curve) | right at M = 2,000 |
+| (not predicted) | **C1 is worse at low load** |
+
+**Why C1 fails.** The written cells fire, but too late. Median recall is 0.92-0.94 at 50 ms
+and 1.00 at 100 ms; at 25 ms it is 0.42-0.48. About 1 cell in 13 crosses threshold after
+the 50 ms window. Pooled over seeds, a written cell's recall rises with the number of
+plateaus it has received for other items: k = 1: 0.73, 3: 0.82, 5: 0.88, 7: 0.92, 9: 0.94,
+>= 12: 0.98. Other items' strong synapses carry background spikes, which raise the cell's
+resting depolarisation and bring the half cue's push nearer to threshold. The failing items
+are mostly marginal (recall 0.70-0.79, one or two of about 20 cells late).
+
+**The capacity curve** (seed 1, J fixed; reported, not gated) shows that this is not a margin
+problem at one load. It is the absence of an operating point:
+
+| M (items per cell) | C1 | C2 | C3 | median recall | median spurious / ignition | hubs | strong per cell |
+|---|---|---|---|---|---|---|---|
+| 250 (0.06) | 0.610 | 1.000 | 1.000 | 0.842 | 0 / 0 | 0 | 61 |
+| 500 (0.13) | 0.635 | 1.000 | 1.000 | 0.875 | 0 / 0 | 0 | 120 |
+| 1,000 (0.25) | 0.840 | 0.925 | 0.955 | 0.929 | 2 / 2 | 10 | 233 |
+| 2,000 (0.5) | 0.975 | 0.000 | 0.000 | 1.000 | 111 / 113 | 756 | 441 |
+| 4,000 (1.0) | 1.000 | 0.000 | 0.000 | 1.000 | 1,815 / 1,774 | 3,797 | 782 |
+
+The M = 1,000 point reproduces the kill test's seed 1 numbers exactly, as the separate random
+streams were designed to.
+
+Every cell's excitability is set by how much the network has stored, not by the cue. A cell
+with few writes sits near rest, so the half cue alone is slow. A cell with many writes sits
+near threshold, so any cue fires it. The fixed J was placed by its rule at the only load where
+the two effects nearly balance, and even there completion misses the bar.
+
+**What this run does show.** BTSP writes one-shot, specific, inspectable traces in a spiking
+network:
+- the right cells, with about 2 spurious per cue;
+- no response to unlearned cues;
+- no loss for the oldest of 1,000 items;
+- nothing erased by 60 s of ongoing activity;
+- full cues recalled at 1.00 within 10 ms.
+
+None of that is the Stage 1 gate.
+
+**Decision (per the contract).** P2-E1 FAILS. J, f_q, rates, windows and bars stay as they
+are, and this configuration is not re-run to pass. The diagnosis points to a missing mechanism
+that holds each cell's operating point independent of load. The next Stage 1 experiment
+carries such a mechanism under its own contract.
+
+**Contract wording, corrected here and not above.** The network section says "forward Euler as
+in the plant". The plant's membrane update is exact exponential leak decay plus delta inputs
+(`brainsim/engine.py`, `_m_decay`), and the code implements that, as "as in the plant"
+intends. At dt 1 ms and tau 20 ms the leak factors are 0.9512 (exact) and 0.9500 (Euler).
