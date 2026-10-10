@@ -603,7 +603,7 @@ def hab_copy(S, M, i, plan, control):
     glob = float(e.mem.vbar.mean() - float(e.mem.v_rest))
     return out, raster1, dict(assembly_offset_first=vbar_x[0], assembly_offset_rep_end=vbar_x[reps - 1],
                               global_offset_end=glob, rec_v_onset_mean=float(np.mean(rec_onset)),
-                              rec_v_onset_last20=float(np.mean(rec_onset[-20:])))
+                              rec_v_onset_late_reps=float(np.mean(rec_onset[max(0, reps - 20):reps])))
 
 
 def habituation(S, M, log=print):
@@ -917,9 +917,10 @@ def dump_logs(seed, kind, payload):
     """Per-slot logs go to the cache (not the results file), referenced from the record by path and sha256."""
     path = record.cache_dir("p2_e4") / f"seed{seed}_{kind}_{record.now().replace(':', '')}.jsonl.gz"
     data = "\n".join(json.dumps(x, sort_keys=True, default=_jsonable) for x in payload).encode()
-    with gzip.open(path, "wb") as f:
+    with gzip.GzipFile(path, "wb", mtime=0) as f:
         f.write(data)
-    return dict(path=str(path), sha256=hashlib.sha256(data).hexdigest())
+    return dict(path=str(path), sha256_uncompressed=hashlib.sha256(data).hexdigest(),
+                sha256_file=hashlib.sha256(path.read_bytes()).hexdigest())
 
 
 def _jsonable(x):
@@ -957,6 +958,7 @@ def run_seed(c, seed, gated, results_path=record.RESULTS, log=print, reported=Tr
             f"recovery {hc['O5_recovery']} collateral {hc['O5_collateral']} ({time.time() - t0:.0f} s)")
         crit["vector"].update(O4=hc["O4"], O5_recovery=hc["O5_recovery"], O5_collateral=hc["O5_collateral"])
         hab_steps[M] = [dict(x=d["x"], **d.pop("steps")) for d in items]
+        crit["rec_onset_v_last20_steps"] = frac([d["rec_v"] for d in main.log if M - 19 <= d["step"] <= M])
         loads[str(M)] = dict(block=crit, habituation=hc, hab_items=items, hab_validity=hv, fb_union_ok=fb_union_ok(S),
                              fwd_digest=e3.digest(S.store.keys), fb_digest=e3.digest(S.fb.keys))
     v = validity
@@ -1038,13 +1040,14 @@ def run_reported(c, seed, gated, main, snaps, results_path, log):
     log(f"seed {seed}: writes-during-probes {out['wps']['writes']} writes ({time.time() - t0:.0f} s)")
     twin = Online(c, seed, novel_duty=True)
     for M in c["gate_M"]:
-        twin.run_to(M, score=False)
+        twin.run_to(M)
         A, _ = twin_A(twin, M)
         out["loads"][str(M)]["novel_duty_twin"] = dict(twin_A=A, fb_size=int(twin.fb.size), fb_main=int(snaps[M].fb.size),
                                                        fwd_digest=e3.digest(twin.store.keys), fb_digest=e3.digest(twin.fb.keys),
                                                        fwd_equals_main=e3.digest(twin.store.keys) == e3.digest(snaps[M].store.keys))
     out["responders_novel_duty"] = responder_stats(twin)
     out["validity"]["novel_duty_fb_union_ok"] = fb_union_ok(twin)
+    out["validity"]["novel_duty_slot_checks"] = bool(all(d["writes_ok"] and d["proj_current"] and d["inh_ok"] for d in twin.log))
     log(f"seed {seed}: novel-duty twin done ({time.time() - t0:.0f} s)")
     duty = Online(c, seed, post=c["duty_post"], bg_key=(ARMS, ARM_DUTY))
     for M in c["gate_M"]:
@@ -1154,17 +1157,20 @@ def predictions(recs, draws=300, sims=1500, rng_seed=5, results_path=record.RESU
     g = record.git_state()
     if g["plant2_dirty"]:
         raise SystemExit("predictions: plant2/ has uncommitted changes")
-    first = {}
+    first, skipped = {}, []
     for r in recs:
-        if (r.get("experiment") == "P2-E4" and r.get("kind") == "exploration_seed" and r.get("contract_digest") == DIGEST
-                and r["seed"] not in first):
-            first[r["seed"]] = r
+        if not (r.get("experiment") == "P2-E4" and r.get("kind") == "exploration_seed"):
+            continue
+        ok = (r.get("contract_digest") == DIGEST and r["seed"] in EXPLORE_SEEDS and r["git"]["plant2_tree"] == g["plant2_tree"]
+              and not r["git"]["plant2_dirty"])
+        if not ok or r["seed"] in first:
+            skipped.append(dict(seed=r["seed"], tree=r["git"]["plant2_tree"], dirty=r["git"]["plant2_dirty"],
+                                reason="duplicate" if ok else "other tree, dirty tree, digest or seed"))
+            continue
+        first[r["seed"]] = r
     ex = [first[s] for s in sorted(first)]
     if sorted(first) != sorted(EXPLORE_SEEDS):
-        raise SystemExit(f"predictions need exploration seeds {EXPLORE_SEEDS}; have {sorted(first)}")
-    for r in ex:
-        if r["git"]["plant2_tree"] != g["plant2_tree"] or r["git"]["plant2_dirty"]:
-            raise SystemExit(f"exploration seed {r['seed']} ran on a different or dirty plant2 tree")
+        raise SystemExit(f"predictions need exploration seeds {EXPLORE_SEEDS} on this clean plant2 tree; have {sorted(first)}")
     rng = np.random.default_rng(rng_seed)
     counts = dict(C1=200, C2=200, C3=20, joint=200, D3=20, O3_memory=100, O3_content=100)
     loads = [str(M) for M in c["gate_M"]]
@@ -1195,8 +1201,9 @@ def predictions(recs, draws=300, sims=1500, rng_seed=5, results_path=record.RESU
         pool = {M: [items[M][j] for j in rng.integers(0, len(items[M]), len(items[M]))] for M in loads}
         p_pass.append(float(np.prod([v for M in loads for v in per[M].values()])) * p45_pool(pool, 20))
     # joint label simulation at the posterior
-    lab_counts, crit_counts, n_pass = {}, {}, 0
+    lab_counts, crit_counts, crit5, n_pass = {}, {}, {}, 0
     for _ in range(sims):
+        allp = {}
         rates = {M: {k: rng.beta(kk + 1, n - kk + 1) for k, (kk, n) in obs[M].items()} for M in loads}
         fake = []
         for _seed in range(5):
@@ -1213,8 +1220,11 @@ def predictions(recs, draws=300, sims=1500, rng_seed=5, results_path=record.RESU
                 for k, val in list(block_vec.items()) + [("O4", h["O4"]), ("O5_recovery", h["O5_recovery"]),
                                                           ("O5_collateral", h["O5_collateral"])]:
                     crit_counts[f"{M}:{k}"] = crit_counts.get(f"{M}:{k}", 0) + int(val)
+                    allp[f"{M}:{k}"] = allp.get(f"{M}:{k}", True) and bool(val)
                 L[M] = dict(block=dict(vector=block_vec), habituation=h)
             fake.append(dict(loads=L))
+        for key, ok in allp.items():
+            crit5[key] = crit5.get(key, 0) + int(ok)
         labs = labels(c, fake)
         n_pass += not labs
         for lb in labs:
@@ -1249,9 +1259,10 @@ def predictions(recs, draws=300, sims=1500, rng_seed=5, results_path=record.RESU
         pf, r_, b_ = p_full(hi_d)
         shift = dict(delta=round(hi_d, 3), p_pass_model=pf, rates=r_, both=b_)
     p_pass = np.array(p_pass)
-    rec = dict(experiment="P2-E4", kind="power_predictions", exploration_seeds=sorted(first),
+    rec = dict(experiment="P2-E4", kind="power_predictions", exploration_seeds=sorted(first), skipped_records=skipped,
                exploration_trees=sorted({r["git"]["plant2_tree"] for r in ex}), observed=obs, both_rate_control=both,
-               p_criterion_5seeds={k: v / (5 * sims) for k, v in crit_counts.items()},
+               p_criterion_5seeds={k: v / sims for k, v in crit5.items()},
+               p_criterion_per_seed={k: v / (5 * sims) for k, v in crit_counts.items()},
                p_label={k: v / sims for k, v in lab_counts.items()}, p_pass_simulated=n_pass / sims,
                p_pass_median=float(np.median(p_pass)), p_pass_interval_5_95=[float(x) for x in np.quantile(p_pass, [0.05, 0.95])],
                p_index_pass={M: float(np.prod([p13(mean_rates)[M][k] for k in index_keys])) for M in loads},
@@ -1281,7 +1292,12 @@ def guard(recs):
         raise SystemExit("guard: plant2/ has uncommitted changes")
     if _git("diff", "--quiet", "HEAD", "--", CONTRACT_PATH).returncode != 0:
         raise SystemExit("guard: the contract differs from HEAD")
-    num = _git("diff", "--numstat", CONTRACT_FROZEN_AT, "HEAD", "--", CONTRACT_PATH).stdout.split()
+    if _git("merge-base", "--is-ancestor", CONTRACT_FROZEN_AT, "HEAD").returncode != 0:
+        raise SystemExit(f"guard: the frozen contract commit {CONTRACT_FROZEN_AT} is not an ancestor of HEAD")
+    r_num = _git("diff", "--numstat", CONTRACT_FROZEN_AT, "HEAD", "--", CONTRACT_PATH)
+    if r_num.returncode != 0:
+        raise SystemExit(f"guard: cannot compare the contract with its frozen commit {CONTRACT_FROZEN_AT}")
+    num = r_num.stdout.split()
     if num and int(num[1]) != 0:
         raise SystemExit("guard: the frozen contract text was changed (only additions are allowed)")
     head = _git("show", "HEAD:bench/results/plant2.jsonl").stdout.splitlines()
@@ -1321,9 +1337,11 @@ def main(argv=None):
     def log(msg):
         print(f"[{record.now()}] {msg}", flush=True)
     if a.cmd == "explore":
+        if record.git_state()["plant2_dirty"]:
+            raise SystemExit("explore: plant2/ has uncommitted changes")
         for s in dict.fromkeys(a.seeds):
-            if s in GATED_SEEDS:
-                raise SystemExit("exploration may not use gated seeds")
+            if s not in EXPLORE_SEEDS:
+                raise SystemExit(f"exploration uses seeds {EXPLORE_SEEDS} only")
             run_seed(CONTRACT, s, gated=False, log=log, reported=not a.no_reported)
     elif a.cmd == "run":
         if not a.gated:

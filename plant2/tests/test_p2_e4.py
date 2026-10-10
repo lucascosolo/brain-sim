@@ -164,6 +164,9 @@ def test_guard_refuses_without_matching_committed_predictions(monkeypatch):
     monkeypatch.setattr(e4, "_git", lambda *a: R(0, "" if a[0] == "show" else ""))
     with pytest.raises(SystemExit):
         e4.guard([])
+    monkeypatch.setattr(e4, "_git", lambda *a: R(128 if "--numstat" in a else 0, pred if a[0] == "show" else ""))
+    with pytest.raises(SystemExit):  # the frozen commit cannot be compared: refuse, never skip the check
+        e4.guard([])
     monkeypatch.setattr(e4, "_git", lambda *a: R(0, pred if a[0] == "show" else ""))
     done = dict(experiment="P2-E4", kind="kill_test_seed", seed=16, gated=True, contract_digest=e4.DIGEST)
     assert e4.guard([done, dict(done, experiment="P2-E3", seed=11)]) == {16}
@@ -225,6 +228,7 @@ def test_predictions_run_on_exploration_records_and_refuse_foreign_trees(run_dir
     rec = e4.predictions(ex, draws=5, sims=20, results_path=run_dir / "p.jsonl", log=lambda m: None)
     assert 0.0 <= rec["p_pass_median"] <= 1.0 and rec["exploration_seeds"] == list(e4.EXPLORE_SEEDS)
     assert isinstance(rec["logit_shift_for_p08"]["delta"], (float, str)) and set(rec["p_criterion_5seeds"])
+    assert all(rec["p_criterion_5seeds"][k] <= rec["p_criterion_per_seed"][k] + 1e-12 for k in rec["p_criterion_5seeds"])
     with pytest.raises(SystemExit):
         e4.predictions([ex[0], dict(ex[1], git=dict(plant2_tree="other", plant2_dirty=False))], draws=2, sims=5,
                        results_path=run_dir / "p.jsonl", log=lambda m: None)
