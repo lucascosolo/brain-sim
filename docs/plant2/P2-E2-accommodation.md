@@ -332,3 +332,103 @@ Stage 1 gate remain open.
 holds pending the owner's ruling on its closeness to the closed intrinsic-homeostasis gate
 (`DECISIONS.md`). The next Stage 1 experiment, after the independent review, attacks either
 content completion or capacity growth with cell count.
+
+## Addendum after independent review (2026-10-10)
+
+Three fresh reviewers checked P2-E2 from the files alone. Findings are verbatim in
+`review/plant2/P2-E2/`, with decisions in `review/ledger.jsonl`.
+
+**The verdict stands: PASS, trustworthy.**
+- Contract, calibration and gated-run ordering verified from git.
+- Every gated number re-derives from the records.
+- An independent dense LIF re-implementation (float32 and float64) reproduced seed 6's
+  per-item recall, spurious and ignition values at M = 250, 500 and 1,000 exactly.
+- Input-spike hashes are identical across the main, fixed and random arms, and no test phase
+  calls `quiet()`; this is now pinned by a unit test.
+- No bug changes a reported number.
+
+The corrections below replace the statements they name. Nothing above is edited.
+
+1. **The closed-gate table misstated K0.14.** K0.14's `theta_h` was also an *additive* offset
+   "added to theta in the spike test" (SPEC around line 2600), not gain-like. And P2-E2's
+   accommodation does hold a setpoint: it keeps theta - vbar at 20 mV, a setpoint on mean
+   distance to threshold. The accurate statement is this:
+   - Both are slow, per-cell, additive intrinsic-threshold homeostats, the family the closed
+     gate names.
+   - They differ in the controlled variable: mean membrane potential, continuous and
+     unbounded, against firing rate per 1 s sweep, bounded.
+   - They differ in role: beside BTSP, against replacing synaptic scaling next to STDP.
+   - They differ in network: plant2, against the plant.
+   - In the records the offset correlates 0.994-0.998 with each cell's stored strong-synapse
+     count. In effect it is a per-cell load normaliser, reached through the membrane potential.
+
+   Two reviewers judge it materially different from K0.14 *as run* and not a renamed re-run,
+   but squarely in the gated family. **The ruling is the owner's.**
+2. **What the controls show, and the "no fixed threshold" claim.**
+   - The fixed-threshold arm at J* passes M = 250 and 500 on every gated seed: C1 >= 0.995,
+     C2 >= 0.905, C3 >= 0.92. It fails only at M = 1,000 (C2 <= 0.015). Accommodation
+     therefore extends the fixed-J window from <= 0.125 to 0.25 items per cell. It is not
+     needed at the lower loads, and P2-E1's slowness at M = 250 came from its J of 1.12.
+   - That no single fixed J passes 250 and 1,000 together rests on reviewers' exploratory
+     sweeps (seeds 0-2), not on recorded runs.
+   - V-A, fixed at the mechanism's own J, was near-certain to fail.
+   - V-B (random store) fails by construction: it removes the cue-line-to-assembly synapses.
+   - Future void comparators are calibrated by the same rule on the held-out seed. A control
+     that keeps cue-line synapses and shuffles only the cross-talk is the stronger null.
+   - The paired seeds differ from P2-E1 in J and in no-reset state as well as in readout, so
+     "only the readout differs" is wrong.
+3. **The operating point needs rest after learning.** Learning simulates only the 200 ms
+   episodes, so `vbar` is not at equilibrium when learning ends. A reviewer's exploratory run
+   (seed 0, M = 1,000, J*) gave:
+
+   | background before testing | C1 |
+   |---|---|
+   | none | 0.875 (fails) |
+   | 5 s | 0.915 |
+   | 50 s (the contract) | 0.94 |
+
+   The result holds after the contract's 50 s settle, which is 5 tau. An online protocol, with
+   background simulated between episodes, is untested.
+4. **The reported threshold offsets include the test's own cue duty.** They are read after the
+   cue blocks. Background alone predicts about 3.6 mV at M = 1,000. The reported 6.0 mV includes
+   the 1/3 cue duty, and items 1-100, cued first, saw lower thresholds. The operating point
+   depends on the protocol.
+5. **C5 is non-vacuous only in form.** Weights are frozen, and `vbar` (tau 10 s) re-equilibrates
+   within the 60 s, so phase 2 is a fresh sample of the same equilibrium. C5 - C1 lay in -0.035
+   to +0.03, about +/-2 sampling standard errors. A persistence criterion that can fail for a real
+   reason needs ongoing learning or a load step inside the interval.
+6. **A limit not tested by the contract: habituation under a sustained cue.** The repeated-cue
+   arm covered only 10 repeats, about 3 s. A reviewer's exploratory run (seed 6, M = 1,000, 10
+   items, 1 seed) showed recall degrading over 30 s, the same class as the plant's K0.13
+   habituation. It bears on any stage that holds or repeats a stimulus (Stages 4 and 6).
+
+   | presentations of the same half cue | items with recall >= 0.8 |
+   |---|---|
+   | 2-10 | 0.99 |
+   | 31-60 | 0.79 |
+   | 61-100 | 0.67 |
+
+   The cued assembly's `vbar` rose by 5.2 mV.
+7. **Overstated sentences, restated as measured** (gated seeds):
+   - novel half cues ignite a median of 0-1 cells: 0 at M <= 500, 0.5-1 at M = 1,000, with a
+     maximum of 14 of 4,000;
+   - completion holds for >= 94.5 % of items (>= 91.5 % after 60 s), not ">= 92 %";
+   - loads tested run from 0.0625 to 0.25 items per cell, and 0.0625 is the lowest load tested,
+     not a measured edge.
+8. **Number and provenance slips.**
+   - The Result's contract digest 1f2dcf7f19bf7073 is P2-E1's. P2-E2's records carry
+     ca482d31aa3f585d (calibration) and 4f625b7cf4dcfbf1 (seeds, J excluded).
+   - Mean |A| on gated seeds is 19.94-20.13.
+   - C2 at M = 1,500 is 0.715-0.775 (mean 0.748), and C3 is 0.74-0.865. C3's 0.865 is above
+     the predicted 0.85.
+   - The median recall at 25 ms of 0.57-0.61 excludes paired seed 1 (0.55).
+   - The contract promised a random-store arm at every load and a separate 100-pair wrong-cue
+     null. The code ran the random arm only at M = 1,000 and one 200-pair label-shuffled null.
+   - The `dirty` flag was true on rows written while the results file had uncommitted appends.
+     The code identity is shown by `git diff 19776f9 545d507 -- plant2` (empty). Records now
+     also carry the plant2 tree hash and a plant2-only dirty flag, and the verdict row carries
+     the digest and runtime.
+9. **The convergence bar sits near the noise floor at high load.** Mean |dvbar| has a floor of
+   about 0.065 mV at M = 1,000 that grows with load. Paired seed 5's 0.207 mV at M = 2,000 is
+   plausibly a fluctuation. The rule was applied as written, and future contracts gate
+   convergence on signed drift instead.

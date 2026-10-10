@@ -278,6 +278,7 @@ def verdict(recs, J, results_path=record.RESULTS, log=print):
     gated = [r for r in recs if r["gated"]]
     void = not all(r["void_A_ok"] and r["void_B_ok"] for r in gated)
     v = dict(experiment="P2-E2", kind="kill_test_verdict", timestamp=record.now(), git=record.git_state(),
+             runtime=record.runtime(), contract_digest=gated[0]["contract_digest"] if gated else None,
              J=J, seeds=[r["seed"] for r in gated], valid=all(r["valid"] for r in gated), void=void,
              passed=bool(gated) and not void and all(r["passed"] for r in gated),
              per_seed={str(r["seed"]): r["passed"] for r in gated})

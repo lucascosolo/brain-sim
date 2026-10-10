@@ -271,3 +271,36 @@ record.
 - recurrent links: they run away without a stabiliser;
 - synaptic-count normalisation: it acts on written synapses, the plant's failure;
 - Vogels iSTDP: the owner's wall.
+
+## 2026-10-10: correction to the P2-E2 gate entry, and three questions for the owner
+
+**Correction.** The P2-E2 entry above and the contract's table said K0.14's offset was
+"gain-like". It was additive (SPEC around line 2600). The P2-E2 review (`review/plant2/P2-E2/`)
+puts it accurately:
+- Both are slow, per-cell, additive intrinsic-threshold homeostats.
+- They differ in the controlled variable (mean membrane potential against firing rate), in
+  role (beside BTSP, against replacing scaling next to STDP) and in network.
+- P2-E2's offset tracks each cell's stored load (r = 0.998).
+
+Reviewers judge it not a renamed re-run, but in the gated family. The entry above stands
+otherwise.
+
+**Work stops here for the owner.** P2-E2 passed, and every next step depends on these answers.
+
+1. **The gate.** Does P2-E2's threshold accommodation fall under "rejected intrinsic homeostasis
+   as previously run"? If yes, P2-E2 is withdrawn from the line and Stage 1 storage is open
+   again.
+2. **Capacity.** What does "capacity grows with cell count" scale: memory cells alone, inputs
+   and memory cells together, or the plateau rate? A reviewer's exploratory surrogate gives
+   these items-per-cell results:
+
+   | what scales | effect |
+   |---|---|
+   | n alone | halves |
+   | n with f_q halved | x1.7 |
+   | m and n together | x2.2 |
+
+3. **Inhibition in content completion.** May the content-completion experiment (P2-E3) add a
+   fixed, activity-proportional inhibition on its readout layer as a declared second element?
+   In a reviewer's exploratory runs, no fixed-threshold readout setting passed at M = 1,000
+   without it.

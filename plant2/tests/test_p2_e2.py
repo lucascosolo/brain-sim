@@ -88,3 +88,36 @@ def test_small_calibration_and_seed_run_write_complete_records(run_dir):
     for k in ("main", "fixed_threshold", "random_store", "after_60s", "repeated_cue", "cue_synapses", "offsets"):
         assert k in rec["loads"]["60"]
     assert len(rec["loads"]["60"]["repeated_cue"]) == e2.REPEATS
+
+
+def test_arms_see_identical_input_spikes_and_tests_never_quiet(monkeypatch):
+    # P2-E2 review (code F7): the main, fixed-threshold and random-store arms are compared on the same
+    # input spikes, and no settle or test phase resets state through quiet().
+    import copy
+    import hashlib
+
+    base = e2.E2(SMALL, 3)
+    base.learn(40)
+    digests = []
+    for arm in ("main", "fixed", "random"):
+        e = copy.deepcopy(base)
+        if arm == "fixed":
+            e.mem.set_accommodation(None)
+        if arm == "random":
+            e.randomise_store()
+        h = hashlib.sha256()
+        orig = e.net.step
+
+        def step(rng, orig=orig, h=h):
+            out = orig(rng)
+            h.update(out["inp"].tobytes())
+            return out
+        e.net.step = step
+
+        def no_quiet(*a, **k):
+            raise AssertionError("quiet() called during a test phase")
+        monkeypatch.setattr(e.mem, "quiet", no_quiet)
+        e.settle(40, phase=1)
+        e2.evaluate(e, 40, phase=1, persist=True)
+        digests.append(h.hexdigest())
+    assert digests[0] == digests[1] == digests[2]

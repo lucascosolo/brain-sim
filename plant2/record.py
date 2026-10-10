@@ -22,8 +22,10 @@ def git_state():
     def run(*args):
         return subprocess.run(["git", "-C", str(REPO), *args], capture_output=True, text=True).stdout.strip()
     untracked = [l for l in run("status", "--porcelain").splitlines() if l.startswith("??")]
+    # plant2_tree / plant2_dirty identify the code that ran even when results-only commits move HEAD
     return {"commit": run("rev-parse", "HEAD"), "dirty": bool(run("status", "--porcelain", "--untracked-files=no")),
-            "untracked": len(untracked)}
+            "untracked": len(untracked), "plant2_tree": run("rev-parse", "HEAD:plant2"),
+            "plant2_dirty": bool(run("status", "--porcelain", "--", "plant2"))}
 
 
 def runtime():
