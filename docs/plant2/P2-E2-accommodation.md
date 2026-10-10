@@ -220,4 +220,115 @@ gated and reported seed.
 
 ## Result
 
-(appended after the run)
+**PASS (2026-10-10). The run is valid and not void.** J* = 1.525 mV and contract digest
+1f2dcf7f19bf7073. All five gated seeds (6-10) pass every gated criterion at M = 250, 500 and
+1,000, and C5 holds. On every gated seed, both void controls fail as the contract requires.
+
+- **Code.** Every seed ran on code commit 19776f9. Records written during the run name later
+  HEADs (6e1fc99 ... 545d507), because the commits in between appended result records while it
+  ran. `git diff 19776f9 545d507 -- plant2` is empty.
+- **Records** are in `bench/results/plant2.jsonl` (`experiment` P2-E2, `kind`
+  `kill_test_seed` / `kill_test_verdict`).
+- **Logs** are in `~/.cache/brain-sim/plant2/p2_e2/run.log`.
+- **Wall time** was about 20 min per seed on 4 cores, two seeds in parallel.
+
+**Gated criteria** (C1 / C2 / C3 / C4 recall, spurious; bar 0.90 each):
+
+| seed | M = 250 | M = 500 | M = 1,000 | C5 at M = 1,000 after 60 s (C1 / C2 / C3) |
+|---|---|---|---|---|
+| 6 | 0.980 / 1 / 1 / 0.98, 1 | 0.975 / 1 / 1 / 0.97, 1 | 0.945 / 0.990 / 1.000 / 0.94, 0.99 | 0.940 / 0.985 / 1.000 |
+| 7 | 0.975 / 1 / 1 / 0.99, 1 | 0.955 / 1 / 1 / 0.96, 1 | 0.945 / 0.975 / 0.990 / 0.97, 0.97 | 0.975 / 0.990 / 0.990 |
+| 8 | 0.960 / 1 / 1 / 0.97, 1 | 0.970 / 1 / 1 / 0.96, 1 | 0.950 / 0.965 / 1.000 / 0.97, 0.96 | 0.925 / 0.995 / 0.995 |
+| 9 | 0.980 / 1 / 1 / 0.98, 1 | 0.970 / 1 / 1 / 0.96, 1 | 0.950 / 0.985 / 1.000 / 0.93, 0.97 | 0.915 / 0.975 / 1.000 |
+| 10 | 0.985 / 1 / 1 / 0.98, 1 | 0.960 / 1 / 1 / 0.98, 1 | 0.955 / 1.000 / 0.995 / 0.95, 1.00 | 0.945 / 0.995 / 0.995 |
+
+**Void controls at M = 1,000** (they must fail; they do on every gated seed):
+- **V-A, fixed threshold** at the same J, stores and input spikes: C1 1.000, C2 0.000-0.015,
+  C3 0.000. Without accommodation every cue ignites the network. Accommodation, not the higher
+  J, is what makes the result.
+- **V-B, matched-density random store** with accommodation: C1 0.000, median recall 0.0. The
+  response comes from what was written, not from excitability.
+
+**Validity on every gated seed.**
+- Eligible fraction 0.987.
+- Mean |A| 19.7-20.1.
+- Weights bit-identical across every test phase and the 60 s.
+- Each store's sha256 equals the store that P2-E1's learning code produces for that seed.
+- Accommodation converged before every phase: 0.028-0.144 mV over the last 10 s, against a
+  0.2 mV bar.
+
+**Paired comparison on P2-E1's own stores** (seeds 1-5, reported; same stores, so only the
+readout differs). At M = 1,000, C1 / C2 / C3:
+
+| seed | P2-E1 (fixed threshold, J 1.12) | P2-E2 |
+|---|---|---|
+| 1 | 0.840 / 0.925 / 0.955 | 0.975 / 0.980 / 0.980 |
+| 2 | 0.845 / 0.935 / 0.980 | 0.950 / 0.975 / 0.995 |
+| 3 | 0.860 / 0.950 / 0.970 | 0.945 / 0.980 / 0.995 |
+| 4 | 0.810 / 0.925 / 0.945 | 0.925 / 0.985 / 0.995 |
+| 5 | 0.850 / 0.905 / 0.945 | 0.955 / 0.960 / 0.985 |
+
+Seeds 1-4 pass every gated criterion. **Seed 5's record is marked invalid**: accommodation
+converged to 0.207 mV before the M = 2,000 test phase, just over the 0.2 mV bar. That phase is
+reported only. At its gated loads seed 5 converged at 0.030-0.085 mV and passed every
+criterion. The validity rule covers every test phase, and it is not relaxed.
+
+**Reported measures** (gated seeds; seeds 1-5 alike).
+
+| measure | outcome | prediction |
+|---|---|---|
+| Median recall at M = 1,000, at 25 / 50 / 100 ms | 0.57-0.61 / 0.96-1.00 / 1.00 (P2-E1: 0.42-0.48 at 25 ms) | about 0.5 at 25 ms |
+| Median latency, half / full cue | 22-23 ms / 10 ms | |
+| Hub cells | 0 at every gated load (P2-E1: 5-13 at M = 1,000) | |
+| Threshold offset at M = 1,000 | mean 6.0 mV, 95th percentile 10.2-10.3 mV | |
+| Offset vs the cell's strong-synapse count | correlation 0.998 | |
+| Cue synapses per written cell | 24.61-24.82 | 24.66, corrected rule |
+| Label-shuffled chance (another item's assembly) | median 0.0, mean 0.004-0.008 | |
+| Repeated-cue arm, recall over 10 repeats | 0.89-0.95 to 0.90-0.94, minimum 0.87 | |
+
+The threshold tracks each cell's stored load almost exactly. The repeated-cue arm shows mild
+habituation at tau 10 s, smaller than at 1-3 s in the reviewer's exploration.
+
+**Capacity edge** (reported; mean over gated seeds):
+
+| M | C1 | C2 | C3 |
+|---|---|---|---|
+| 1,500 | 0.93 | 0.73-0.78 | 0.74-0.87 |
+| 2,000 | 0.90-0.93 | 0.30-0.37 | 0.43-0.46 |
+
+As predicted, completion now holds across load, and the limit has moved to specificity. Other
+memories' strong synapses on the cue's own lines are untouched by accommodation, and they end
+the operating window between 0.25 and 0.375 items per cell.
+
+**Predictions against outcome** (calibration seed 0 predicted M = 1,000 at 0.935 / 0.97 / 1.00):
+
+| prediction | outcome |
+|---|---|
+| C1 0.93-0.99 | 0.945-0.955 at M = 1,000; 0.955-0.985 at M <= 500 |
+| C2 / C3 >= 0.97 at M <= 500 | 1.00 |
+| C2 / C3 0.91-0.99 at M = 1,000 | 0.965-1.00 |
+| C5 within 0.03 of phase 1 | within 0.035 (seed 9: 0.950 -> 0.915) |
+| V-A: fixed arm C2 <= 0.10 | 0.000-0.015 |
+| V-B: random store recall <= 0.10 | 0.0 |
+| Capacity edge: C2 / C3 0.5-0.85 at M = 1,500 | 0.69-0.87 |
+| Capacity edge: <= 0.4 at M = 2,000 | 0.27-0.46 (C3 at 0.43-0.46 slightly above) |
+
+**What this shows.** In a spiking network, one exposure per item stores up to 1,000 items in
+4,000 memory cells: 0.25 items per cell, with the load window running from 0.06. A half cue
+re-evokes >= 80 % of an item's written cells within 50 ms for >= 92 % of items. Unlearned cues
+ignite nothing, and the oldest items are retained. One J works across a 4x range of load, which
+no fixed threshold achieved (P2-E1 and the reviewers' sweeps).
+
+**What it does not show.**
+- That the system chose its own code: the plateaus are random.
+- That the input content is regenerated: not tested yet.
+- That capacity grows with cell count.
+- Anything about sequences, abstraction or behaviour.
+
+This is Stage 1's storage-and-recall part. The content-completion and capacity parts of the
+Stage 1 gate remain open.
+
+**Decision (per the contract).** Accommodation is plant2's operating-point mechanism. This
+holds pending the owner's ruling on its closeness to the closed intrinsic-homeostasis gate
+(`DECISIONS.md`). The next Stage 1 experiment, after the independent review, attacks either
+content completion or capacity growth with cell count.
