@@ -328,4 +328,116 @@ Memory layer (D5), seed 0: C1 0.985 / 0.955 / 0.945, C2 1.0 / 1.0 / 0.970, C3 1.
 
 ## Result
 
-(appended after the run)
+**PASS (2026-10-10). Valid and not void. Secondary reading: inhibition required.**
+- **Settings:** J_fb* = 2.80 mV, g = 0.3, matched g = 0 arm at 1.45 mV (fallback).
+- **Code:** commit c97f237, plant2 tree a949ecb0, unchanged during the runs. Contract digest
+  e829ac7011a8c2cd.
+- **Outcome:** all five gated seeds (11-15) meet every criterion at M = 250, 500 and 1,000.
+- **Records:** `kind` `kill_test_seed` x5 and `kill_test_verdict`.
+- **Log:** `~/.cache/brain-sim/plant2/p2_e3/run.log`.
+- **Wall time:** about 7 min per seed, two processes in parallel.
+
+**Gated criteria, main arm** (joint D1/2, D3, D4; then memory C1 / C2 / C3; bar 0.90 each):
+
+| seed | M = 250 | M = 500 | M = 1,000 |
+|---|---|---|---|
+| 11 | 1.000 / 1 / 1; 0.960 / 1 / 1 | 0.995 / 1 / 1; 0.970 / 1 / 1 | 0.985 / 1.000 / 0.980; 0.925 / 0.995 / 0.995 |
+| 12 | 1.000 / 1 / 1; 0.960 / 1 / 1 | 0.990 / 1 / 0.990; 0.980 / 1 / 1 | 0.970 / 1.000 / 0.970; 0.940 / 1.000 / 0.995 |
+| 13 | 0.990 / 1 / 0.980; 0.975 / 1 / 1 | 0.995 / 1 / 1; 0.980 / 1 / 1 | 0.980 / 1.000 / 0.980; 0.930 / 0.990 / 1.000 |
+| 14 | 1.000 / 1 / 1; 0.985 / 1 / 1 | 0.990 / 1 / 1; 0.960 / 1 / 1 | 0.955 / 0.990 / 0.940; 0.955 / 0.985 / 0.990 |
+| 15 | 0.995 / 1 / 1; 0.975 / 1 / 1 | 1.000 / 1 / 1; 0.970 / 1 / 1 | 0.985 / 1.000 / 0.990; 0.940 / 0.975 / 0.990 |
+
+**Validity on every gated seed.**
+- The forward store is bit-identical to unmodified P2-E1 learning at M = 250, 500 and 1,000.
+- Both stores are unchanged by every test phase.
+- Eligible fraction 0.987; mean |A| 19.83-20.20.
+- Convergence 0.029-0.117 mV, against the 0.2 mV bar.
+
+**Void and comparison arms at M = 1,000** (every gated seed):
+
+| arm | joint D1/2 | D1 | D2 | reading |
+|---|---|---|---|---|
+| main (2.80, g 0.3) | 0.955-0.985 | 0.980-0.995 | 0.970-1.000 | passes |
+| shuffled feedback (void check) | 0.000 | 0.000 | | fails, as required. By construction; a leak check |
+| label-permuted feedback | 0.000 for x | 0.000 | | pi(x)'s missing lines regenerated at 0.968-0.982: a cue regenerates whatever was written for its own memory cells |
+| plateau-set feedback (A(x) instead of R(x)) | 0.980-0.990 | 0.980-0.990 | 1.000 | about equal to main: the activity rule loses nothing to the bookkeeping version |
+| matched g = 0 (1.45; no calibration window) | **0.770-0.860** | 0.840-0.920 | 0.920-0.970 | fails on every seed |
+| g = 0 at 2.80 | **0.065-0.155** | | | floods with intrusions |
+
+**Secondary claim, predeclared reading.** The matched no-inhibition arm has no calibration
+window and fails at M = 1,000 on all five seeds. **Inhibition is required.** At M <= 500 the
+no-inhibition arm alone reaches 0.92-0.965, so the inhibition matters only at the higher load.
+
+**What the regeneration looks like** (main arm, gated seeds):
+
+| measure | M = 250 / 500 | M = 1,000 |
+|---|---|---|
+| missing half regenerated, 10th / 25th / 50th / 75th / 90th percentile | 0.96 / 0.98 / 0.98-1.0 / 1.0 / 1.0 | same |
+| intrusions per cue: median, 90th percentile | 0, 1-2 | 1, 2-3 |
+| intrusions over the whole cue plus gap: median | 0 | 1 |
+| reconstruction error HD(r, x) / HD(x', x): p10 / 50 / 90 | 0.0 / 0.04 / 0.06-0.08 | 0.0-0.02 / 0.04 / 0.10 (about 2 of 50 lines wrong) |
+| novel half cues: lines regenerated, median and max | 0 and 0 | 0 and 0-2; max 22 on one seed |
+| chance: another item's missing half regenerated | 0.022-0.027 | 0.022-0.027 |
+| visible half regenerated | 0.98-1.0 | 0.98-1.0 |
+| full cues: item lines regenerated | 0.99 | 0.99 |
+| regeneration latency, median | 23-25 ms | 25-28 ms |
+| joint at a 50 ms window | 0.945-0.995 | 0.92-0.955 |
+
+- **Latency.** Regeneration follows the memory layer's own first spikes (about 22 ms) within
+  1-6 ms.
+- **Out-of-window rec spikes.** These run at 204-252 per cue. They are the regenerated lines
+  firing on through the rest of the 100 ms cue (about 2 more spikes per line), not
+  intrusions. Intrusions over the whole cue plus its gap stay at a median of 0-1.
+- **Feedback store.** At M = 1,000 it holds 2.11-2.16 x 10^6 synapses, 527-540 per memory cell,
+  each memory cell reaching 13.3-13.6 % of lines. The forward store holds about 0.93 x 10^6.
+- **Responders.** |R(x)| is 23.3-24.0 against |A(x)| 19.8-20.2, with Jaccard 0.87-0.88. The
+  extra responders write extra feedback but cost no measurable specificity.
+
+**Capacity edge** (reported):
+
+| M | joint | D2 | memory C2 |
+|---|---|---|---|
+| 1,500 | 0.185-0.290 | 0.195-0.315 | 0.68-0.73 |
+| 2,000 | <= 0.015 | | |
+
+D1 stays at 0.97-1.0 at both loads. Content specificity collapses more sharply than memory
+specificity: every spurious memory responder also writes and reads feedback.
+
+**Predictions against outcome.**
+
+| prediction | outcome |
+|---|---|
+| J_fb* about 2.6 (window 2.0-3.3) | 2.80 (2.00-3.60) |
+| matched g = 0 has no window, best near 1.4-1.5, joint about 0.87 | right: 1.45, 0.885 on seed 0; 0.77-0.86 gated |
+| main joint 0.95-0.99 at M = 1,000 and >= 0.97 at M <= 500 | 0.955-0.985 and 0.990-1.000 |
+| D3 >= 0.99 | 0.99-1.0 |
+| latency 22-26 ms | 23-28 ms (slightly later at M = 1,000) |
+| shuffled D1 <= 0.02 | 0.000 |
+| plateau-set "slightly fewer intrusions and lower D1" | wrong: about equal |
+| capacity: M = 1,500 fails D1/2 | right, by D2 |
+
+**What this shows.** After one exposure per item and up to 1,000 items in 4,000 memory cells, a
+spiking network regenerates the actual missing half of an input from half of it:
+- it regenerates >= 80 % of the missing features with fewer than 10 wrong ones for 95.5-100 %
+  of items, within 75 ms;
+- the median reconstruction error is 2 of 50 lines;
+- unlearned cues regenerate nothing;
+- what is regenerated is the specific content written for that memory, not a statistical
+  artefact.
+
+The content path is written one-shot, from real memory spikes, while the experience is
+present. It needs the fixed activity-proportional inhibition at the higher load.
+
+**What it does not show.**
+- **Assigned codes.** The memory index is still a random code assigned by plateaus.
+- **Verbatim storage.** The feedback stores the input verbatim against the responders. That is
+  input-supervised hetero-association, so "content" means the stored pattern, not an
+  abstraction of it.
+- **The test regime.** Everything was tested after a 50 s settle, on frozen copies. Online
+  learning, interference while learning continues, and repeated-cue habituation are untested;
+  that is the online-memory experiment's job.
+- **Capacity.** It ends between 0.25 and 0.375 items per memory cell, and more sharply for
+  content than for the index.
+
+**Decision (per the contract).** Stage 1's content-completion clause is met. Next come an
+evaluation against the north star, then the online-memory experiment, then capacity.

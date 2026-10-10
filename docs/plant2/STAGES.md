@@ -69,6 +69,7 @@ and working memory are the north star's additions.
 |---|---|---|---|---|
 | P2-E1 | 1 | behavioural-timescale plasticity (BTSP), binary synapses, random plateau gating | `docs/plant2/P2-E1-btsp.md` | **FAIL** on C1 (completion 0.81-0.86 against 0.90) on 5/5 seeds; specificity and the unlearned-cue control pass. Diagnosis: no load-independent operating point (C1 0.61 at M = 250; everything ignites at M = 2,000). |
 | P2-E2 | 1 | slow threshold accommodation to each cell's own mean potential (labelled proxy), J calibrated on a held-out seed | `docs/plant2/P2-E2-accommodation.md` | **PASS** on 5/5 fresh gated seeds. C1 0.945-0.985, C2 0.965-1, C3 0.99-1 at M = 250, 500 and 1,000; C5 holds. The fixed-threshold control fails (C2 <= 0.015) and the random-store control fails (C1 0). Capacity edge between 0.25 and 0.375 items per cell. The owner accepted it as a distinct mechanism (K0.14 stays closed), with its limits retained. |
+| P2-E3 | 1 | one-shot feedback from memory spikes to a reconstruction layer, plus fixed activity-proportional inhibition (owner-approved element) | `docs/plant2/P2-E3-content-completion.md` | **PASS** on 5/5 fresh gated seeds. The half cue regenerates the missing half of the input: joint (>= 80 % missing lines, < 10 intrusions) 0.955-1.000 at M = 250-1,000; median reconstruction error 2 of 50 lines; latency 23-28 ms. Matched no-inhibition fails at M = 1,000 (0.77-0.86), so inhibition is required. Shuffled feedback 0.000. Content capacity edge before M = 1,500. |
 
 ## Owner's rulings (2026-10-10; `DECISIONS.md`, last entry)
 
