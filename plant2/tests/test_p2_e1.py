@@ -17,9 +17,8 @@ def test_contract_constants_are_the_predeclared_ones():
     assert e1.BARS["recall"] == 0.80 and e1.BARS["item_frac"] == 0.90 and e1.SEEDS == (1, 2, 3, 4, 5)
 
 
-def test_small_seed_run_writes_a_complete_record(tmp_path, monkeypatch):
-    monkeypatch.setenv("BRAINSIM_CACHE", str(tmp_path))
-    out = tmp_path / "results.jsonl"
+def test_small_seed_run_writes_a_complete_record(run_dir):
+    out = run_dir / "results.jsonl"
     rec = e1.run_seed(SMALL, 1, out, log=lambda m: None)
     row = json.loads(out.read_text().splitlines()[-1])
     assert row["experiment"] == "P2-E1" and row["kind"] == "kill_test_seed" and row["seed"] == 1
@@ -38,16 +37,14 @@ def test_the_write_does_not_read_memory_spikes():
     assert np.array_equal(loud.store.keys, silent.store.keys)
 
 
-def test_capacity_point_reproduces_the_kill_test_numbers(tmp_path, monkeypatch):
-    monkeypatch.setenv("BRAINSIM_CACHE", str(tmp_path))
-    rec = e1.run_seed(SMALL, 3, tmp_path / "a.jsonl", log=lambda m: None)
-    cap = e1.run_capacity(SMALL, seed=3, points=(30, SMALL["M"]), results_path=tmp_path / "b.jsonl",
+def test_capacity_point_reproduces_the_kill_test_numbers(run_dir):
+    rec = e1.run_seed(SMALL, 3, run_dir / "a.jsonl", log=lambda m: None)
+    cap = e1.run_capacity(SMALL, seed=3, points=(30, SMALL["M"]), results_path=run_dir / "b.jsonl",
                           log=lambda m: None)
     assert cap[-1]["criteria"] == rec["criteria"]["phase1"]
 
 
 @pytest.mark.slow
-def test_p2_e1_kill_test(tmp_path, monkeypatch):
-    monkeypatch.setenv("BRAINSIM_CACHE", str(tmp_path))
-    verdict, _ = e1.run_kill_test(results_path=tmp_path / "results.jsonl", log=print)
+def test_p2_e1_kill_test(run_dir):
+    verdict, _ = e1.run_kill_test(results_path=run_dir / "results.jsonl", log=print)
     assert verdict["valid"] and verdict["passed"], verdict["per_seed"]
