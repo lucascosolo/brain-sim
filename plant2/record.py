@@ -44,7 +44,14 @@ def now():
 
 
 def append(record, path=RESULTS):
+    """One O_APPEND write per record, so concurrent runs cannot interleave their lines."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(record, sort_keys=True) + "\n")
+    data = (json.dumps(record, sort_keys=True) + "\n").encode("utf-8")
+    fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+    try:
+        written = os.write(fd, data)
+        if written != len(data):
+            raise OSError(f"short append to {path}: {written} of {len(data)} bytes")
+    finally:
+        os.close(fd)
