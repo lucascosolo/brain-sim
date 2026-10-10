@@ -256,3 +256,68 @@ carries such a mechanism under its own contract.
 in the plant". The plant's membrane update is exact exponential leak decay plus delta inputs
 (`brainsim/engine.py`, `_m_decay`), and the code implements that, as "as in the plant"
 intends. At dt 1 ms and tau 20 ms the leak factors are 0.9512 (exact) and 0.9500 (Euler).
+
+## Addendum after independent review (2026-10-10)
+
+Three fresh reviewers (methodology, code, direction) checked P2-E1 from the files alone. Their
+findings are verbatim in `review/plant2/P2-E1/`, and each decision is in `review/ledger.jsonl`.
+The verdict stands: **FAIL, trustworthy**.
+- Two reviewers recomputed every number.
+- One reran seed 1 and got C1 0.840 again.
+- A dense float64 LIF replay of the seed-1 store matched the engine spike for spike.
+- A dense toggle model matched the sparse BTSP store over 3,600 updates.
+
+The corrections below replace the statements they name. Nothing above "Result" is edited.
+
+1. **The J rule double-counted 3.1 cue synapses.** BTSP toggling leaves each of a written
+   cell's own item inputs at P(strong) = 0.5 whatever later plateaus do. Later items' strong
+   synapses on the cue lines are therefore the same synapses, not extra ones.
+   - Measured on seed 1: 24.69 cue synapses per written cell (sd 3.55), flat in k (24.5-24.8),
+     not the predicted 27.76.
+   - The mean half-cue drive was about 24.9 mV, 1.24x the distance to threshold, not 1.4x.
+     The rule computed correctly would have given J of about 1.26 mV.
+   - The verdict does not depend on this, because J = 1.12 was fixed explicitly. But "C1 the
+     criterion most at risk: right" is an artefact of the error. One reviewer's sweep at
+     J = 1.25 (exploratory, seed 1) gave C1 0.99, C2 0.445, C3 0.57: at the intended margin
+     the run fails on specificity instead.
+2. **"Why C1 fails": corrected figures.**
+   - The cell-level miss rate is 10.2-11.9 % (about 1 in 9), not "1 in 13".
+   - Failing items have 3-14 late cells (median 5-6), not one or two, and 34-45 % of failing
+     items have recall below 0.70.
+   - k counts all of the cell's plateaus, this item's included.
+   - Item recall is overdispersed: sd 0.105-0.127 against about 0.07 for independent cells,
+     because all cells of an assembly share one cue spike train and mask. C1 is therefore
+     5-6 points below what independent per-cell recall implies.
+3. **"No operating point" rests on reviewer sweeps, not on the run.** The capacity curve is
+   one seed (nested prefixes of seed 1, n = 1 per point). The reviewers' exploratory engine
+   sweeps (seeds 1-2, not recorded as results) support the claim: no single fixed J passes
+   C1-C4 at M = 1,000 (J = 1.16: C1 0.915, C2 0.84; J = 1.20: C1 0.945, C2 0.69), or at both
+   M = 250 and 1,000.
+   - Two terms contribute about equally to the load effect: background spikes on other items'
+     strong synapses, and other items' strong synapses on the cue's own lines (the cue adds
+     about 1,975 Hz, comparable to the whole background).
+   - Widening the window trades C1 for C2: at 75 ms, C1 0.99 and C2 0.72.
+4. **C5 and the never-trained twin are vacuous.** `present()` calls `net.quiet()`, which resets
+   all dynamic state, and nothing changes weights without a plateau. So the 60 s cannot affect
+   anything measured: C5 is C1 re-measured with a new input-noise draw (draw-to-draw noise
+   about 0.02). The twin has no weights. The result bullet "nothing erased by 60 s of ongoing
+   activity" is a design property, not evidence. Nulls with teeth, run by a reviewer on the
+   seed-1 store:
+   - 200 background-only 50 ms windows gave 0 responders;
+   - another item's half cue recalled 0.006 of A(x).
+5. **Overstated bullets, restated as measured.**
+   - Unlearned cues: median ignition 2, maximum 15-21 per seed, about one assembly; C3
+     0.945-0.98.
+   - Full cues: median first-spike latency 10 ms, recall 1.00 at 50 ms.
+   - Spurious: median 2 per cue, with C2 at 0.905 and 0.900 on seed 5.
+6. **Lineage and deviations from Wu & Maass 2025.**
+   - The half cue (50 % masked) is the inherited K1.1 bar. It lies outside the paper's
+     demonstrated regime: one third masked at f_q 0.005.
+   - The paper defines a trace by the full-cue response and sets thresholds by grid search or
+     scales them with input activity. Here the trace is the plateau set, there is one fixed
+     threshold, and connectivity is full.
+   - These make the test stricter, not easier.
+7. **What A(x) is.** The written assembly is a random code assigned by content-independent
+   plateaus. Stage 1 measures whether an assigned code can be read back from a partial cue. It
+   says nothing about the system choosing its own representations (Stage 3), and a Stage 1
+   pass is not evidence of thinking power.

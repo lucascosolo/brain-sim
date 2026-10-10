@@ -51,6 +51,14 @@ experiment's own contract says otherwise, against a never-trained or shuffled co
 | 7 | scale and integration | Sharded multi-process or multi-GPU engine. Gate: a stated Stage 1-6 metric improves with size along a curve predicted before the run. Size alone is never a gate. |
 | 8 | symbol-like tokens (horizon) | Grounded token sequences learned from experience. Nothing language-like is attempted before Stages 1-6 pass. |
 
+Notes from the P2-E1 review (`review/plant2/P2-E1/`):
+- Stage 1 tests whether a code assigned by random plateaus can be read back from a partial
+  cue. Choosing its own representations is Stage 3's question. A Stage 1 pass is not evidence
+  of thinking power.
+- Capacity that grows linearly with cell count needs a signal-to-noise mechanism of its own:
+  sparser codes over more inputs, recurrent completion with a stabiliser, or matched
+  inhibition. No operating-point mechanism gets credit for it.
+
 The old ladder maps onto this one: old 1 (episode memory) is 1, old 2 (sequences) is 2, old 3
 (structure and scale) is 7, old 4 (symbol-like tokens) is 8. Abstraction, behaviour, planning
 and working memory are the north star's additions.
