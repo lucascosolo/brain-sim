@@ -8,6 +8,8 @@ those of the engine network built with that J and g, bit for bit (tests/test_p2_
 
 `cues` lists the scoring windows. Each window (onset, lines-of-interest...) is scored per arm
 over ticks onset .. onset + window - 1, and also over the whole cue plus gap (`span` ticks).
+Spans of successive cues may overlap; scoring windows may not, and every window and span must end
+within the raster (a ValueError otherwise, rather than silent zeros).
 """
 import numpy as np
 
@@ -34,23 +36,30 @@ def replay(raster, n_ticks, indptr, post, m, J, g, cues, window=75, short=50, sp
     ring = np.zeros((3, A, m), np.float32)
     win = np.zeros((A, m), bool)
     win_short = None
-    win_span = np.zeros((A, m), bool)
+    spans = {}                     # cue index -> lines that spiked so far in that cue's span
     first = np.full((A, m), -1, np.int16)
     starts = {c["onset"]: i for i, c in enumerate(cues)}
+    if len(starts) != len(cues):
+        raise ValueError("two cues share an onset")
+    onsets = sorted(starts)
+    if any(b - a < window for a, b in zip(onsets, onsets[1:])):
+        raise ValueError(f"cue onsets closer than the {window}-tick scoring window")
+    if onsets and onsets[-1] + max(window, span) > n_ticks:
+        raise ValueError("a scoring window or span runs past the end of the raster")
     out = {k: np.zeros((len(cues), A), np.int32) for k in
            ("missing", "visible", "item", "total", "missing_short", "item_short", "total_short",
             "total_span", "item_span", "other_missing")}
     latency = np.full((len(cues), A), np.nan)
     out_of_window = np.zeros(A, np.int64)
-    active, span_cue = None, None
+    active = None
     dirty = [False, False, False]  # whether each ring slot holds anything; adding a zero slot is a no-op
     since_input = 10_000           # ticks since input last reached v; a cell below threshold with no input stays below
     for t in range(n_ticks):
         if t in starts:
-            active = span_cue = starts[t]
+            active = starts[t]
             win[:] = False
-            win_span[:] = False
             first[:] = -1
+            spans[active] = np.zeros((A, m), bool)
         slot = ring[t % 3]
         np.multiply(v, decay, out=v)
         v += v_c
@@ -98,14 +107,13 @@ def replay(raster, n_ticks, indptr, post, m, J, g, cues, window=75, short=50, sp
                 active = None
         elif hit is not None:
             out_of_window += hit.sum(1)
-        if span_cue is not None:
+        for i in list(spans):
             if hit is not None:
-                win_span |= hit
-            if t - cues[span_cue]["onset"] == span - 1:
-                c = cues[span_cue]
-                out["total_span"][span_cue] = win_span.sum(1)
-                out["item_span"][span_cue] = win_span[:, c["item"]].sum(1)
-                span_cue = None
+                spans[i] |= hit
+            if t - cues[i]["onset"] == span - 1:
+                win_span = spans.pop(i)
+                out["total_span"][i] = win_span.sum(1)
+                out["item_span"][i] = win_span[:, cues[i]["item"]].sum(1)
         s = raster.get(t)
         if s is not None and s.size:
             lo, cnt = indptr[s], indptr[s + 1] - indptr[s]

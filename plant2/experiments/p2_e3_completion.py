@@ -189,9 +189,11 @@ def run_phase(e, M, phase=1):
 
 
 def score(res, latency, cues, n_cued_old, A):
-    """Per-arm criteria from replay output."""
+    """Per-arm criteria from replay output. Item, cue and missing sizes come from the cue arrays."""
     kinds = np.array([c["kind"] for c in cues])
     h, nv, fu = kinds == "half", kinds == "novel", kinds == "full"
+    size = lambda kind, key: np.array([c[key].size for c in cues if c["kind"] == kind], float)[:, None]
+    n_item, n_cue, n_miss = size("half", "item"), size("half", "cue"), size("half", "missing")
     miss = res["missing"][h]
     intr = res["total"][h] - res["item"][h]
     joint = (miss >= JOINT_MISSING) & (intr < JOINT_INTRUSIONS)
@@ -200,7 +202,7 @@ def score(res, latency, cues, n_cued_old, A):
     miss_s = res["missing_short"][h]
     intr_s = res["total_short"][h] - res["item_short"][h]
     joint_s = (miss_s >= JOINT_MISSING) & (intr_s < JOINT_INTRUSIONS)
-    hd = ((res["total"][h] - res["item"][h]) + (100 - res["item"][h])) / 50.0
+    hd = ((res["total"][h] - res["item"][h]) + (n_item - res["item"][h])) / n_miss
     other_size = np.array([max(1, c["other_missing"].size) for c in cues if c["kind"] == "half"], float)
     arms = []
     for a in range(A):
@@ -210,16 +212,16 @@ def score(res, latency, cues, n_cued_old, A):
             D2=float((intr[:, a] < JOINT_INTRUSIONS).mean()),
             joint_50ms=float(joint_s[:, a].mean()), D1_50ms=float((miss_s[:, a] >= JOINT_MISSING).mean()),
             D2_50ms=float((intr_s[:, a] < JOINT_INTRUSIONS).mean()),
-            missing_frac_median=float(np.median(miss[:, a] / 50.0)),
-            missing_frac_pct=[float(x) for x in np.percentile(miss[:, a] / 50.0, [10, 25, 50, 75, 90])],
+            missing_frac_median=float(np.median(miss[:, a] / n_miss[:, 0])),
+            missing_frac_pct=[float(x) for x in np.percentile(miss[:, a] / n_miss[:, 0], [10, 25, 50, 75, 90])],
             intrusions_median=float(np.median(intr[:, a])), intrusions_p90=float(np.percentile(intr[:, a], 90)),
             intrusions_span_median=float(np.median(res["total_span"][h][:, a] - res["item_span"][h][:, a])),
-            visible_frac_median=float(np.median(res["visible"][h][:, a] / 50.0)),
+            visible_frac_median=float(np.median(res["visible"][h][:, a] / n_cue[:, 0])),
             hd_ratio=[float(x) for x in np.percentile(hd[:, a], [10, 50, 90])],
             chance_other_missing=float(np.mean(res["other_missing"][h][:, a] / other_size)),
             novel_lines_median=float(np.median(res["total"][nv][:, a])),
             novel_lines_max=int(res["total"][nv][:, a].max()),
-            full_item_frac_median=float(np.median(res["item"][fu][:, a] / 100.0)),
+            full_item_frac_median=float(np.median(res["item"][fu][:, a] / size("full", "item")[:, 0])),
             latency_ms_median=float(np.nanmedian(latency[h][:, a])) if np.isfinite(latency[h][:, a]).any() else None,
         )
         d["passes"] = bool(d["joint"] >= FRAC and d["D3"] >= FRAC and d["D4"] >= FRAC)
@@ -231,7 +233,9 @@ def readout(e, M, raster, n_ticks, onsets, J, g, store=None, pi=None):
     store = e.fb if store is None else store
     cues = build_cues(e, M, onsets, pi=pi)
     indptr, post = feedback_csr(store)
-    res, lat, oow = replay(raster, n_ticks, indptr, post, e.c["m"], J, g, cues, window=WINDOW, short=SHORT, span=SPAN)
+    # the window is the contract's rec_window; the span is the whole cue plus its gap (SPAN in the contract config)
+    res, lat, oow = replay(raster, n_ticks, indptr, post, e.c["m"], J, g, cues, window=e.c["rec_window"], short=SHORT,
+                           span=e.c["t_cue"] + e.c["t_gap"])
     arms = score(res, lat, cues, e.c["n_old"], len(J))
     for a, d in enumerate(arms):
         d.update(J=float(J[a]), g=float(g[a]), out_of_window_spikes_per_cue=float(oow[a] / len(cues)))

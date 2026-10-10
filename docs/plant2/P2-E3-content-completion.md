@@ -441,3 +441,170 @@ present. It needs the fixed activity-proportional inhibition at the higher load.
 
 **Decision (per the contract).** Stage 1's content-completion clause is met. Next come an
 evaluation against the north star, then the online-memory experiment, then capacity.
+
+## Addendum after independent review (2026-10-10)
+
+Four fresh reviewers examined the result: methodology, code, and two north-star lenses (one
+constructive, one skeptical). Their findings are recorded verbatim in `review/plant2/P2-E3/`,
+and each decision is in `review/ledger.jsonl`.
+- No reviewer found a bug that changes a reported number.
+- The code reviewer re-ran seed 14 from scratch and rescored 200 cues by brute force from a
+  live engine; everything matched.
+- **The verdict stands.** Nothing above this addendum has been edited.
+
+The corrections below change how the Result should be read.
+
+1. **The plateau-set control was read backwards.** At M = 1,000, the arm written from the
+   assigned plateau set A(x) is equal to or better than main on every seed:
+
+   | measure | plateau-set arm | main arm |
+   |---|---|---|
+   | joint | 0.980-0.990 | 0.955-0.985 |
+   | D2 | 1.000 on all 5 seeds | 0.970-0.995 |
+   | 90th-percentile reconstruction error | 0.08 | 0.10 |
+   | novel-cue maximum | 0-2 lines | 0-22 lines |
+
+   The Result's wording is wrong in two places, and one prediction was scored wrongly:
+   - **"The activity rule loses nothing."** Writing from the memory layer's own continuation
+     spikes, R(x) rather than A(x), adds nothing measurable.
+   - **"Extra responders cost no measurable specificity."** The extra responders add a few
+     intrusions: D2 is lower on 5 of 5 seeds.
+   - **The prediction row.** The prediction "slightly fewer intrusions" was right. "Lower D1"
+     was wrong: D1 is about equal.
+2. **What "content" means.**
+   - **The mechanism.** The regenerated content is the input copied verbatim (the encoding's
+     eligible lines), stored against a random, content-independent memory index (the plateau
+     cells). P2-E3 is a spiking implementation of Willshaw-style hetero-associative memory
+     (Willshaw et al. 1969) with random indices.
+   - **Inhibition's role.** The fixed inhibition implements the count threshold, about 30 % of
+     the active memory cells.
+   - **The label-permuted result follows from this.** A cue regenerates pi(x)'s lines because
+     the output is whatever was filed under the key.
+3. **Scope: independent random items only.**
+   - **What was gated.** Every gated item was an independent random sparse pattern, with about
+     2.5 % pairwise overlap.
+   - **No generalisation was tested.** D3 requires novel cues to regenerate nothing.
+   - **An exploratory check on structured items** (labelled, not a result). Items were drawn as
+     exemplars of 10 prototypes that were never shown. Siblings shared about 16 of 100 lines,
+     and parameters were frozen. The reviewer's script ran on seed 99, and I re-ran it
+     unchanged on seed 97:
+
+     | seed | joint, M = 500 | joint, M = 250 | plateau-set store, M = 500 | joint at about 4 % sibling overlap |
+     |---|---|---|---|---|
+     | 99 | 0.147 | 0.62 | 0.94 | 0.99 |
+     | 97 | 0.167 | 0.63 | 0.94 | 0.99 |
+
+     - **The cause.** |R(x)| rose to 50-52 against |A(x)| of about 20, because sibling
+       assemblies fire during the continuation and write feedback.
+     - **Generalisation.** A new exemplar of a family regenerated nothing.
+     - **Scripts and outputs.** `~/.cache/brain-sim/review/p2e3-northstar/` and
+       `~/.cache/brain-sim/plant2/diag/structured/`.
+   - **So:** the claim holds for independent items only. The one experience-driven part of the
+     write is the part that breaks on structured input.
+4. **Past capacity the store saturates; it does not forget.**
+   - **Why.** The clipped feedback write only adds.
+   - **Feedback density** is 0.133 / 0.23 / 0.36 at M = 1,000 / 1,500 / 2,000.
+   - **|R(x)|** grows too, from 23 to 30 to 41: spurious responders write as well.
+   - **At M = 2,000:**
+     - a half cue lights a median of 2,983-3,545 of the 4,000 rec lines;
+     - novel half cues light a median of 1,419-2,588 lines and up to 4,000.
+   - **At M = 1,500,** novel cues reach 1,225-3,509 lines.
+   - **The Result's "D1 stays at 0.97-1.0"** at these loads reflects saturation: the missing
+     lines are lit because nearly every line is.
+5. **"Inhibition required" needs a scope.**
+   - **It was settled at calibration.** verdict() returns "required" whenever the g = 0 arm
+     uses the fallback J, so no gated outcome could have read "unnecessary".
+   - **What the gated numbers show:**
+
+     | M | items per memory cell | matched g = 0, joint | main, joint | reading |
+     |---|---|---|---|---|
+     | 250 and 500 | <= 0.125 | 0.92-0.965 (passes) | | inhibition unnecessary |
+     | 1,000 | 0.25 | 0.77-0.86 (fails) | 0.955-0.985 | inhibition needed |
+     | 1,500 | 0.375 | 0.245-0.345 | 0.185-0.290 | g = 0 beats main on every seed (both fail) |
+
+     At M = 1,500, D3 is also higher without inhibition: 0.88-0.925 against 0.75-0.795.
+   - **So:** the inhibition sets an operating band around 0.25 items per cell. It is not a
+     capacity mechanism.
+   - **Future contracts** make the two readings mutually exclusive.
+6. **The bug-fix note was incomplete.**
+   - **What changed.** On seed 0 at M = 1,000, the window fix changed three numbers (rows 59 and
+     63 of `bench/results/plant2.jsonl`, counted from 1), so gate_ok flipped from false to true:
+
+     | measure | under the bug | after the fix |
+     |---|---|---|
+     | C2 | 0.880 | 0.970 |
+     | C3 | 0.970 | 1.000 |
+     | C4 spurious | 0.90 | 0.98 |
+
+   - **Its effect on the verdict.** Under the bug, D5 failed on seed 0.
+   - **How it was found.** The fix restored the contract's 50 ms memory window. It was looked
+     for because D5 looked bad, using seed-0 diagnostics only
+     (`~/.cache/brain-sim/plant2/diag/e3_memory_c2*.py`).
+   - **Where the bug was.** In the test configuration (a key collision), not in the
+     continuation.
+   - **What did not change.** Content arms, learning and convergence are bit-identical between
+     the two runs.
+7. **Overstated or slipped numbers.**
+   - **"Unlearned cues regenerate nothing"** should read "almost nothing". The median is 0
+     lines; at M = 1,000 the per-seed maximum is 0, 1, 1, 2 and 22; D3 is 0.99-1.0.
+   - **Main D2 at M = 1,000** is 0.970-0.995, not 0.970-1.000.
+   - **Out-of-window rec spikes** (204-252 per cue) are averaged over 600 cues. That includes
+     200 novel cues with about 0 lines, so it comes to about 3-4 further spikes per regenerated
+     line, not 2.
+   - **"pi(x)'s missing lines"** are pi(x)'s 100 lines minus any overlap with x's cue, about 99
+     lines.
+   - **The label-permuted store keeps degrees only approximately.** The contract said every
+     per-cell and per-line degree is kept. In a reviewer's small check, the per-cell degree was
+     equal for 36 % of cells (correlation 0.9996) and the per-line degree for 3.6 % of lines
+     (correlation 0.947).
+   - **"Chance" (0.022-0.027) is the overlap floor.** Another item's missing half overlaps x's
+     100 lines by 100/4,000 = 2.5 % by construction. The label-permuted arm is the real
+     specificity control.
+8. **Controls that cannot fail.**
+   - **The shuffled arm** fails by construction. It is a leak check, so STAGES' "against a
+     never-trained or shuffled control" is met in letter only.
+   - **`stores_unchanged_by_tests`** compares a test copy with itself, so it cannot fail. The
+     protection of the main line rests on `test_testing_a_copy_leaves_learning_untouched`.
+   - **From P2-E4 on:**
+     - at least one gated control could pass if the claim were false;
+     - the main line's stores and `vbar` are digested before and after every test phase.
+9. **Provenance.**
+   - **Code trees.** Calibration ran on plant2 tree 0207e6cc and the gated seeds on a949ecb0.
+     The difference is only the 17-line `verdict` subcommand (`git diff 68beb4c..c97f237 --
+     plant2`).
+   - **Timing.** The predictions were committed at 16:52:56, about 7 s before the gated runs
+     started.
+   - **Ledger time stamps.** The ledger rows for the P2-E2 review and the P2-E3 red-team were
+     hand-stamped, and some stamps precede the commits they describe. Rows from this review on
+     are machine-stamped.
+   - **A gated seed in a unit test.** Before gating, a unit test ran `run_seed` on gated seed 13
+     in an 800-cell configuration. No information can leak from that run. Tests now use seeds
+     90 and up.
+10. **Code changes after the result.**
+    - **`replay()`.** It now keeps one span accumulator per cue, and raises an error on
+      overlapping scoring windows or on a window that runs past the raster. Before, it returned
+      zeros silently when cues were closer than 300 ms. The contract layout spaces them exactly
+      300 ms, so no reported number was affected.
+    - **Configuration.** `readout()` takes the window from `rec_window` and the span from
+      `t_cue + t_gap`, and `score()` takes item and cue sizes from the cue arrays. In the
+      contract configuration these equal the old constants. A slow test reproduces gated seed
+      11's M = 250 arms, memory criteria and drift exactly.
+    - **New tests:**
+      - live engine against replay against brute-force scoring, on two cue layouts, one of them
+        the layout that exposed the old bug;
+      - alignment of the scored cues with the presented cues;
+      - the exact feedback-store contents;
+      - E3 without continuation against P2-E2's seed-6 record.
+    - **The P2-E3 contract digest is unchanged.**
+
+**Corrected reading.**
+- **What it does.** One exposure per item, with independent random sparse items, up to 0.25
+  items per memory cell, and tests on frozen copies after a 50 s settle. Under those
+  conditions, a spiking network stores each input verbatim against a random memory index and
+  regenerates the missing half from the other half, with few intrusions.
+- **What it is.** Working plumbing for later stages (prediction, replay, comparison against
+  input). It is not evidence of learning structure:
+  - it has not been tested on structured inputs, and a labelled exploration says it fails on
+    them;
+  - nothing in the system reads the regenerated content yet;
+  - past about 0.375 items per cell the store saturates instead of forgetting.
