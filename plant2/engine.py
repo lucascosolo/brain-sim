@@ -29,20 +29,38 @@ class Poisson:
 
 
 class LIF:
-    """Leaky integrate-and-fire cells with delta synapses (mV per spike)."""
+    """Leaky integrate-and-fire cells with delta synapses (mV per spike).
+
+    With `acc_tau` (ms) set, each cell's threshold accommodates: it sits `v_th - v_rest` above
+    the cell's own running mean membrane potential `vbar` (P2-E2, labelled proxy for slow
+    threshold accommodation) instead of above rest. `vbar` is adaptive state: `quiet()` keeps it.
+    """
 
     def __init__(self, name, n, d_max, tau_m=20.0, v_rest=-70.0, v_reset=-65.0, v_th=-50.0,
-                 t_ref=2, dt=1.0):
-        self.name, self.n, self.d_max = name, n, d_max
+                 t_ref=2, dt=1.0, acc_tau=None):
+        self.name, self.n, self.d_max, self.dt = name, n, d_max, dt
         self.v_rest, self.v_reset, self.v_th, self.t_ref = f32(v_rest), f32(v_reset), f32(v_th), t_ref
         self.decay = f32(np.exp(-dt / tau_m))
         self._v_c = f32(v_rest * (1.0 - self.decay))
         self.v = np.full(n, v_rest, np.float32)
         self.t_last = np.full(n, -10_000, np.int64)
         self.ring = np.zeros((d_max + 1, n), np.float32)
+        self.vbar = np.full(n, float(v_rest), np.float64)
+        self.set_accommodation(acc_tau)
+
+    def set_accommodation(self, acc_tau):
+        self.acc_tau = acc_tau
+        self._acc = None if acc_tau is None else self.dt / float(acc_tau)
+
+    def threshold(self):
+        if self._acc is None:
+            return np.full(self.n, self.v_th, np.float64)
+        return self.vbar + float(self.v_th - self.v_rest)
 
     def quiet(self):
-        """State after a long input-free interval: rest, no pending input, not refractory."""
+        """State after a long input-free interval: rest, no pending input, not refractory.
+
+        Adaptive state (`vbar`) is not reset."""
         self.v[:] = self.v_rest
         self.t_last[:] = -10_000
         self.ring[:] = 0.0
@@ -54,7 +72,11 @@ class LIF:
         v += self._v_c
         v += slot
         slot[:] = 0.0
-        s = np.flatnonzero(v >= self.v_th)
+        if self._acc is None:
+            s = np.flatnonzero(v >= self.v_th)
+        else:
+            self.vbar += (v - self.vbar) * self._acc
+            s = np.flatnonzero(v >= self.vbar + float(self.v_th - self.v_rest))
         if s.size:
             s = s[t - self.t_last[s] > self.t_ref]
             v[s] = self.v_reset
