@@ -50,6 +50,13 @@ def test_real_schedule_is_feasible_and_follows_every_rule(seed):
             sub = [b[k]["kind"] for k in steps[24 * j:24 * (j + 1)]]
             assert {kd: sub.count(kd) for kd in set(sub)} == dict(recent=5, uniform=5, cohort=10, novel=2, blank=2)
         assert all(sl["pseudo"] is not None and sl["pseudo"][0] not in s.reserved for sl in b.values() if sl["kind"] == "novel")
+        seen = set()
+        for k in steps:  # a pseudo-target is never an item already targeted earlier in the block
+            sl = b[k]
+            if sl["kind"] == "novel":
+                assert sl["pseudo"][0] not in seen
+            elif sl["target"] is not None:
+                seen.add(sl["target"])
     assert all(s.slot(k)["kind"] == "novel" for k in range(1, 201))  # every item 1-200 is reserved
     assert all(s.slot(k)["kind"] != "uniform" for k in range(1, 221))
     assert set(s.reserved.tolist()) == set(range(1, 201))
@@ -117,7 +124,8 @@ def test_habituation_rules_match_the_power_model_and_label_not_estimable():
     c = e4.CONTRACT
     rng = np.random.default_rng(0)
     items = [dict(scored=True, L_rep=int(rng.integers(6, 11)), L_ctl=int(rng.integers(8, 11)), rec_rep=int(rng.integers(2, 6)),
-                  rec_ctl=int(rng.integers(3, 6)), col_rep=5, col_ctl=5, overlap=2, per_rep_both=[1] * 100) for _ in range(50)]
+                  rec_ctl=int(rng.integers(3, 6)), col_rep=5, col_ctl=5, overlap=2, per_rep_both=[1] * 100,
+                  per_rep_recall=[1.0] * 100) for _ in range(50)]
     full = e4.hab_criteria(c, items)
     fast = e4._hab_fast(c, items)
     assert full["O4"] == fast["O4"] and full["O5_recovery"] == fast["O5_recovery"] and full["O5_collateral"] == fast["O5_collateral"]
@@ -140,6 +148,10 @@ def test_labels_join_every_failure_and_separate_not_estimable():
     assert e4.labels(e4.CONTRACT, [rec(O1_C1=False, O4=False, est4=False, O5_recovery=False, est5=False)]) == [
         "ONLINE INDEX FAIL", "HABITUATION NOT ESTIMABLE", "RECOVERY NOT ESTIMABLE"]
     assert e4.labels(e4.CONTRACT, [rec(O3_content=False, O4=False)]) == ["ONLINE CONTENT FAIL", "HABITUATION FAIL"]
+    # the contract's predicted case: estimable failures at one load, not-estimable ones at the other
+    two = rec(O4=False, O5_recovery=False)
+    two["loads"]["500"] = rec(O4=False, est4=False, O5_recovery=False, est5=False)["loads"]["1000"]
+    assert e4.labels(e4.CONTRACT, [two]) == ["HABITUATION FAIL", "RECOVERY FAIL"]
 
 
 def test_guard_refuses_without_matching_committed_predictions(monkeypatch):
@@ -153,7 +165,12 @@ def test_guard_refuses_without_matching_committed_predictions(monkeypatch):
     with pytest.raises(SystemExit):
         e4.guard([])
     monkeypatch.setattr(e4, "_git", lambda *a: R(0, pred if a[0] == "show" else ""))
-    assert e4.guard([dict(experiment="P2-E4", kind="kill_test_seed", seed=16)]) == {16}
+    done = dict(experiment="P2-E4", kind="kill_test_seed", seed=16, gated=True, contract_digest=e4.DIGEST)
+    assert e4.guard([done, dict(done, experiment="P2-E3", seed=11)]) == {16}
+    monkeypatch.setattr(e4, "_git", lambda *a: R(0, pred if a[0] == "show" else ("2\t1\tdoc" if "--numstat" in a else "")))
+    with pytest.raises(SystemExit):  # a committed edit that removes or changes frozen contract lines
+        e4.guard([])
+    monkeypatch.setattr(e4, "_git", lambda *a: R(0, pred if a[0] == "show" else ""))
     monkeypatch.setattr(e4.record, "git_state", lambda: dict(plant2_dirty=False, plant2_tree="other"))
     with pytest.raises(SystemExit):
         e4.guard([])
@@ -177,3 +194,37 @@ def test_small_seed_runs_every_arm_and_every_validity_check_holds(run_dir):
         assert {"twin_A", "twin_B", "reference", "novel_duty_twin", "duty"} <= set(L)
         assert L["twin_A"]["replay_mismatch"]["replay_only"] == L["twin_A"]["replay_mismatch"]["live_only"] == 0
     assert {"ood", "stress", "wps", "efficiency_final", "M250_rolling"} <= set(rep)
+
+
+def _fake_seed(seed, gated, kind, M_rates, hab=None, tree="t"):
+    vec = dict(O1_C1=True, O1_C2=True, O1_C3=True, O2_joint=True, O2_D3=True, O3_memory=True, O3_content=True, O4=True,
+               O5_recovery=True, O5_collateral=True)
+    items = hab or [dict(scored=True, L_rep=9, L_ctl=9, rec_rep=5, rec_ctl=5, col_rep=5, col_ctl=5) for _ in range(50)]
+    hc = dict(O4=True, O4_estimable=True, O5_recovery=True, O5_recovery_estimable=True, O5_collateral=True,
+              O5_collateral_estimable=True, vector_state=dict(O4="pass"))
+    loads = {M: dict(block=dict(vector=dict(vec), rates=dict(M_rates), per_kind={}), habituation=hc, hab_items=items)
+             for M in ("500", "1000")}
+    return dict(experiment="P2-E4", kind=kind, seed=seed, gated=gated, contract_digest=e4.DIGEST, valid=True,
+                vector={M: L["block"]["vector"] for M, L in loads.items()}, loads=loads,
+                git=dict(plant2_tree=tree, plant2_dirty=False))
+
+
+def test_verdict_reads_only_this_experiments_gated_records(run_dir):
+    real = e4.load_records()
+    fake = [_fake_seed(s, True, "kill_test_seed", dict(C1=1.0)) for s in e4.GATED_SEEDS]
+    rec = e4.verdict(real + fake + [dict(fake[0], valid=False)], results_path=run_dir / "v.jsonl", log=lambda m: None)
+    assert rec["verdict"] == "PASS" and rec["seeds"] == list(e4.GATED_SEEDS)  # the later duplicate of seed 16 is ignored
+    with pytest.raises(SystemExit):
+        e4.verdict(real + fake[:4], results_path=run_dir / "v.jsonl", log=lambda m: None)
+
+
+def test_predictions_run_on_exploration_records_and_refuse_foreign_trees(run_dir, monkeypatch):
+    monkeypatch.setattr(e4.record, "git_state", lambda: dict(plant2_dirty=False, plant2_tree="t"))
+    rates = dict(C1=0.95, C2=1.0, C3=1.0, joint=0.97, D3=1.0, O3_memory=0.93, O3_content=0.97)
+    ex = [_fake_seed(s, False, "exploration_seed", rates) for s in e4.EXPLORE_SEEDS]
+    rec = e4.predictions(ex, draws=5, sims=20, results_path=run_dir / "p.jsonl", log=lambda m: None)
+    assert 0.0 <= rec["p_pass_median"] <= 1.0 and rec["exploration_seeds"] == list(e4.EXPLORE_SEEDS)
+    assert isinstance(rec["logit_shift_for_p08"]["delta"], (float, str)) and set(rec["p_criterion_5seeds"])
+    with pytest.raises(SystemExit):
+        e4.predictions([ex[0], dict(ex[1], git=dict(plant2_tree="other", plant2_dirty=False))], draws=2, sims=5,
+                       results_path=run_dir / "p.jsonl", log=lambda m: None)

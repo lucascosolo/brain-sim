@@ -13,6 +13,7 @@ twins' P2-E3-comparable readouts.
 """
 import argparse
 import copy
+import gzip
 import hashlib
 import json
 import math
@@ -128,7 +129,7 @@ class Schedule:
                 slot = dict(kind=kind, block=M, age0=bool(is0), c500=bool(is500), target=None, mask=None, pseudo=None)
                 if kind == "novel":
                     if gated:
-                        el = self.eligible("blank", k)
+                        el = np.array([i for i in self.eligible("blank", k) if int(i) not in used], np.int64)
                         if not el.size:
                             ok = False
                             break
@@ -290,8 +291,8 @@ class Online(e3.E3):
         s = sp["mem"]
         if s.size:
             self._raster[t] = s.copy()
-        if self._rec_log is not None:
-            self._rec_log.extend((t, int(j)) for j in sp["rec"])
+        if self._rec_log is not None and sp["rec"].size:
+            self._rec_log.append(t * self.c["m"] + sp["rec"].astype(np.int64))
         return s
 
     # one probe slot ------------------------------------------------------------------------
@@ -437,7 +438,11 @@ def _leak_C(e, t, mask, rec):
 # ---------------------------------------------------------------- block criteria (O1-O3) and validity 9
 
 def frac(x):
-    return float(np.mean(x)) if len(x) else float("nan")
+    return float(np.mean(x)) if len(x) else None
+
+
+def ge(x, bar):
+    return x is not None and x >= bar
 
 
 def block_criteria(e, M):
@@ -456,8 +461,8 @@ def block_criteria(e, M):
     O3m = frac([d["recall"] >= c["recall_bar"] for d in coh])
     O3c = frac([d["joint"] for d in coh])
     f = c["frac"]
-    vec = dict(O1_C1=C1 >= f, O1_C2=C2 >= f, O1_C3=C3 >= f, O2_joint=joint >= f, O2_D3=D3 >= f, O3_memory=O3m >= f,
-               O3_content=O3c >= f)
+    vec = dict(O1_C1=ge(C1, f), O1_C2=ge(C2, f), O1_C3=ge(C3, f), O2_joint=ge(joint, f), O2_D3=ge(D3, f),
+               O3_memory=ge(O3m, f), O3_content=ge(O3c, f))
     kinds = {}
     for kd in ("recent", "uniform", "cohort"):
         sub = [d for d in half if d["kind"] == kd]
@@ -470,8 +475,14 @@ def block_criteria(e, M):
                 L_C=frac([d["leak_C"] for d in blank]), B_A=frac([d["leak_A"] for d in nov]), B_C=frac([d["leak_C"] for d in nov]),
                 posctl=frac([e.cont_frac[d["step"] - 1] for d in blank]),
                 age0=dict(n=int(sum(d["age0"] for d in blank)), L_A=frac([d["leak_A"] for d in blank if d["age0"]])))
-    leak["ok"] = bool(leak["recalled"] <= c["leak_max_recalled"] and leak["L_A"] <= leak["B_A"] + c["leak_margin"]
-                      and leak["L_C"] <= leak["B_C"] + c["leak_margin"] and leak["posctl"] >= c["posctl_bar"])
+    leak["ok"] = bool(leak["recalled"] <= c["leak_max_recalled"] and None not in (leak["L_A"], leak["B_A"], leak["L_C"], leak["B_C"])
+                      and leak["L_A"] <= leak["B_A"] + c["leak_margin"] and leak["L_C"] <= leak["B_C"] + c["leak_margin"]
+                      and ge(leak["posctl"], c["posctl_bar"]))
+    # reported: cued (recent half cues) against blank targets, by age (0 and 1-20)
+    leak["cued_vs_blank_by_age"] = {
+        name: dict(cued_recall=frac([d["recall"] for d in half if d["kind"] == "recent" and lo <= d["age"] <= hi]),
+                   blank_L_A=frac([d["leak_A"] for d in blank if lo <= d["age"] <= hi]))
+        for name, (lo, hi) in (("age0", (0, 0)), ("age1_20", (1, 20)))}
     ages = [d["age"] for d in half if d["kind"] == "recent"]
     return dict(
         n=dict(half=len(half), cohort=len(coh), novel=len(nov), blank=len(blank)), mean_A=meanA,
@@ -500,8 +511,10 @@ def state_digest(e):
     return h.hexdigest()[:16]
 
 
-def sham_step(e, r, cue, keep_raster=False):
-    """A copy step: sham encoding (fresh pattern, no plateau, BTSP or feedback write), gaps and the slot."""
+def sham_step(e, r, cue, keep_raster=False, onset=None):
+    """A copy step: sham encoding (fresh pattern, no plateau, BTSP or feedback write), gaps and the slot.
+
+    `onset`, when a list, receives the mean rec v at slot onset."""
     c = e.c
     pattern = np.sort(r.choice(c["m"], c["a"], replace=False))
     raster = [] if keep_raster else None
@@ -515,6 +528,8 @@ def sham_step(e, r, cue, keep_raster=False):
         sp = e.net.step(r)
         if raster is not None:
             raster.append((sp["mem"].tolist(), sp["rec"].tolist()))
+    if onset is not None:
+        onset.append(float(e.rec.v.mean()))
     e._rates(cue)
     fm = np.full(c["n"], -1, np.int64)
     fr = np.full(c["m"], -1, np.int64)
@@ -561,7 +576,7 @@ def hab_copy(S, M, i, plan, control):
     c = S.c
     e = copy.deepcopy(S)
     reps, late, pause, rec_n = c["hab_reps"], c["hab_late"], c["hab_pause"], c["hab_recovery"]
-    out, raster1, vbar_x = [], None, []
+    out, raster1, vbar_x, rec_onset = [], None, [], []
     x, y = plan["x"], plan["y"]
     Ax = e.A[x - 1]
     for s in range(1, reps + pause + 2 * rec_n + 1):
@@ -577,7 +592,7 @@ def hab_copy(S, M, i, plan, control):
             j = s - reps - pause
             t, mk = (x, plan["mx"]) if j % 2 == 1 else (y, plan["my"])
         cue = None if t is None else e.items[t - 1][mk]
-        fm, fr, raster = sham_step(e, r, cue, keep_raster=(s == 1))
+        fm, fr, raster = sham_step(e, r, cue, keep_raster=(s == 1), onset=rec_onset)
         if s == 1:
             raster1 = raster
         if t is not None:
@@ -587,7 +602,8 @@ def hab_copy(S, M, i, plan, control):
         vbar_x.append(float(e.mem.vbar[Ax].mean() - float(e.mem.v_rest)) if Ax.size else float("nan"))
     glob = float(e.mem.vbar.mean() - float(e.mem.v_rest))
     return out, raster1, dict(assembly_offset_first=vbar_x[0], assembly_offset_rep_end=vbar_x[reps - 1],
-                              global_offset_end=glob, rec_v_end=float(e.rec.v.mean()))
+                              global_offset_end=glob, rec_v_onset_mean=float(np.mean(rec_onset)),
+                              rec_v_onset_last20=float(np.mean(rec_onset[-20:])))
 
 
 def habituation(S, M, log=print):
@@ -596,26 +612,31 @@ def habituation(S, M, log=print):
     plans = hab_selection(S, M)
     reps, late, pause, rec_n = c["hab_reps"], c["hab_late"], c["hab_pause"], c["hab_recovery"]
     items, rep1_identical = [], True
+    per_copy_ok = True
     for i, plan in enumerate(plans):
+        d0 = state_digest(S)
         rep, ras_r, info_r = hab_copy(S, M, i, plan, control=False)
         ctl, ras_c, info_c = hab_copy(S, M, i, plan, control=True)
+        per_copy_ok &= state_digest(S) == d0
         rep1_identical &= ras_r == ras_c
         R = {s: b for s, t, b, *_ in rep}
         Cc = {s: b for s, t, b, *_ in ctl}
         lw = range(reps - late + 1, reps + 1)
         rx = [reps + pause + j for j in range(1, 2 * rec_n + 1, 2)]
         ry = [reps + pause + j for j in range(2, 2 * rec_n + 1, 2)]
-        items.append(dict(
-            x=plan["x"], y=plan["y"], overlap=plan["overlap"], age_x=M - plan["x"], age_y=M - plan["y"],
+        items.append(dict(  # stream_pos: copy input streams are (seed, 16, M, stream_pos, s), x + 1 in the contract's key
+            x=plan["x"], y=plan["y"], stream_pos=i + 1, overlap=plan["overlap"], age_x=M - plan["x"], age_y=M - plan["y"],
             scored=bool(R[1]), L_rep=int(sum(R[s] for s in lw)), L_ctl=int(sum(Cc[s] for s in lw)),
             rec_rep=int(sum(R[s] for s in rx)), rec_ctl=int(sum(Cc[s] for s in rx)),
             col_rep=int(sum(R[s] for s in ry)), col_ctl=int(sum(Cc[s] for s in ry)),
             per_rep_both=[int(R[s]) for s in range(1, reps + 1)],
+            per_rep_recall=[round(rc, 4) for s, t, b, rc, j in rep if s <= reps],
+            steps=dict(rep=[list(x) for x in rep], ctl=[list(x) for x in ctl]),
             info_rep=info_r, info_ctl=info_c))
         if (i + 1) % 10 == 0:
             log(f"  habituation M={M}: {i + 1}/{len(plans)} items")
     after = state_digest(S)
-    return items, dict(main_untouched=before == after, rep1_identical=bool(rep1_identical))
+    return items, dict(main_untouched=bool(before == after and per_copy_ok), rep1_identical=bool(rep1_identical))
 
 
 def hab_criteria(c, items):
@@ -643,17 +664,25 @@ def hab_criteria(c, items):
                                        min_eligible=me, seeds=1, loads=1, sims=20000, rng_seed=7)
     pr, pc = p0(rate_r), p0(rate_c)
     hab_detail = [d["L_rep"] - d["L_ctl"] for d in el]
-    b = sum(1 for d in el if d["L_rep"] < need <= d["L_ctl"])
-    cc = sum(1 for d in el if d["L_ctl"] < need <= d["L_rep"])
+    scored = [d for d in items if d["scored"]]
+    b = sum(1 for d in scored if d["L_rep"] < need <= d["L_ctl"])
+    cc = sum(1 for d in scored if d["L_ctl"] < need <= d["L_rep"])
+    rate_pooled = float(np.mean([d["rec_ctl"] + d["col_ctl"] for d in items]) / (2 * c["hab_recovery"])) if items else 0.0
     return dict(
         n_scored=int(sum(d["scored"] for d in items)), n_eligible=len(el), n_habituated=len(hab),
         O4=bool(o4), O4_estimable=bool(o4_est),
         O5_recovery=bool(o5r), O5_recovery_estimable=bool(pr >= c["recovery_power_bar"]), O5_recovery_n=[n_r, k_r],
         O5_collateral=bool(o5c), O5_collateral_estimable=bool(pc >= c["recovery_power_bar"]), O5_collateral_n=[n_c, k_c],
         ctl_rate_recovery=rate_r, ctl_rate_collateral=rate_c, p0_recovery=pr, p0_collateral=pc,
-        diff_hist={str(k): hab_detail.count(k) for k in sorted(set(hab_detail))}, mcnemar=dict(b=b, c=cc),
+        ctl_rate_pooled=rate_pooled, p0_pooled=p0(rate_pooled),
+        diff_hist={str(k): hab_detail.count(k) for k in sorted(set(hab_detail))}, mcnemar_scored=dict(b=b, c=cc),
         recovery_among_habituated=frac([d["rec_rep"] >= rn for d in hab]),
         per_rep_both=np.mean([d["per_rep_both"] for d in items], 0).round(3).tolist() if items else [],
+        per_rep_recall=np.mean([d["per_rep_recall"] for d in items], 0).round(4).tolist() if items else [],
+        vector_state=dict(
+            O4="pass" if o4 else ("fail" if o4_est else "fail (not estimable)"),
+            O5_recovery="pass" if o5r else ("fail" if pr >= c["recovery_power_bar"] else "fail (not estimable)"),
+            O5_collateral="pass" if o5c else ("fail" if pc >= c["recovery_power_bar"] else "fail (not estimable)")),
         collateral_overlap=np.bincount([d["overlap"] for d in items]).tolist() if items else [],
     )
 
@@ -697,6 +726,7 @@ def twin_A(S, M, ref_store=None):
     c = S.c
     e = copy.deepcopy(S)
     drift = e.settle_drift(M, 1)
+    offset_settled = float(e.mem.vbar.mean() - float(e.mem.v_rest))
     B = copy.deepcopy(e)
     e._raster, e._onsets, e._t0 = {}, [], e.net.t
     e._rec_log = []
@@ -708,10 +738,27 @@ def twin_A(S, M, ref_store=None):
     trace = []
     indptr, post = e.fb.csr()
     replay(raster, n_ticks, indptr, post, c["m"], J, g, [], trace=trace)
-    rp = {(t, j) for t, _, j in trace}
-    live = set(e._rec_log)
-    res = dict(memory=e3.memory_summary(out), main=main, drift=list(drift),
-               replay_mismatch=dict(replay_only=len(rp - live), live_only=len(live - rp), replay_spikes=len(rp)),
+    m = c["m"]
+    rp = np.unique(np.fromiter((t * m + j for t, _, j in trace), np.int64, len(trace)))
+    del trace
+    live = np.unique(np.concatenate(e._rec_log)) if e._rec_log else np.empty(0, np.int64)
+    # the joint scored from the carried live rec, for the mismatch's effect on the joint
+    cues = e3.build_cues(e, M, onsets)
+    w = c["rec_window"]
+    lt, lj = live // m, live % m
+    joint_live = []
+    for cue in cues:
+        if cue["kind"] != "half":
+            continue
+        sel = (lt >= cue["onset"]) & (lt < cue["onset"] + w)
+        lines = np.unique(lj[sel])
+        miss = np.isin(cue["missing"], lines).sum()
+        intr = np.setdiff1d(lines, cue["item"]).size
+        joint_live.append(miss >= c["joint_missing"] and intr < c["joint_intrusions"])
+    res = dict(memory=e3.memory_summary(out), main=main, drift=list(drift), offset_settled=offset_settled,
+               replay_mismatch=dict(replay_only=int(np.setdiff1d(rp, live).size), live_only=int(np.setdiff1d(live, rp).size),
+                                    replay_spikes=int(rp.size), joint_live=frac(joint_live),
+                                    joint_live_minus_replay=(frac(joint_live) - main["joint"]) if joint_live else None),
                swap_plateau=e3.readout(e, M, raster, n_ticks, onsets, J, g, store=e.fb_plateau)[0])
     if ref_store is not None:
         res["swap_reference"] = e3.readout(e, M, raster, n_ticks, onsets, J, g, store=ref_store)[0]
@@ -773,10 +820,11 @@ def responder_stats(e, bins=((1, 250), (251, 500), (501, 750), (751, 1000))):
     return out
 
 
-def rolling_summary(e, lo, hi):
+def rolling_summary(e, lo, hi, any_block=False):
     c = e.c
-    L = [d for d in e.log if lo <= d["step"] <= hi and d["block"] is None and d["kind"] in HALF]
-    return dict(n=len(L), C1=frac([d["recall"] >= c["recall_bar"] for d in L]), joint=frac([d["joint"] for d in L]))
+    L = [d for d in e.log if lo <= d["step"] <= hi and (any_block or d["block"] is None) and d["kind"] in HALF]
+    return dict(n=len(L), C1=frac([d["recall"] >= c["recall_bar"] for d in L]), joint=frac([d["joint"] for d in L]),
+                age_median=float(np.median([d["age"] for d in L])) if L else None)
 
 
 def retention_by_age(e, bins=((0, 20), (21, 100), (101, 300), (301, 600), (601, 3000))):
@@ -839,14 +887,16 @@ def wps_arm(S, main_final):
                 depressed=int(sum(w["dep"] for w in e.probe_writes)), potentiated=int(sum(w["pot"] for w in e.probe_writes)),
                 rolling_copy=rolling_summary(e, *span), rolling_main_matched_items=rolling_summary(main_final, *span),
                 plateau_episodes=episodes,
-                rolling_main_matched_episodes=rolling_summary(main_final, max(M + 1, episodes - 70), episodes + 70))
+                rolling_main_matched_episodes=rolling_summary(main_final, max(M + 1, episodes - 70), episodes + 70,
+                                                              any_block=True))
 
 
 def efficiency(e):
     c = e.c
     bits_item = (math.lgamma(c["m"] + 1) - math.lgamma(c["a"] + 1) - math.lgamma(c["m"] - c["a"] + 1)) / math.log(2)
     M = len(e.items)
-    return dict(bits_per_item=bits_item, bits_per_feedback_synapse=M * bits_item / max(1, e.fb.size),
+    return dict(inherited_window_widths=dict(J="1.45-1.60 mV around 1.525 (about +/-5 %)", J_fb="2.00-3.60 mV around 2.80 (about +/-29 %)"),
+                bits_per_item=bits_item, bits_per_feedback_synapse=M * bits_item / max(1, e.fb.size),
                 bits_per_potential_synapse=M * bits_item / (c["n"] * c["m"]), feedback_density=e.fb.size / (c["n"] * c["m"]))
 
 
@@ -863,28 +913,52 @@ def stress_summary(e, M):
 
 # ---------------------------------------------------------------- one seed
 
+def dump_logs(seed, kind, payload):
+    """Per-slot logs go to the cache (not the results file), referenced from the record by path and sha256."""
+    path = record.cache_dir("p2_e4") / f"seed{seed}_{kind}_{record.now().replace(':', '')}.jsonl.gz"
+    data = "\n".join(json.dumps(x, sort_keys=True, default=_jsonable) for x in payload).encode()
+    with gzip.open(path, "wb") as f:
+        f.write(data)
+    return dict(path=str(path), sha256=hashlib.sha256(data).hexdigest())
+
+
+def _jsonable(x):
+    if isinstance(x, (np.integer,)):
+        return int(x)
+    if isinstance(x, (np.floating,)):
+        return float(x)
+    if isinstance(x, np.ndarray):
+        return x.tolist()
+    return str(x)
+
+
 def run_seed(c, seed, gated, results_path=record.RESULTS, log=print, reported=True):
+    if str(results_path) == str(record.RESULTS) and record.digest(c) != DIGEST:
+        raise SystemExit("only the contract configuration may write to the results file")
     t0 = time.time()
     g0, g1 = c["gate_M"]
     main = Online(c, seed)
     snaps, loads, validity = {}, {}, {}
+    hab_steps = {}
     for M in (g0, g1):
         main.run_to(M)
         S = copy.deepcopy(main)
         snaps[M] = S
         crit = block_criteria(main, M)
-        log(f"seed {seed} M={M}: online C1 {crit['rates']['C1']:.3f} C2 {crit['rates']['C2']:.3f} C3 {crit['rates']['C3']:.3f} "
-            f"joint {crit['rates']['joint']:.3f} D3 {crit['rates']['D3']:.3f} | cohort mem {crit['rates']['O3_memory']:.3f} "
-            f"content {crit['rates']['O3_content']:.3f} | offset {crit['offset_mv']['mean']:.2f} mV | leak ok {crit['leak']['ok']} "
-            f"({time.time() - t0:.0f} s)")
+        r_ = crit["rates"]
+        log(f"seed {seed} M={M}: online C1 {r_['C1']:.3f} C2 {r_['C2']:.3f} C3 {r_['C3']:.3f} joint {r_['joint']:.3f} "
+            f"D3 {r_['D3']:.3f} | cohort memory {r_['O3_memory']:.3f} content {r_['O3_content']:.3f} | offset "
+            f"{crit['offset_mv']['mean']:.2f} mV | leak ok {crit['leak']['ok']} ({time.time() - t0:.0f} s)")
+        d_main = state_digest(main)
         items, hv = habituation(S, M, log)
+        hv["main_untouched"] = bool(hv["main_untouched"] and state_digest(main) == d_main)
         hc = hab_criteria(c, items)
         log(f"seed {seed} M={M}: habituation eligible {hc['n_eligible']} habituated {hc['n_habituated']} O4 {hc['O4']} | "
             f"recovery {hc['O5_recovery']} collateral {hc['O5_collateral']} ({time.time() - t0:.0f} s)")
         crit["vector"].update(O4=hc["O4"], O5_recovery=hc["O5_recovery"], O5_collateral=hc["O5_collateral"])
-        loads[str(M)] = dict(block=crit, habituation=hc, hab_items=items, hab_validity=hv,
+        hab_steps[M] = [dict(x=d["x"], **d.pop("steps")) for d in items]
+        loads[str(M)] = dict(block=crit, habituation=hc, hab_items=items, hab_validity=hv, fb_union_ok=fb_union_ok(S),
                              fwd_digest=e3.digest(S.store.keys), fb_digest=e3.digest(S.fb.keys))
-    # gated validity
     v = validity
     ref_digests = p2e1_digests(c, seed, (g0, g1))
     v["fwd_equals_p2e1"] = all(ref_digests[M] == loads[str(M)]["fwd_digest"] for M in (g0, g1))
@@ -892,7 +966,7 @@ def run_seed(c, seed, gated, results_path=record.RESULTS, log=print, reported=Tr
     v["mean_A"] = float(np.mean([a.size for a in main.A[:g1]]))
     v["elig_ok"] = v["mean_elig_frac"] >= c["elig_valid"]
     v["mean_A_ok"] = c["mean_A_lo"] <= v["mean_A"] <= c["mean_A_hi"]
-    v["fb_union_ok"] = fb_union_ok(snaps[g1])
+    v["fb_union_ok"] = all(loads[str(M)]["fb_union_ok"] for M in (g0, g1))
     v["slot_checks_ok"] = all(all(loads[str(M)]["block"]["slot_checks"].values()) for M in (g0, g1)) and all(
         d["writes_ok"] for d in main.log)
     v["main_untouched"] = all(loads[str(M)]["hab_validity"]["main_untouched"] for M in (g0, g1))
@@ -904,8 +978,10 @@ def run_seed(c, seed, gated, results_path=record.RESULTS, log=print, reported=Tr
     valid = all(v[k] for k in ("fwd_equals_p2e1", "elig_ok", "mean_A_ok", "fb_union_ok", "slot_checks_ok", "main_untouched",
                                "rep1_identical", "audit_ok", "leak_ok"))
     vec = {M: loads[M]["block"]["vector"] for M in loads}
+    logs = dict(main=dump_logs(seed, "main", [d for d in main.log if d["step"] <= g1]),
+                habituation=dump_logs(seed, "habituation", [dict(M=M, **x) for M in (g0, g1) for x in hab_steps[M]]))
     rec = dict(experiment="P2-E4", kind="kill_test_seed" if gated else "exploration_seed", seed=seed, gated=gated,
-               contract_digest=DIGEST, loads=loads, validity=v, valid=bool(valid), vector=vec,
+               contract_digest=record.digest(c), loads=loads, validity=v, valid=bool(valid), vector=vec, logs=logs,
                passed=bool(valid and all(all(x.values()) for x in vec.values())), timestamp=record.now(),
                git=record.git_state(), runtime=record.runtime(), wall_s=round(time.time() - t0, 1))
     record.append(rec, results_path)
@@ -917,7 +993,10 @@ def run_seed(c, seed, gated, results_path=record.RESULTS, log=print, reported=Tr
 
 def run_reported(c, seed, gated, main, snaps, results_path, log):
     t0 = time.time()
-    out = dict(experiment="P2-E4", kind="reported_arms", seed=seed, gated=gated, contract_digest=DIGEST, loads={})
+    out = dict(experiment="P2-E4", kind="reported_arms", seed=seed, gated=gated, contract_digest=record.digest(c), loads={},
+               validity={})
+    d_main = state_digest(main)
+    snap_digest = {M: state_digest(S) for M, S in snaps.items()}
     ref = e3.E3(c, seed)
     ref_stores, ref_tests = {}, {}
     J, g = np.array([c["J_fb"]]), np.array([c["g"]])
@@ -933,7 +1012,8 @@ def run_reported(c, seed, gated, main, snaps, results_path, log):
         S = snaps[M]
         A, B = twin_A(S, M, ref_stores[M])
         out["loads"][str(M)] = dict(twin_A=A, twin_B=twin_B(B, main, M), reference=ref_tests[M],
-                                    offset_settled=float(B.mem.vbar.mean() - float(B.mem.v_rest)))
+                                    offset_settled=A["offset_settled"],
+                                    offset_online_block=block_criteria(main, M)["offset_mv"]["mean"])
         log(f"seed {seed} M={M}: twin A joint {A['main']['joint']:.3f} (plateau swap {A['swap_plateau']['joint']:.3f}, "
             f"reference swap {A['swap_reference']['joint']:.3f}) replay mismatch {A['replay_mismatch']} ({time.time() - t0:.0f} s)")
     g1 = c["gate_M"][1]
@@ -943,29 +1023,38 @@ def run_reported(c, seed, gated, main, snaps, results_path, log):
     out["M250_rolling"] = rolling_summary(main, 221, 250)
     out["efficiency_at_gate"] = efficiency(snaps[g1])
     log(f"seed {seed}: OOD done ({time.time() - t0:.0f} s)")
+    out["validity"]["snapshots_untouched"] = all(state_digest(S) == snap_digest[M] for M, S in snaps.items())
+    out["validity"]["main_untouched_by_twins"] = state_digest(main) == d_main
     for M in c["stress_M"]:
         main.run_to(M)
         out.setdefault("stress", {})[str(M)] = stress_summary(main, M)
         log(f"seed {seed}: stress M={M} {out['stress'][str(M)]} ({time.time() - t0:.0f} s)")
     out["retention_main_final"] = retention_by_age(main)
     out["efficiency_final"] = efficiency(main)
+    out["logs_main_continuation"] = dump_logs(seed, "main_continuation", [d for d in main.log if d["step"] > g1])
+    d_snap = state_digest(snaps[g1])
     out["wps"] = wps_arm(snaps[g1], main)
+    out["validity"]["snapshot_untouched_by_wps"] = state_digest(snaps[g1]) == d_snap
     log(f"seed {seed}: writes-during-probes {out['wps']['writes']} writes ({time.time() - t0:.0f} s)")
     twin = Online(c, seed, novel_duty=True)
     for M in c["gate_M"]:
         twin.run_to(M, score=False)
         A, _ = twin_A(twin, M)
-        out["loads"][str(M)]["novel_duty_twin"] = dict(twin_A=A, fb_size=int(twin.fb.size), fb_main=int(snaps[M].fb.size))
+        out["loads"][str(M)]["novel_duty_twin"] = dict(twin_A=A, fb_size=int(twin.fb.size), fb_main=int(snaps[M].fb.size),
+                                                       fwd_digest=e3.digest(twin.store.keys), fb_digest=e3.digest(twin.fb.keys),
+                                                       fwd_equals_main=e3.digest(twin.store.keys) == e3.digest(snaps[M].store.keys))
     out["responders_novel_duty"] = responder_stats(twin)
+    out["validity"]["novel_duty_fb_union_ok"] = fb_union_ok(twin)
     log(f"seed {seed}: novel-duty twin done ({time.time() - t0:.0f} s)")
     duty = Online(c, seed, post=c["duty_post"], bg_key=(ARMS, ARM_DUTY))
     for M in c["gate_M"]:
         duty.run_to(M)
         A, _ = twin_A(duty, M)
         crit = block_criteria(duty, M)
-        out["loads"][str(M)]["duty"] = dict(block=dict(rates=crit["rates"], vector=crit["vector"], offset_mv=crit["offset_mv"]),
-                                            twin_A=A)
+        out["loads"][str(M)]["duty"] = dict(block=dict(rates=crit["rates"], vector=crit["vector"], offset_mv=crit["offset_mv"],
+                                                       leak=crit["leak"], slot_checks=crit["slot_checks"]), twin_A=A)
     out["responders_duty"] = responder_stats(duty)
+    out["validity"]["duty_fb_union_ok"] = fb_union_ok(duty)
     out.update(timestamp=record.now(), git=record.git_state(), runtime=record.runtime(), wall_s=round(time.time() - t0, 1))
     record.append(out, results_path)
     log(f"seed {seed}: reported arms done, wall {out['wall_s']} s")
@@ -974,7 +1063,13 @@ def run_reported(c, seed, gated, main, snaps, results_path, log):
 
 # ---------------------------------------------------------------- verdict, predictions, guard
 
+LABEL_ORDER = ["ONLINE INDEX FAIL", "ONLINE CONTENT FAIL", "HABITUATION FAIL", "HABITUATION NOT ESTIMABLE", "RECOVERY FAIL",
+               "RECOVERY NOT ESTIMABLE"]
+
+
 def labels(c, recs):
+    """Failure labels over all seeds and loads. A NOT ESTIMABLE label applies only when every failure of that family is
+    not estimable (the contract's 'fails only because' / 'fails only on'), the same reading for both families."""
     lab = set()
     for r in recs:
         for M, L in r["loads"].items():
@@ -988,114 +1083,188 @@ def labels(c, recs):
             for part in ("recovery", "collateral"):
                 if not h[f"O5_{part}"]:
                     lab.add("RECOVERY FAIL" if h[f"O5_{part}_estimable"] else "RECOVERY NOT ESTIMABLE")
-    order = ["ONLINE INDEX FAIL", "ONLINE CONTENT FAIL", "HABITUATION FAIL", "HABITUATION NOT ESTIMABLE", "RECOVERY FAIL",
-             "RECOVERY NOT ESTIMABLE"]
-    lab = [x for x in order if x in lab]
-    if "RECOVERY FAIL" in lab and "RECOVERY NOT ESTIMABLE" in lab:
-        lab.remove("RECOVERY NOT ESTIMABLE")
-    return lab
+    for fam in ("HABITUATION", "RECOVERY"):
+        if f"{fam} FAIL" in lab:
+            lab.discard(f"{fam} NOT ESTIMABLE")
+    return [x for x in LABEL_ORDER if x in lab]
+
+
+def gated_records(recs):
+    """P2-E4 gated seed records under this contract, the first record per seed (re-runs keep the first records)."""
+    first = {}
+    for r in recs:
+        if (r.get("experiment") == "P2-E4" and r.get("kind") == "kill_test_seed" and r.get("gated") is True
+                and r.get("contract_digest") == DIGEST and r["seed"] not in first):
+            first[r["seed"]] = r
+    return [first[s] for s in sorted(first)]
 
 
 def verdict(recs, results_path=record.RESULTS, log=print):
-    gated = [r for r in recs if r["gated"] and r["kind"] == "kill_test_seed"]
+    gated = gated_records(recs)
     if sorted(r["seed"] for r in gated) != sorted(GATED_SEEDS):
         raise SystemExit(f"verdict needs exactly the gated seeds {GATED_SEEDS}; have {sorted(r['seed'] for r in gated)}")
-    c = CONTRACT
     invalid = [r["seed"] for r in gated if not r["valid"]]
-    if invalid:
-        label = "INVALID"
-        labs = ["INVALID"]
-    else:
-        labs = labels(c, gated)
-        label = "PASS" if not labs else " + ".join(labs)
-    vector = {M: {k: all(r["vector"][M][k] for r in gated) for k in gated[0]["vector"][M]} for M in gated[0]["vector"]}
+    labs = ["INVALID"] if invalid else labels(CONTRACT, gated)
+    label = "INVALID" if invalid else ("PASS" if not labs else " + ".join(labs))
+    loads = list(gated[0]["vector"])
+    vector = {M: {k: all(r["vector"][M][k] for r in gated) for k in gated[0]["vector"][M]} for M in loads}
+    per_seed = {r["seed"]: {M: dict(rates=r["loads"][M]["block"]["rates"], per_kind=r["loads"][M]["block"]["per_kind"],
+                                    habituation_state=r["loads"][M]["habituation"]["vector_state"]) for M in loads}
+                for r in gated}
     rec = dict(experiment="P2-E4", kind="kill_test_verdict", seeds=sorted(r["seed"] for r in gated), verdict=label, labels=labs,
-               invalid_seeds=invalid, vector=vector, contract_digest=DIGEST, timestamp=record.now(), git=record.git_state(),
-               runtime=record.runtime())
+               invalid_seeds=invalid, vector=vector, per_seed=per_seed, contract_digest=DIGEST, timestamp=record.now(),
+               git=record.git_state(), runtime=record.runtime())
     record.append(rec, results_path)
     log(f"P2-E4 verdict: {label}")
     return rec
 
 
-def predictions(recs, draws=400, boot=4000, rng_seed=5, results_path=record.RESULTS, log=print):
+def _hab_fast(c, items, p0_table=None):
+    """O4 and O5 exactly as hab_criteria decides them; with p0_table, also the estimability used by the labels."""
+    need, drop, rn, me, f = c["late_need"], c["max_drop"], c["recovery_need"], c["min_eligible"], c["frac"]
+    el = [d for d in items if d["scored"] and d["L_ctl"] >= need]
+    hab = [d for d in el if d["L_rep"] <= d["L_ctl"] - drop - 1]
+    out = dict(O4=bool(len(el) >= me and len(hab) <= 0.10 * len(el) + 1e-9), O4_estimable=len(el) >= me)
+    for name, rk, ck in (("O5_recovery", "rec_rep", "rec_ctl"), ("O5_collateral", "col_rep", "col_ctl")):
+        e_ = [d for d in items if d[ck] >= rn]
+        out[name] = bool(len(e_) >= me and sum(d[rk] >= rn for d in e_) >= math.ceil(f * len(e_) - 1e-9))
+        if p0_table is not None:
+            rate = float(np.mean([d[ck] for d in items]) / c["hab_recovery"])
+            out[f"{name}_estimable"] = bool(np.interp(rate, *p0_table) >= c["recovery_power_bar"])
+    return out
+
+
+def _p0_table(c):
+    grid = np.round(np.arange(0.50, 1.0001, 0.01), 2)
+    vals = [power.p_paired_majority(float(min(r, 0.999)), power.P2E4_ICC, items=c["hab_items"], cues=c["hab_recovery"],
+                                    need=c["recovery_need"], min_eligible=c["min_eligible"], seeds=1, loads=1, sims=4000,
+                                    rng_seed=7) for r in grid]
+    return grid, np.array(vals)
+
+
+def predictions(recs, draws=300, sims=1500, rng_seed=5, results_path=record.RESULTS, log=print):
     """Full-rule power from the exploration seeds (contract: 'After implementation, before any gated seed').
 
-    O1-O3: exact binomials with the seed effect, for posterior draws of each per-cue rate (Beta(k+1, n-k+1) from the
-    pooled exploration cues), giving P(PASS) as an interval. O4-O5: a bootstrap of whole habituation items from the
-    exploration copies, five seeds per load.
+    O1-O3: exact binomials with the seed effect, per posterior draw of each per-cue rate. O4-O5: a bootstrap of whole
+    habituation items from the exploration copies (the item pool itself resampled per draw), five seeds per load. Labels:
+    a joint simulation of every criterion with the labels() logic. The logit shift that brings P(PASS) to 0.8 moves every
+    per-cue rate together (O1-O3 rates directly; O4-O5 through the beta item model at the shifted 'both' rate).
     """
     c = CONTRACT
-    ex = [r for r in recs if r.get("experiment") == "P2-E4" and r["kind"] == "exploration_seed" and r["contract_digest"] == DIGEST]
-    if not ex:
-        raise SystemExit("no exploration records under this contract digest")
+    g = record.git_state()
+    if g["plant2_dirty"]:
+        raise SystemExit("predictions: plant2/ has uncommitted changes")
+    first = {}
+    for r in recs:
+        if (r.get("experiment") == "P2-E4" and r.get("kind") == "exploration_seed" and r.get("contract_digest") == DIGEST
+                and r["seed"] not in first):
+            first[r["seed"]] = r
+    ex = [first[s] for s in sorted(first)]
+    if sorted(first) != sorted(EXPLORE_SEEDS):
+        raise SystemExit(f"predictions need exploration seeds {EXPLORE_SEEDS}; have {sorted(first)}")
+    for r in ex:
+        if r["git"]["plant2_tree"] != g["plant2_tree"] or r["git"]["plant2_dirty"]:
+            raise SystemExit(f"exploration seed {r['seed']} ran on a different or dirty plant2 tree")
     rng = np.random.default_rng(rng_seed)
     counts = dict(C1=200, C2=200, C3=20, joint=200, D3=20, O3_memory=100, O3_content=100)
     loads = [str(M) for M in c["gate_M"]]
     obs = {M: {k: (int(round(sum(r["loads"][M]["block"]["rates"][k] * counts[k] for r in ex))), counts[k] * len(ex))
                for k in counts} for M in loads}
-    index_keys, content_keys = ("C1", "C2", "C3", "O3_memory"), ("joint", "D3", "O3_content")
+    items = {M: [d for r in ex for d in r["loads"][M]["hab_items"]] for M in loads}
+    table = _p0_table(c)
+    index_keys = ("C1", "C2", "C3", "O3_memory")
 
     def p13(rates):
-        per = {M: {k: power.p_criterion(counts[k], min(max(rates[M][k], 1e-6), 1 - 1e-6), c["frac"], power.P2E4_SEED_SD) ** 5
-                   for k in counts} for M in loads}
-        return per
-    p_draws, idx_draws, con_draws = [], [], []
-    mean_rates = {M: {k: (kk + 1) / (n + 2) for k, (kk, n) in obs[M].items()} for M in loads}
-    per_mean = p13(mean_rates)
+        return {M: {k: power.p_criterion(counts[k], min(max(rates[M][k], 1e-6), 1 - 1e-6), c["frac"], power.P2E4_SEED_SD) ** 5
+                    for k in counts} for M in loads}
+
+    def p45_pool(pool, n_sims):
+        ok = np.ones(n_sims, bool)
+        for M in loads:
+            for _ in range(5):
+                for i in range(n_sims):
+                    if not ok[i]:
+                        continue
+                    h = _hab_fast(c, [pool[M][j] for j in rng.integers(0, len(pool[M]), c["hab_items"])])
+                    ok[i] = h["O4"] and h["O5_recovery"] and h["O5_collateral"]
+        return float(ok.mean())
+    p_pass = []
     for _ in range(draws):
         rates = {M: {k: rng.beta(kk + 1, n - kk + 1) for k, (kk, n) in obs[M].items()} for M in loads}
         per = p13(rates)
-        p_draws.append(float(np.prod([v for M in loads for v in per[M].values()])))
-        idx_draws.append(float(np.prod([per[M][k] for M in loads for k in index_keys])))
-        con_draws.append(float(np.prod([per[M][k] for M in loads for k in content_keys])))
-    items = {M: [d for r in ex for d in r["loads"][M]["hab_items"]] for M in loads}
-    hab = {M: dict(O4=0, O5=0, both=0) for M in loads}
-    for _ in range(boot):
+        pool = {M: [items[M][j] for j in rng.integers(0, len(items[M]), len(items[M]))] for M in loads}
+        p_pass.append(float(np.prod([v for M in loads for v in per[M].values()])) * p45_pool(pool, 20))
+    # joint label simulation at the posterior
+    lab_counts, crit_counts, n_pass = {}, {}, 0
+    for _ in range(sims):
+        rates = {M: {k: rng.beta(kk + 1, n - kk + 1) for k, (kk, n) in obs[M].items()} for M in loads}
+        fake = []
+        for _seed in range(5):
+            L = {}
+            for M in loads:
+                eff = power.P2E4_SEED_SD * rng.standard_normal()
+                vec = {}
+                for k, n in counts.items():
+                    lp = math.log(rates[M][k] / (1 - rates[M][k]))
+                    vec[k] = bool(rng.binomial(n, 1 / (1 + math.exp(-(lp + eff)))) >= math.ceil(c["frac"] * n - 1e-9))
+                h = _hab_fast(c, [items[M][j] for j in rng.integers(0, len(items[M]), c["hab_items"])], table)
+                block_vec = dict(O1_C1=vec["C1"], O1_C2=vec["C2"], O1_C3=vec["C3"], O2_joint=vec["joint"], O2_D3=vec["D3"],
+                                 O3_memory=vec["O3_memory"], O3_content=vec["O3_content"])
+                for k, val in list(block_vec.items()) + [("O4", h["O4"]), ("O5_recovery", h["O5_recovery"]),
+                                                          ("O5_collateral", h["O5_collateral"])]:
+                    crit_counts[f"{M}:{k}"] = crit_counts.get(f"{M}:{k}", 0) + int(val)
+                L[M] = dict(block=dict(vector=block_vec), habituation=h)
+            fake.append(dict(loads=L))
+        labs = labels(c, fake)
+        n_pass += not labs
+        for lb in labs:
+            lab_counts[lb] = lab_counts.get(lb, 0) + 1
+    # one common logit shift of all per-cue rates for P(PASS) >= 0.8
+    mean_rates = {M: {k: (kk + 1) / (n + 2) for k, (kk, n) in obs[M].items()} for M in loads}
+    both = {M: float(np.mean([(d["L_ctl"] / c["hab_late"] + d["rec_ctl"] / c["hab_recovery"] + d["col_ctl"] / c["hab_recovery"]) / 3
+                              for d in items[M]])) for M in loads}
+
+    def p_full(delta):
+        sh = lambda p: 1 / (1 + math.exp(-(math.log(min(max(p, 1e-6), 1 - 1e-6) / (1 - min(max(p, 1e-6), 1 - 1e-6))) + delta)))
+        r_ = {M: {k: sh(p) for k, p in mean_rates[M].items()} for M in loads}
+        per = p13(r_)
+        p = float(np.prod([v for M in loads for v in per[M].values()]))
         for M in loads:
-            ok4 = ok5 = True
-            for _seed in range(5):
-                h = _hab_fast(c, [items[M][i] for i in rng.integers(0, len(items[M]), c["hab_items"])])
-                ok4 &= h["O4"]
-                ok5 &= h["O5_recovery"] and h["O5_collateral"]
-            hab[M]["O4"] += ok4
-            hab[M]["O5"] += ok5
-            hab[M]["both"] += ok4 and ok5
-    hab = {M: {k: v / boot for k, v in d.items()} for M, d in hab.items()}
-    p45 = float(np.prod([hab[M]["both"] for M in loads]))
-    p_pass = np.array(p_draws) * p45
-    # one common logit shift of all O1-O3 rates that brings P(PASS) to 0.8, holding O4-O5 at the bootstrap value
-    shift = None
-    if p45 > 0.8:
-        for delta in np.arange(0, 6.01, 0.05):
-            r_ = {M: {k: 1 / (1 + math.exp(-(math.log(p / (1 - p)) + delta))) for k, p in mean_rates[M].items()} for M in loads}
-            per = p13(r_)
-            if float(np.prod([v for M in loads for v in per[M].values()])) * p45 >= 0.8:
-                shift = round(float(delta), 2)
-                break
-    rec = dict(experiment="P2-E4", kind="power_predictions", exploration_seeds=sorted(r["seed"] for r in ex),
-               observed=obs, p_criterion_5seeds={M: per_mean[M] for M in loads}, habituation_5seeds=hab,
+            b = sh(both[M])
+            kw = dict(items=c["hab_items"], min_eligible=c["min_eligible"], seeds=5, loads=1, sims=2000)
+            p *= power.p_paired_late_window(b, power.P2E4_ICC, rng_seed=11, **kw)
+            p *= power.p_paired_majority(b, power.P2E4_ICC, cues=c["hab_recovery"], need=c["recovery_need"], rng_seed=21, **kw)
+            p *= power.p_paired_majority(b, power.P2E4_ICC, cues=c["hab_recovery"], need=c["recovery_need"], rng_seed=31, **kw)
+        return p, r_, {M: sh(both[M]) for M in loads}
+    lo_d, hi_d = -6.0, 6.0
+    if p_full(hi_d)[0] < 0.8:
+        shift = dict(delta="unreachable")
+    else:
+        for _ in range(30):
+            mid = (lo_d + hi_d) / 2
+            if p_full(mid)[0] >= 0.8:
+                hi_d = mid
+            else:
+                lo_d = mid
+        pf, r_, b_ = p_full(hi_d)
+        shift = dict(delta=round(hi_d, 3), p_pass_model=pf, rates=r_, both=b_)
+    p_pass = np.array(p_pass)
+    rec = dict(experiment="P2-E4", kind="power_predictions", exploration_seeds=sorted(first),
+               exploration_trees=sorted({r["git"]["plant2_tree"] for r in ex}), observed=obs, both_rate_control=both,
+               p_criterion_5seeds={k: v / (5 * sims) for k, v in crit_counts.items()},
+               p_label={k: v / sims for k, v in lab_counts.items()}, p_pass_simulated=n_pass / sims,
                p_pass_median=float(np.median(p_pass)), p_pass_interval_5_95=[float(x) for x in np.quantile(p_pass, [0.05, 0.95])],
-               p_index_pass_median=float(np.median(idx_draws)), p_content_pass_median=float(np.median(con_draws)),
-               logit_shift_for_p08=shift, draws=draws, boot=boot, contract_digest=DIGEST,
-               plant2_tree=record.git_state()["plant2_tree"], timestamp=record.now(), git=record.git_state(),
-               runtime=record.runtime())
+               p_index_pass={M: float(np.prod([p13(mean_rates)[M][k] for k in index_keys])) for M in loads},
+               logit_shift_for_p08=shift, draws=draws, sims=sims, contract_digest=DIGEST, plant2_tree=g["plant2_tree"],
+               timestamp=record.now(), git=g, runtime=record.runtime())
     record.append(rec, results_path)
-    log(f"P2-E4 predictions: P(PASS) median {rec['p_pass_median']:.3g} [{rec['p_pass_interval_5_95'][0]:.3g}, "
-        f"{rec['p_pass_interval_5_95'][1]:.3g}]; index {rec['p_index_pass_median']:.3g}, content {rec['p_content_pass_median']:.3g}; "
-        f"habituation {hab}")
+    log(f"P2-E4 predictions: P(PASS) median {rec['p_pass_median']:.3g} {rec['p_pass_interval_5_95']}; simulated "
+        f"{rec['p_pass_simulated']:.3g}; labels {rec['p_label']}; shift {shift.get('delta')}")
     return rec
 
 
-def _hab_fast(c, items):
-    """O4 and O5 pass/fail exactly as hab_criteria decides them, without the estimability calculation."""
-    need, drop, rn, me, f = c["late_need"], c["max_drop"], c["recovery_need"], c["min_eligible"], c["frac"]
-    el = [d for d in items if d["scored"] and d["L_ctl"] >= need]
-    hab = [d for d in el if d["L_rep"] <= d["L_ctl"] - drop - 1]
-    out = dict(O4=bool(len(el) >= me and len(hab) <= 0.10 * len(el) + 1e-9))
-    for name, rk, ck in (("O5_recovery", "rec_rep", "rec_ctl"), ("O5_collateral", "col_rep", "col_ctl")):
-        e_ = [d for d in items if d[ck] >= rn]
-        out[name] = bool(len(e_) >= me and sum(d[rk] >= rn for d in e_) >= math.ceil(f * len(e_) - 1e-9))
-    return out
+CONTRACT_FROZEN_AT = "cd17cde"
+CONTRACT_PATH = "docs/plant2/P2-E4-online-memory.md"
 
 
 def _git(*args):
@@ -1104,14 +1273,17 @@ def _git(*args):
 
 
 def guard(recs):
-    """--gated refuses unless the code and contract are committed and unmodified, and HEAD's results file holds a
-    power_predictions record made under this contract digest and this plant2 tree. Appends to the results file by a
-    parallel gated seed do not trip it."""
+    """--gated refuses unless: plant2/ is committed; the contract is unmodified in the working tree and, since its frozen
+    commit, has only had lines added (the appended predictions); and HEAD's results file holds a power_predictions record
+    made under this contract digest and this plant2 tree. Appends by a parallel gated seed do not trip it."""
     g = record.git_state()
     if g["plant2_dirty"]:
         raise SystemExit("guard: plant2/ has uncommitted changes")
-    if _git("diff", "--quiet", "HEAD", "--", "docs/plant2/P2-E4-online-memory.md").returncode != 0:
+    if _git("diff", "--quiet", "HEAD", "--", CONTRACT_PATH).returncode != 0:
         raise SystemExit("guard: the contract differs from HEAD")
+    num = _git("diff", "--numstat", CONTRACT_FROZEN_AT, "HEAD", "--", CONTRACT_PATH).stdout.split()
+    if num and int(num[1]) != 0:
+        raise SystemExit("guard: the frozen contract text was changed (only additions are allowed)")
     head = _git("show", "HEAD:bench/results/plant2.jsonl").stdout.splitlines()
     pred = [json.loads(l) for l in head if '"power_predictions"' in l]
     pred = [p for p in pred if p.get("experiment") == "P2-E4"]
@@ -1120,11 +1292,17 @@ def guard(recs):
     p = pred[-1]
     if p["contract_digest"] != DIGEST or p["plant2_tree"] != g["plant2_tree"]:
         raise SystemExit("guard: predictions were made under a different contract digest or plant2 tree")
-    return {r["seed"] for r in recs if r.get("experiment") == "P2-E4" and r["kind"] == "kill_test_seed"}
+    return {r["seed"] for r in gated_records(recs)}
 
 
 def load_records(path=record.RESULTS):
-    return [json.loads(l) for l in open(path)]
+    out = []
+    for line in open(path):
+        try:
+            out.append(json.loads(line))
+        except json.JSONDecodeError:  # a torn line from a concurrent append is skipped, never repaired
+            continue
+    return out
 
 
 def main(argv=None):
@@ -1135,6 +1313,7 @@ def main(argv=None):
         p.add_argument("--seeds", type=int, nargs="+", required=True)
         p.add_argument("--gated", action="store_true")
         p.add_argument("--no-reported", action="store_true")
+        p.add_argument("--owner-ruled-rerun", action="store_true", help="only with the owner's written ruling")
     sub.add_parser("predict")
     sub.add_parser("verdict")
     a = ap.parse_args(argv)
@@ -1142,19 +1321,21 @@ def main(argv=None):
     def log(msg):
         print(f"[{record.now()}] {msg}", flush=True)
     if a.cmd == "explore":
-        for s in a.seeds:
+        for s in dict.fromkeys(a.seeds):
             if s in GATED_SEEDS:
                 raise SystemExit("exploration may not use gated seeds")
             run_seed(CONTRACT, s, gated=False, log=log, reported=not a.no_reported)
     elif a.cmd == "run":
         if not a.gated:
             raise SystemExit("use 'explore' for non-gated seeds")
-        done = guard(load_records())
-        for s in a.seeds:
+        for s in dict.fromkeys(a.seeds):
             if s not in GATED_SEEDS:
                 raise SystemExit(f"{s} is not a gated seed")
-            if s in done:
-                raise SystemExit(f"seed {s} already has a gated record (each seed runs once)")
+            done = guard(load_records())  # re-checked before every seed
+            marker = record.cache_dir("p2_e4") / f"gated_seed{s}.started"
+            if s in done or (marker.exists() and not a.owner_ruled_rerun):
+                raise SystemExit(f"seed {s} was already started or recorded (each gated seed runs once)")
+            marker.write_text(record.now())
             run_seed(CONTRACT, s, gated=True, log=log)
     elif a.cmd == "predict":
         predictions(load_records(), log=log)
