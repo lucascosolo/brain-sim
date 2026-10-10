@@ -22,6 +22,8 @@ def test_contract_constants_are_the_predeclared_ones():
     assert e3.GATE_M == (250, 500, 1000) and e3.GATED_SEEDS == (11, 12, 13, 14, 15) and e3.CAL_SEED == 0
     assert e3.CONTRACT["t_cont"] == 50 and e3.CONTRACT["J"] == 1.525 and e3.CONTRACT["acc_tau"] == 10_000
     assert (e3.CONT, e3.SHUFFLED, e3.PERMUTED) == (9, 10, 11)
+    # the memory criteria keep P2-E2's 50 ms window (a collision with the rec window was a bug, fixed before gating)
+    assert e3.CONTRACT["window"] == e1.CONTRACT["window"] == 50 and e3.CONTRACT["rec_window"] == 75
 
 
 def test_clipped_add_sets_without_toggling():

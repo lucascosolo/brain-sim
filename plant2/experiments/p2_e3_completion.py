@@ -33,7 +33,8 @@ STRUCT_M = 1000
 CAL_SEED = 0
 GATED_SEEDS = (11, 12, 13, 14, 15)
 CONT, SHUFFLED, PERMUTED = 9, 10, 11  # stream ids (P2-E1 uses 0-6, P2-E2 uses 8)
-CONTRACT = dict(e2.CONTRACT, J=J_STAR_MEM, t_cont=50, g=G, window=WINDOW)
+# "window" stays P2-E1/E2's 50 ms memory window (C1-C4); the rec scoring window is its own key
+CONTRACT = dict(e2.CONTRACT, J=J_STAR_MEM, t_cont=50, g=G, rec_window=WINDOW)
 DIGEST = record.digest(dict(CONTRACT, J_fb=None))
 
 
