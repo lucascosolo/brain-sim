@@ -183,7 +183,40 @@ which criterion and why, and stop this line. VOID: record which control and why.
 
 ## Calibration result
 
-(appended after the calibration, before any gated seed)
+**Run 2026-10-10, commit 6076a22, seed 0** (records `kind: calibration_point` and
+`calibration_verdict`; log `~/.cache/brain-sim/plant2/p2_e2/calibrate.log`). Accommodation
+converged at every point: mean |vbar change| over the last 10 s was 0.03-0.09 mV, against a
+0.2 mV bar.
+
+| J (mV) | M = 250: C1 / C2 / C3 / C4 (recall, spurious) | M = 500 | M = 1,000 | passes |
+|---|---|---|---|---|
+| 1.40 | 0.925 / 1 / 1 / 0.910, 1 | 0.920 / 1 / 1 / 0.940, 1 | **0.875** / 1 / 1 / **0.880**, 1 | no |
+| 1.45 | 0.960 / 1 / 1 / 0.950, 1 | 0.945 / 1 / 1 / 0.950, 1 | 0.900 / 1 / 1 / 0.920, 1 | yes |
+| 1.50 | 0.980 / 1 / 1 / 0.970, 1 | 0.950 / 1 / 1 / 0.960, 1 | 0.925 / 0.985 / 1 / 0.950, 0.990 | yes |
+| 1.55 | 0.985 / 1 / 1 / 0.980, 1 | 0.975 / 1 / 1 / 0.990, 1 | 0.945 / 0.960 / 1 / 0.960, 0.960 | yes |
+| 1.60 | 0.990 / 1 / 1 / 0.980, 1 | 0.990 / 1 / 1 / 1, 1 | 0.965 / 0.940 / 0.985 / 0.960, 0.950 | yes |
+| 1.65 | 0.995 / 1 / 1 / 0.990, 1 | 0.995 / 1 / 1 / 1, 1 | 0.970 / **0.895** / 0.940 / 0.960, **0.890** | no |
+| 1.70 | 0.995 / 1 / 1 / 0.990, 1 | 1 / 1 / 1 / 1, 1 | 0.980 / **0.815** / 0.910 / 0.980, **0.820** | no |
+| 1.75-1.90 | >= 0.995 / 1 / 1 / >= 0.99, 1 | 1 / 1 / 1 / 1, 1 | >= 0.99 / **0.71-0.445** / 0.845-0.540 / ..., **0.70-0.40** | no |
+
+**J\* is 1.525 mV**, the midpoint of the one passing run, 1.45-1.60. This J is fixed for every
+gated and reported seed.
+
+**Item-level predictions for the gated seeds**, read from seed 0 at J = 1.50-1.55:
+
+| | C1 | C2 | C3 | C4 |
+|---|---|---|---|---|
+| M = 250 | 0.98 | 1.00 | 1.00 | |
+| M = 500 | 0.96 | 1.00 | 1.00 | |
+| M = 1,000 | 0.935 | 0.97 | 1.00 | 0.955 recall / 0.975 spurious |
+
+- The window is narrower than the reviewers' exploration suggested (about 1.52-1.68). C1 at
+  M = 1,000 clears its bar by only about 0.035, so seed-to-seed spread (about +/-0.03 in P2-E1)
+  could fail one gated seed there.
+- Revised chance of PASS: **about 55 %**. The likeliest failure is C1 at M = 1,000.
+- Above J*, C2 and C3 at M = 1,000 fall fast. Below it, C1 at M = 1,000 does. Even with
+  accommodation, the cue-line overlap term closes the window near 0.25 items per cell, as
+  predicted.
 
 ## Result
 
