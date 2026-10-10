@@ -304,3 +304,47 @@ otherwise.
    fixed, activity-proportional inhibition on its readout layer as a declared second element?
    In a reviewer's exploratory runs, no fixed-threshold readout setting passed at M = 1,000
    without it.
+
+## 2026-10-10: the owner's rulings on P2-E2, capacity, and content completion
+
+Given by the owner after reviewing P2-E2 and its independent reviews. Recorded as given.
+
+1. **P2-E2 is accepted as a distinct mechanism, and K0.14 is not reopened.** The rejection of
+   intrinsic homeostasis "as previously run" (K0.14) stays closed. P2-E2's voltage-tracking
+   threshold accommodation is admitted as its own tested mechanism, because its controlled
+   variable, role and learning architecture all differ. Its family membership is recorded
+   accurately: like K0.14, it is a slow, per-cell, additive intrinsic-threshold homeostat, and
+   its offset tracks each cell's stored load (r = 0.998). The P2-E2 PASS stands with every
+   limitation in its addendum.
+2. **Capacity growth.** The primary experiment scales the input and memory populations
+   together. Absolute active-input count and memory assembly size stay about constant;
+   activation percentages are not preserved.
+   - Memory-only scaling is the control.
+   - Measured: absolute capacity, items per memory cell, synaptic storage cost, and whether
+     the growth survives the full LIF simulation.
+   - Exploratory surrogate predictions are not results.
+3. **Content completion may use fixed inhibition.** P2-E3's reconstruction layer may use fixed,
+   activity-proportional feedforward inhibition, declared as an additional fixed circuit
+   element. The conditions:
+   - matched no-inhibition and shuffled-feedback comparisons are included;
+   - parameters are frozen before gated testing, with no per-seed tuning;
+   - learning stays one-shot.
+
+**Order of work.**
+- P2-E3, content completion, comes first. The primary demonstration is regenerating the actual
+  missing input features from a partial cue, not recovering the assigned memory assembly.
+- A separate, predeclared **online-memory** experiment must pass before Stage 1 counts as
+  complete. It tests recall while the system keeps learning new items, with no artificial
+  50 s settle, and covers interference, retention of older memories and repeated-cue
+  habituation. P2-E2's contract and result are not changed retroactively.
+- After P2-E3, evaluate whether the new capability meaningfully advances the line toward
+  sequences, abstraction and independent problem solving.
+
+**Standing discipline.**
+- Contracts are committed before implementation.
+- Gated seeds are fresh, controls are meaningful, and every result gets an independent review.
+- Passing thresholds are never revised, and failures are recorded without unplanned tuning.
+- The plant stays frozen; the no-delete rules hold; nothing merges into `main` without the
+  owner's approval.
+- The objective is genuine, generalisable, experience-driven learning, not collecting passing
+  benchmarks.

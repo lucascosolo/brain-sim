@@ -68,11 +68,18 @@ and working memory are the north star's additions.
 | id | stage | mechanism | contract | result |
 |---|---|---|---|---|
 | P2-E1 | 1 | behavioural-timescale plasticity (BTSP), binary synapses, random plateau gating | `docs/plant2/P2-E1-btsp.md` | **FAIL** on C1 (completion 0.81-0.86 against 0.90) on 5/5 seeds; specificity and the unlearned-cue control pass. Diagnosis: no load-independent operating point (C1 0.61 at M = 250; everything ignites at M = 2,000). |
-| P2-E2 | 1 | slow threshold accommodation to each cell's own mean potential (labelled proxy), J calibrated on a held-out seed | `docs/plant2/P2-E2-accommodation.md` | **PASS** on 5/5 fresh gated seeds. C1 0.945-0.985, C2 0.965-1, C3 0.99-1 at M = 250, 500 and 1,000; C5 holds. The fixed-threshold control fails (C2 <= 0.015) and the random-store control fails (C1 0). Capacity edge between 0.25 and 0.375 items per cell. Pending the owner's ruling on the intrinsic-homeostasis gate. |
+| P2-E2 | 1 | slow threshold accommodation to each cell's own mean potential (labelled proxy), J calibrated on a held-out seed | `docs/plant2/P2-E2-accommodation.md` | **PASS** on 5/5 fresh gated seeds. C1 0.945-0.985, C2 0.965-1, C3 0.99-1 at M = 250, 500 and 1,000; C5 holds. The fixed-threshold control fails (C2 <= 0.015) and the random-store control fails (C1 0). Capacity edge between 0.25 and 0.375 items per cell. The owner accepted it as a distinct mechanism (K0.14 stays closed), with its limits retained. |
 
-## Waiting on the owner (2026-10-10)
+## Owner's rulings (2026-10-10; `DECISIONS.md`, last entry)
 
-Three answers are needed before P2-E3, listed in `DECISIONS.md`, last entry:
-1. Does P2-E2's threshold accommodation fall under the closed intrinsic-homeostasis gate?
-2. What should "capacity grows with cell count" scale?
-3. May content completion add a fixed, activity-proportional inhibition on its readout?
+1. P2-E2 is accepted as a distinct mechanism. K0.14 stays closed, and P2-E2's membership in the
+   same homeostatic family is recorded.
+2. Capacity: the primary experiment scales input and memory populations proportionally, with
+   constant absolute active inputs and assembly size. Memory-only scaling is the control.
+3. P2-E3 may use fixed, activity-proportional inhibition on its readout. It needs matched
+   no-inhibition and shuffled-feedback comparisons, with parameters frozen before gating.
+
+Stage 1 also needs a predeclared **online-memory** experiment: recall while learning continues,
+with no 50 s settle, covering interference, retention and repeated-cue habituation. Order:
+P2-E3 (content completion), then an evaluation against the north star, then online memory and
+capacity.
