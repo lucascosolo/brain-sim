@@ -608,3 +608,35 @@ The corrections below change how the Result should be read.
     them;
   - nothing in the system reads the regenerated content yet;
   - past about 0.375 items per cell the store saturates instead of forgetting.
+
+## Addendum 2: the content PASS depends on the learning protocol (2026-10-10; exploratory)
+
+Found by the P2-E4 contract red-team (`review/plant2/P2-E4/redteam-implementation_mechanism.md`,
+finding M1, confirmed by an independent refuter). These are rough re-implementations on
+exploration seeds 42-43, at P2-E3's frozen values. They are labelled exploratory, not results.
+Nothing above this addendum is changed.
+
+**Two learning protocols, items 751-1,000:**
+
+| measure | P2-E3's protocol (`quiet()`, items back to back) | an online timeline (no `quiet()`, a 250 ms interval with probes after each item) |
+|---|---|---|
+| continuation threshold offset | 8.5 mV | 6.85 mV |
+| \|R(x)\| | 28.6 | 45 |
+| Jaccard(R, A) | 0.73 | 0.49 |
+| feedback store | 2.12 M synapses | 2.50 M synapses |
+
+**Settled test of the online line:**
+- through its own feedback store: joint 0.81 / 0.89, failing P2-E3's bar;
+- the same raster through the P2-E3-protocol store: 0.98 / 0.99;
+- the same raster through the plateau-set store: 0.995.
+
+**A 2 s interval:** |R| is 133, Jaccard 0.18, and the settled joint 0.165.
+
+**Reading.**
+- The responder-based write is specific only while back-to-back learning holds the continuation
+  offset near 8.5 mV.
+- P2-E3's content PASS is therefore scoped to its own protocol. The plateau-set write does not
+  have this dependence.
+- This is the same weakness as the structured-input collapse (addendum item 3): extra responders
+  write wrong lines. It strengthens the case that the write, not the readout, is what must change.
+- P2-E4 measures it under a predeclared contract: a same-seed reference line and store swaps.

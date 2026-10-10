@@ -1,0 +1,67 @@
+# P2-E4 draft red-team: completeness critic
+
+Given the three lenses' findings and verdicts; asked only what is still missing. Run 2026-10-10. Recorded verbatim.
+
+## Verdict
+
+The draft cannot be frozen until the M = 250 schedule blocker (M1/B1/FID-1) is fixed. The fixes proposed so far conflict with each other, and that conflict has to be resolved before freezing. The 240-step blocks cannot carry the per-kind sample sizes the power findings ask for. Shortening the M = 250 block makes O3 there fail about 40 % of the time from sampling alone, even at settled recall rates. Making the habituation copies keep learning, as all three lenses recommend, moves the M = 1,000 habituation gate past the demonstrated capacity, which the owner's ruling forbids. Separately, O5 can never test recovery in substance under the draft's verdict logic. Beyond that, what is missing is three validity checks that removing quiet() now requires, a load confound in the no-write-oracle arm, and predictions for most reported arms.
+
+## Findings
+
+### C1 [major] The slot budget cannot carry the recommended fixes together; a shortened M = 250 block makes O3 fail from sampling
+
+- where: Draft lines 127-139 (240-step blocks, one probe per step, counts summing to 240); methodology M1, M5 and M8; implementation B1; owner_intent FID-1 and FID-6
+- evidence: One probe per step caps a block at its length. (1) The M1/B1/FID-1 fixes start the M = 250 block after the pool, at about step 141, which leaves about 110 slots. With proportional counts that is 18 cohort cues. At settled M = 250 recall (P2-E3 D5 C1 0.960-0.985), P(O3 memory passes on all 5 seeds) is 0.42 at p = 0.96, 0.59 at 0.97 and 0.78 at 0.98, before any online cost. (2) M8's per-kind gating, with each kind sized for P(5 seeds pass) >= 0.8-0.9 at p = 0.94, needs 90-150 cues per kind. Three kinds plus 40 novel and 40 blank come to 350-530 slots against 240. (3) M5's cohort of at least 100 at M = 1,000 enlarges the reserved pool, which makes the M = 250 problem worse. Longer blocks are not a way out: they spread the load further (M7), and at M = 250 they cannot fit. All figures are exploratory arithmetic from ~/.cache/brain-sim/review/p2e4-redteam/completeness/budget.py and budget250.py.
+- recommendation: Settle the budget in the contract before freezing, keeping the 90 % bars and I = 250 ms. One consistent option: gate pooled O1/O2 as now and report per-kind readings. Reserve the never-probed pool only for M = 500 and 1,000, so O3 is gated at those loads and retention at M = 250 is reported. Cut the full cues and part of the novel slots. Then run the full-rule Monte Carlo on the chosen counts and commit the resulting P(PASS) rather than enlarge blocks. Also predeclare a deterministic redraw rule, stream(seed, 15, attempt), for a schedule that turns out infeasible at run time, and test the builder on non-gated seeds (90+). M1's suggestion of checking every gated seed's stream-15 draw before freezing would expose gated-seed material and invite a seed-specific builder fix.
+
+### C2 [major] The recommended habituation fix puts the M = 1,000 habituation gate past the demonstrated capacity
+
+- where: Draft lines 160-173 and O4/O5; methodology M2 ('encodings continue on the copy'), owner_intent FID-2 ('recovery as 20 ordinary steps'), implementation M3 ('continue real learning and accept the extra load')
+- evidence: Under these fixes each habituation copy learns 100 items during the repetitions and 20 more before the recovery cue. A copy branched at M = 1,000 therefore reaches 1,100 items at repetition 100 and 1,120 at recovery: 0.275-0.28 items per memory cell. The demonstrated capacity is 0.25 (the edge lies between 0.25 and 0.375; P2-E3 joint at M = 1,500 was 0.185-0.290). Owner ruling 2 requires habituation and recovery to be gated 'at loads within the demonstrated capacity'. Exploration already puts online C1 at 0.70-0.81 at M = 1,000, so the extra load would further confound habituation with load. Arithmetic is in budget.py.
+- recommendation: If copies keep real learning, branch them at step M - 120 (380 and 880) so that the recovery and collateral cues land at load M, or use sham encodings with plateaus, BTSP and feedback writes off, so the load stays at M. Give the control copy the same branch point and rhythm. State the load at every scored cue in the contract.
+
+### C3 [major] O5 never tests recovery in substance: whenever habituation is large enough to need recovery, O4 has already decided the verdict
+
+- where: Draft lines 40-41 (hypothesis), 185-186 (O4, O5), 201-209 (verdict names); owner ruling 2 ('habituation and recovery')
+- evidence: HABITUATION FAIL follows from an O4 failure whatever O5 shows. O5 can change the label only when O4 passes, and then at most 10 % of scored items habituated by O4's own measure. In that case O5's 90 % bar over all scored items mostly measures the retest reliability of items that never habituated. The hypothesis has the same gap: 'keeps recall through 30 s ... and recovers within 10 s' has nothing to recover from if the first clause holds. In the only data available (P2-E2 addendum 6, exploratory, seed 6), about a third of items lost recall at presentations 61-100. So in the predicted case O4 fails, and a system that habituates and fully recovers gets the same label as one that never recovers. M9 (verdict vector), M3 and FID-2 (pairing) and m4 (collateral) do not address this, because O5's statistic itself averages over non-habituated items.
+- recommendation: Define recovery conditional on habituation: among scored items that fail the late-window statistic on the repeated copy and pass it on the paired control, the fraction whose recovery cue meets both criteria. Set a minimum count below which recovery is reported as not estimable, and size it in the power check (about 16 of 50 items if a third habituate). Split the label into HABITUATES, RECOVERS and HABITUATES, DOES NOT RECOVER. Ask the owner whether the gated property is 'no habituation' (EVAL risk 3 reads that way) or 'habituation with recovery' (ruling 2's wording reads that way), and record the answer before freezing.
+
+### C4 [minor] The validity list misses state that now carries across steps, the live projection that produces the gated numbers, and the realised probe log
+
+- where: Draft lines 188-196 (Validity), 97 (reload after each write); plant2/experiments/p2_e3_completion.py:55 and p2_e1_btsp.py:69 (quiet() at every episode)
+- evidence: (a) In P2-E3, quiet() reset mem v, t_last and the delay ring at each learn_one, so only the stores and vbar carried from item to item. P2-E4 removes quiet(), so v, t_last, the ring, net.t and every generator's state now carry too. The main-line digest (lines 193-194) covers only the stores, vbar and rec. A copy that shares a generator or array by reference would shift later main-line spikes without any digest changing. (b) Gated content is read from the live rec feedback projection, but validity checks only the feedback store (line 191). A missed reload would show up as a content FAIL, not as INVALID. (c) Nothing checks the realised probe log: that cohort items were never cued or targeted before their slot, that no item was cued twice in a block, and that counts are exact. B1/M1 check only the planned schedule, before the run.
+- recommendation: Add three validity checks: (a) digest mem v, t_last, ring, net.t and all generator states before and after every copy or twin; (b) at every gated slot, require that the live projection's CSR equals the store's csr() and that the inhibition weight is g x J_fb; (c) audit the realised probe log against the cohort, no-repeat and count rules on every gated seed.
+
+### C5 [minor] The no-write-oracle arm stores almost every probe by construction, so its effect on recall is confounded with load past capacity
+
+- where: Draft lines 264-266; p2_e1_btsp.py:71 (f_q is a per-episode, per-cell plateau probability)
+- evidence: 'Plateaus at the base rate f_q during probe slots' gives every probe about 20 plateau cells (0.005 x 4,000), and P(no plateau) is about e^-20. A line is eligible (>= 3 spikes at 40 Hz) with probability 0.76 over a 100 ms probe, against 0.986 over a 200 ms encoding. So every non-blank probe is written: about 170 extra plateau episodes in 200 steps, about 1,370 in total, or 0.34 per cell, close to the 0.375 load where P2-E3's joint fell to 0.19-0.29. 'How many probes get stored' is therefore fixed by arithmetic, and 'the effect on later recall' mostly measures the added load. The draft also leaves undefined whether a probe's eligibility window is the 100 ms slot. Toggle-BTSP probe writes also depress existing synapses. FID-5 covers the arm's name and what 'stored' means, but not this confound. Arithmetic is in budget.py.
+- recommendation: Define f_q's unit and the eligibility window for probe writes. Predict the stored count by arithmetic. Compare the arm with the main line, which continues to 3,000, at the matched item count (M = 1,200) and at the matched plateau-episode count (about 1,370). Report the BTSP depressions that probe writes cause on existing items.
+
+### C6 [minor] The draft says every reported arm is predeclared with a prediction; most have none
+
+- where: Draft lines 244-245 against 247-274; predictions table, lines 281-288
+- evidence: Only beyond-capacity ('predicted blackout') and lures carry a prediction. Implementation M1 and M4 add the duty arm and the sign of the no-probe twin. No prediction is given for: online cost per criterion (only O1's C1 range appears), probe-caused interference, retention slope against age, vbar trajectory, the per-repetition habituation curve, re-exposure, no write oracle, 30 % and noisy cues, a = 50 and 200 transfer, and efficiency. Several follow from existing numbers. Re-exposure adds about one new item's synapses, because plateaus are content-blind (constructive review F3). A 50-line cue gives about 12 strong cue synapses, P(cell fires) about 0.17 (F6 predictor), so C1 fails for a = 50. Efficiency is about 0.22 bits per synapse (F11). M10 covers predictions for gated criteria only.
+- recommendation: Before freezing, add a prediction row with a direction and range for every reported arm, citing its arithmetic or exploratory source, or cut the arm (FID-9). Otherwise remove the sentence on line 244.
+
+### C7 [nit] The draft does not say whether it discharges STAGES' Stage 1 clause 'after 60 s of ongoing activity'
+
+- where: STAGES.md Stage 1 gate; P2-E2 addendum 5; draft has no mapping
+- evidence: P2-E2's C5 met this clause in form only: weights were frozen and vbar re-equilibrated. Addendum 5 says a persistence test that can fail for a real reason 'needs ongoing learning'. P2-E4's cohort, at ages of at least 281 steps (140 s or more) under continuing learning, is the first test of that kind, but the draft neither claims nor maps it. FID-4(c) maps only the owner's ruling-2 terms.
+- recommendation: In the Decision or mapping table, state that O3 is P2-E4's test of the 'after 60 s of ongoing activity' clause, and what a FAIL there means for it.
+
+## Exploratory runs (labelled; not results)
+
+- `~/.cache/brain-sim/review/p2e4-redteam/completeness/budget.py` (seed none (closed-form arithmetic, no simulation); Binomial P(>= 90 %) at p 0.94-0.97 and n 40-200; n per kind for P(5 seeds pass) >= 0.8 or 0.9; Poisson eligibility (>= 3 spikes) at 40 Hz over 100 and 200 ms; f_q x n plateau cells; copy load M + 120): EXPLORATORY. Per kind, n = 90 (0.8) or 150 (0.9) at p = 0.94, and 50 or 80 at p = 0.95. Per-kind gating needs 350-530 slots against 240. P(line eligible) is 0.762 at 100 ms and 0.986 at 200 ms; 20 plateau cells per probe; about 170 probe writes in 200 steps. Habituation copy load is 1,100-1,120 (0.28 items per cell) at M = 1,000. Draft table row n = 60 at 0.95 should read 0.970 (already M15).
+- `~/.cache/brain-sim/review/p2e4-redteam/completeness/budget250.py` (seed none (closed-form arithmetic, no simulation); 110-slot M = 250 block (steps 141-250) with the draft's proportions: 18 recent, 18 uniform, 18 cohort, 28 novel, 9 full, 18 blank): EXPLORATORY. O3 (n = 18) passes on all 5 seeds with P = 0.42, 0.59, 0.78 and 0.93 at true rates 0.96, 0.97, 0.98 and 0.99. Pooled O1 (n = 54) gives 0.90, 0.97, 0.996 and 1.0.
+
+## Reviewer's predictions
+
+As written, the driver cannot run: no slot schedule exists for the M = 250 gated block (M1/B1/FID-1), so no verdict is possible. Suppose a builder filled it somehow. Reasoning from the other lenses' exploration (exploratory; seeds 42-43) and the records:
+- O0 passes, about 0-2 of 40 per block. Its targets exclude age 0, and the 50 ms pre-gap is 2.5 tau_m, so it cannot fail.
+- O1 fails at M = 1,000 on most or all seeds (online C1 about 0.70-0.81, against a 0.90 bar), probably passes at M = 250, and is marginal at M = 500.
+- O2 is likely to fail at M = 1,000: the online feedback write inflates the responders, and content was 0.81-0.89 even after a settle. It probably passes at M <= 500.
+- O3 at M = 1,000 fails with O1, because cohort items face the same operating point.
+- O4 fails. The copies stop learning and settle, but the item-unreliability failure (M3) and the settled habituation level (about 0.67 at repetitions 61-100, P2-E2 addendum 6) both lie below the 0.90 bar.
+- O5 is about 0.85-0.95 and cannot change the verdict (finding C3).
+Likeliest verdict: ONLINE FAIL, P > 0.9, which hides the O4 failure. P(PASS) is below about 2 %.
