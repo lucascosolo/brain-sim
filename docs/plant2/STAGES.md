@@ -1,0 +1,62 @@
+# plant2: staged path from the recovered plant toward the human-level horizon
+
+Written 2026-10-10 under the owner's north star of that day: a spiking, brain-like system whose
+learning and problem-solving capacity moves toward human level (flexible memory, sequential
+structure, abstraction over experience, usable behaviour). Human level is the horizon, not a
+claim. No LLM or transformer is the mind at runtime. No teacher current, no forced synchrony,
+no bar lowered to pass. Every proxy is labelled; nothing is claimed as biology beyond its label.
+
+## Where the recovered plant stands (audit of 2026-10-10)
+
+The recovered plant (`brainsim/`, frozen) is a 2,600-cell LIF network with pair STDP, synaptic
+scaling and rate-driven structural plasticity. Its record (SPEC 7-8.49) shows:
+
+- Stage 0 is not complete by its own record: K0.1 (event cost) and K0.4 (immature pruning) are
+  red in `ui/stage0_results.json`.
+- Stage 1 (episode memory) never passed. K1.1 failed on the master plant (half cue recalled
+  1 of 16 assembly cells) and under every labelled proxy stacked on it (8.3-8.12, best 5/16).
+  The best later line (8.46, excitatory binding) reached 13 of 16 on four seeds of six, lost
+  half its gain within 10 s (8.48), and its code was not recovered.
+- The record diagnoses why, in its own measurements:
+  1. Pair STDP's uncorrelated fixed point (0.45 `w_max`) sits below the homeostatic rest
+     weight (0.6-0.75), so co-activity depresses the used pathway (K0.13 ratio 0.922; 8.19).
+  2. The rate homeostat runs on a seconds timescale and treats a stimulus as a rate error:
+     scaling and rate-driven elimination each erase a write within 1-3 sweeps and back each
+     other up (8.3, 8.13, 8.14, 8.18); scaling caused 51-87 % of the 10 s loss (8.49).
+  3. The cortical stimulus code is dense and overlapping, so local rules cannot separate inputs
+     better than their rate ratio, about 2 (8.20, 8.22).
+  4. Even with oracle weights at the bound, no arm completes a half cue in 50 ticks on that
+     wiring (8.23); readouts were often within a few cells of a never-trained twin (8.15-D2).
+
+The plant stays frozen at its recovered paths (`AGENTS.md` invariant 4). The new line, plant2,
+is a separate package that keeps the plant's methods (predeclared kill tests, never-trained
+controls, labelled proxies, one source of truth for results) and drops the three causes above
+from its design: its first learning rule does not depend on postsynaptic spike timing, no
+homeostat acts on written synapses, and codes are sparse.
+
+## Stages and gates
+
+Each stage's kill tests are written and committed before its code. One primary mechanism per
+experiment. A stage passes only on predeclared numbers, on five of five seeds unless the
+experiment's own contract says otherwise, against a never-trained or shuffled control.
+
+| stage | capacity it adds | gate (all numeric bars predeclared per experiment) |
+|---|---|---|
+| 1 | one-shot episodic memory | Items shown once are stored so that a half cue re-evokes >= 80 % of the item's written assembly within 50 ms for >= 90 % of items at a load of >= 0.25 items per memory cell; unlearned cues ignite < half an assembly; holds for the oldest items and after 60 s of ongoing activity. Then: the half cue regenerates the missing half of the input (content completion), and capacity grows about linearly with cell count. |
+| 2 | sequences | After one exposure, sequences of 8 items that share items with other sequences replay in order from their first item with >= 90 % correct transitions, >= 50 sequences stored, shared items disambiguated by context >= 80 %. |
+| 3 | abstraction over experience | From exemplars of unseen prototypes, the never-seen prototype is recalled more completely than the seen exemplars (prototype effect), and a fixed linear readout of the network state classifies held-out exemplars with at least 2x fewer labels than on raw input or on a never-trained twin. |
+| 4 | usable behaviour | Closed loop with a reward signal (three-factor rule; scalar neuromodulator, labelled proxy): bandit reversal re-learned within 20 trials; a delayed-reward T-maze (2 s delay) at >= 90 % within 200 trials; gridworld paths within 1.5x optimal within 100 episodes; compared with tabular Q-learning and a never-trained twin. |
+| 5 | model-based problem solving | After reward-free exploration, routes to a newly announced goal are generated internally (replay or preplay of learned transitions) and succeed first try on >= 80 % of held-out start-goal pairs, including a detour when a learned path is blocked; transitive inference on a 6-item hierarchy >= 85 %. |
+| 6 | working memory and binding | Four or more role-filler bindings held over 10 s and queried at >= 90 %; queries on novel role-filler combinations answered without retraining. |
+| 7 | scale and integration | Sharded multi-process or multi-GPU engine. Gate: a stated Stage 1-6 metric improves with size along a curve predicted before the run. Size alone is never a gate. |
+| 8 | symbol-like tokens (horizon) | Grounded token sequences learned from experience. Nothing language-like is attempted before Stages 1-6 pass. |
+
+The old ladder maps onto this one: old 1 (episode memory) is 1, old 2 (sequences) is 2, old 3
+(structure and scale) is 7, old 4 (symbol-like tokens) is 8. Abstraction, behaviour, planning
+and working memory are the north star's additions.
+
+## Experiment log
+
+| id | stage | mechanism | contract | result |
+|---|---|---|---|---|
+| P2-E1 | 1 | behavioural-timescale plasticity (BTSP), binary synapses, random plateau gating | `docs/plant2/P2-E1-btsp.md` | pending |

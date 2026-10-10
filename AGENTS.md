@@ -32,6 +32,9 @@ invariants. Rules below override them only where they are stricter.
 ## Development conventions
 
 - Python ≥3.11, stdlib plus reflex-layer. New dependencies need a `DECISIONS.md` entry.
+- plant2 (the active line, `DECISIONS.md` 2026-10-10): an experiment's contract in
+  `docs/plant2/` is committed before its code; `python3 -m pytest -q plant2/tests -m "not slow"`
+  runs in seconds; work stays on non-main branches until the owner says "merge".
 - Run `python3 -m pytest -q tests/test_safety_lint.py` before committing (seconds). The plant's
   legacy suite (`python3 -m pytest -q tests`) takes ~11 minutes and has 120 known failures
   from the recovery (see `docs/report-2026-10-03.md`); do not "fix" it piecemeal.

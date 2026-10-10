@@ -5,6 +5,9 @@ that replaced it. Entries before 2026-10-03 live in `SPEC.md` (the spiking plant
 
 ## 2026-10-03: brain-sim becomes a cognitive executive; the spiking plant is frozen
 
+**Superseded in part** by the 2026-10-10 entry (the repository's purpose). The plant
+paragraphs stand.
+
 **Decision.** The repository's purpose is now the cognitive executive described in
 `docs/architecture.md`: goals, world state, prediction, action selection, memory and learning
 in ordinary code, with language models as tools. The spiking-network plant recovered after the
@@ -207,3 +210,37 @@ Orphaned branch tests stay at their paths and keep failing: making them pass wou
 the closed k11 proxy hunts and the rejected 8.17 line.
 
 **Revisit when** the owner declares recovery closed (then the `legacy/` move of 2026-10-03 applies).
+
+## 2026-10-10: the owner's north star; a second plant (plant2) beside the frozen one
+
+**Decision.** The repository's purpose is again a spiking, brain-like learning system, now
+under the owner's north star of 2026-10-10: move toward human-level learning and
+problem-solving capacity (flexible memory, sequences, abstraction, usable behaviour), with
+human level as a horizon and never a claim without evidence. The work happens in a new
+package, `plant2/`, on new branches. Nothing merges to `main` until the owner says "merge".
+The recovered plant stays frozen at its paths (`AGENTS.md` invariant 4). The staged path, with
+its gates, is `docs/plant2/STAGES.md`. Each experiment's contract is committed before its
+code, and results are appended to `bench/results/plant2.jsonl`.
+
+**Why a new package and not more plant experiments.** The audit of 2026-10-10 (summarised in
+`STAGES.md`) found that the plant's Stage 1 failures are structural and documented: pair
+STDP's fixed point sits below the homeostatic rest weight, the seconds-scale homeostat erases
+writes, the cortical code is dense, and the wiring caps recall even with oracle weights
+(SPEC 8.2-8.24, 8.49). The best line's code (8.30, 8.46) was not recovered. A new substrate
+that drops those causes is cheaper and more honest than a fiftieth proxy on the old one.
+
+**What carries over.** The plant's methods: predeclared kill tests, never-trained or shuffled
+controls, labelled proxies, one mechanism per experiment, stop a line on FAIL. Its walls also
+carry over: no LLM or transformer as the mind at runtime, no teacher current, no engineered
+synchrony, no hand-set weights presented as learning, no bar lowered or rewritten to pass.
+
+**Rejected.**
+- Editing the plant on a branch. Recovery is not closed, and its manifests key on those paths.
+- Continuing K1.1 on the plant, for the reasons above.
+- The literal human-anatomy replica requested earlier on 2026-10-10. The owner's later
+  instruction the same day superseded it before any code was written ("prefer lasting,
+  specific, experience-driven change and inspectable state over anatomical name-dropping").
+  Anatomical structure enters plant2 only where an experiment's metric needs it.
+
+**Supersedes** the first 2026-10-03 entry's statement of the repository's purpose (the
+executive it described moved to reflex-layer that day). Its plant paragraphs stand.
