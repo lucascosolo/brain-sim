@@ -99,44 +99,82 @@ def p_paired_majority(mean, icc, items=50, cues=3, need=2, frac=0.90, min_eligib
 
 # P2-E4's zero-online-cost reference (contract docs/plant2/P2-E4-online-memory.md, "Power").
 P2E4_SEED_SD = 0.18
-P2E4_RATES = {  # recorded settled rates of P2-E2 and P2-E3's gated seeds, per cue
-    500: dict(C1=0.970, C2=0.999, C3=0.999, joint=0.994, D3=0.999, old_recall=0.972, D4=0.998),
-    1000: dict(C1=0.944, C2=0.989, C3=0.994, joint=0.975, D3=0.998, old_recall=0.954, D4=0.972),
+# recorded settled rates per cue: memory measures pooled over P2-E2 seeds 6-10 and P2-E3 seeds 11-15,
+# content measures from P2-E3 seeds 11-15; recorded 1.000 enters as 0.999
+P2E4_RATES = {
+    500: dict(C1=0.969, C2=0.999, C3=0.999, joint=0.994, D3=0.999, old_recall=0.969, D4=0.998),
+    1000: dict(C1=0.9435, C2=0.986, C3=0.9955, joint=0.975, D3=0.998, old_recall=0.953, D4=0.972),
 }
-P2E4_COUNTS = dict(half=180, novel=30, cohort=80, hab_items=50, min_eligible=25)
+P2E4_RATES_E3_ONLY = {
+    500: dict(P2E4_RATES[500], C1=0.972, old_recall=0.972),
+    1000: dict(P2E4_RATES[1000], C1=0.938, C2=0.989, C3=0.994, old_recall=0.954),
+}
+P2E4_COUNTS = dict(half=200, novel=20, cohort=100, hab_items=50, min_eligible=25, recovery_cues=5, recovery_need=3)
+P2E4_ICC = 0.09
 
 
-def p2e4_reference():
-    """P(each criterion and the whole O1-O3 rule pass on all five seeds) at settled rates, and the
-    zero-habituation O4/O5 pass probabilities over a range of per-cue rates."""
-    n = P2E4_COUNTS
-    out = dict(seed_sd=P2E4_SEED_SD, rates=P2E4_RATES, counts=n, loads={}, habituation={})
-    total = 1.0
-    for M, r in P2E4_RATES.items():
+def p2e4_o1_o3(rates, n=P2E4_COUNTS, seed_sd=P2E4_SEED_SD):
+    loads, total = {}, 1.0
+    for M, r in rates.items():
         crit = dict(O1=[(n["half"], r["C1"]), (n["half"], r["C2"]), (n["novel"], r["C3"])],
                     O2=[(n["half"], r["joint"]), (n["novel"], r["D3"])],
                     O3=[(n["cohort"], r["old_recall"]), (n["cohort"], r["D4"])])
-        d = {k: p_rule(v, seeds=5, seed_sd=P2E4_SEED_SD) for k, v in crit.items()}
-        out["loads"][str(M)] = d
-        for v in d.values():
+        loads[str(M)] = {k: p_rule(v, seeds=5, seed_sd=seed_sd) for k, v in crit.items()}
+        for v in loads[str(M)].values():
             total *= v
-    out["p_O1_O3_all"] = total
-    for mean in (0.97, 0.95, 0.93, 0.90, 0.85):
-        o4 = p_paired_late_window(mean, 0.09, items=n["hab_items"], min_eligible=n["min_eligible"])
-        rec = p_paired_majority(mean, 0.09, items=n["hab_items"], min_eligible=n["min_eligible"], rng_seed=2)
-        col = p_paired_majority(mean, 0.09, items=n["hab_items"], min_eligible=n["min_eligible"], rng_seed=5)
-        hab = p_paired_late_window(mean, 0.09, items=n["hab_items"], min_eligible=n["min_eligible"], late_factor=0.85)
-        out["habituation"][str(mean)] = dict(O4=o4, O4_if_late_rate_x085=hab, O5_recovery=rec, O5_collateral=col,
-                                             O5_both=rec * col)
+    return loads, total
+
+
+def p2e4_o4_o5(both, n=P2E4_COUNTS, late_factor=1.0):
+    """O4 and O5 over five seeds, per load (both: {M: per-cue 'both' rate}), multiplied over loads."""
+    out = dict(O4=1.0, O5_recovery=1.0, O5_collateral=1.0)
+    for i, (M, b) in enumerate(sorted(both.items())):
+        out["O4"] *= p_paired_late_window(b, P2E4_ICC, items=n["hab_items"], min_eligible=n["min_eligible"], loads=1,
+                                          late_factor=late_factor, rng_seed=11 + i)
+        kw = dict(items=n["hab_items"], cues=n["recovery_cues"], need=n["recovery_need"], min_eligible=n["min_eligible"],
+                  loads=1)
+        out["O5_recovery"] *= p_paired_majority(b, P2E4_ICC, rng_seed=21 + i, **kw)
+        out["O5_collateral"] *= p_paired_majority(b, P2E4_ICC, rng_seed=31 + i, **kw)
     return out
+
+
+def p2e4_reference():
+    """Zero-online-cost pass probabilities of P2-E4's full acceptance rule (all criteria, both loads, five seeds)."""
+    loads, o13 = p2e4_o1_o3(P2E4_RATES)
+    _, o13_e3 = p2e4_o1_o3(P2E4_RATES_E3_ONLY)
+    _, o13_draft = p2e4_o1_o3(P2E4_RATES, dict(P2E4_COUNTS, half=120, novel=60, cohort=40))
+    full = {}
+    for name, both in (("product", {500: 0.963, 1000: 0.920}), ("settled_C1", {500: 0.968, 1000: 0.944})):
+        h = p2e4_o4_o5(both)
+        hab = p2e4_o4_o5(both, late_factor=0.85)["O4"]
+        full[name] = dict(both=both, **h, O4_if_late_rate_x085=hab,
+                          p_pass_pooled=o13 * h["O4"] * h["O5_recovery"] * h["O5_collateral"],
+                          p_pass_e3_only=o13_e3 * h["O4"] * h["O5_recovery"] * h["O5_collateral"])
+    rng = np.random.default_rng(3)
+    draft = {}
+    for nl in (1, 2):  # the draft's unpaired O4 rule: >= 8 of 10 late passes for >= 90 % of scored items
+        ok = np.ones(20000, bool)
+        for _ in range(5 * nl):
+            p = beta_items(rng, 0.93, P2E4_ICC, (20000, 50))
+            sc = rng.random(p.shape) < p
+            late = rng.binomial(10, p) >= 8
+            ok &= (sc & late).sum(1) >= np.ceil(0.9 * sc.sum(1) - 1e-9)
+        draft[f"loads_{nl}"] = float(ok.mean())
+    return dict(seed_sd=P2E4_SEED_SD, icc=P2E4_ICC, rates=P2E4_RATES, rates_e3_only=P2E4_RATES_E3_ONLY, counts=P2E4_COUNTS,
+                loads=loads, p_O1_O3_pooled=o13, p_O1_O3_e3_only=o13_e3, p_O1_O3_draft_counts=o13_draft, full_rule=full,
+                draft_unpaired_O4_at_093=draft)
 
 
 if __name__ == "__main__":
     import sys
 
     from plant2 import record
-    rec = dict(experiment="P2-E4", kind="power_reference", **p2e4_reference(), timestamp=record.now(),
+    import hashlib
+    contract = record.REPO / "docs" / "plant2" / "P2-E4-online-memory.md"
+    rec = dict(experiment="P2-E4", kind="power_reference", **p2e4_reference(),
+               contract_sha256=hashlib.sha256(contract.read_bytes()).hexdigest(), timestamp=record.now(),
                git=record.git_state(), runtime=record.runtime())
     if "--append" in sys.argv:
         record.append(rec)
-    print({k: rec[k] for k in ("loads", "p_O1_O3_all", "habituation")})
+    print({k: rec[k] for k in ("loads", "p_O1_O3_pooled", "p_O1_O3_e3_only",
+                                                             "p_O1_O3_draft_counts", "full_rule", "draft_unpaired_O4_at_093")})

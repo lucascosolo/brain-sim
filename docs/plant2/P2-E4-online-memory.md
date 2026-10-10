@@ -1,238 +1,296 @@
 # P2-E4: online memory, recall while learning continues
 
-**Contract, revised after red-team (2026-10-10). Not frozen until committed with its
-schedule-and-power check.** No P2-E4 driver code exists. Gated seeds 16-20 are untouched.
+**Contract (2026-10-10). Frozen by the commit that adds this text together with its
+`power_reference` record.** No P2-E4 driver code existed before that commit. Gated seeds 16-20
+are untouched.
 
-**History:**
-- the draft at commit 953851e;
-- the two-critic-plus red-team (`review/plant2/P2-E4/redteam-*.md`; three lenses, a refuter per
-  lens, a completeness critic; exploration on seeds 42-43 only);
-- the decisions on each finding (`review/ledger.jsonl`, review "P2-E4 contract red-team").
+**How it was reviewed:**
+- **Draft:** commit 953851e.
+- **Red-team:** three lenses, an independent refuter for each lens, and a completeness critic;
+  exploration on seeds 42-43 only. Findings are in `review/plant2/P2-E4/redteam-*.md`.
+- **Verification of the revision:** three checkers covering schedule and power, coverage of the
+  red-team, and implementation ambiguity. Findings are in `review/plant2/P2-E4/verify-*.md`.
+- **Decisions on every finding** are in `review/ledger.jsonl`.
 
-The owner requires this experiment before Stage 1 counts as complete (`DECISIONS.md`, rulings of
-2026-10-10). It gates the following at loads within the demonstrated capacity (M = 500 and
-1,000):
+**What it gates.** The owner requires this experiment before Stage 1 counts as complete
+(`DECISIONS.md`, rulings of 2026-10-10). It gates the following at loads within the
+demonstrated capacity (M = 500 and 1,000):
 - continuous recall;
 - interference resistance;
 - retention of the oldest items;
 - repeated-cue habituation and recovery.
 
-Learning past capacity and learning with writes during probes are **reported stress tests, not
-gates**. P2-E2's and P2-E3's contracts and results are not changed.
+**What it reports only.** Learning past capacity, and writes during probes, are reported stress
+tests, not gates. P2-E2's and P2-E3's contracts and results are not changed.
 
 ## Why this test, and why previous passes do not settle it
 
 - **The settle.** P2-E2 and P2-E3 tested frozen copies after a 50 s settle, with learning
-  stopped. The P2-E2 review (exploratory, seed 0) found:
-  - C1 at M = 1,000 was 0.875 with no rest, 0.915 after 5 s and 0.94 after 50 s;
-  - on a 10-item exploratory run (seed 6), a half cue repeated for 30 s cut the share of items
-    with recall >= 0.8 from 0.99 to 0.67.
-- **The test block is itself a settle.** P2-E3's 600-cue test block lasts 180 s, against an
-  accommodation time constant of 10 s. Recall has to be measured by short probes interleaved
-  into learning.
-- **Tests never fed back.** No test so far let tests affect later learning, or learning affect
-  later tests. Here both can happen.
-- **What the red-team's exploration found** (rough re-implementations, seeds 42-43, labelled;
-  not results):
-  - **Online index recall falls at M = 1,000.** Online C1 was 0.70-0.85, because at 50 %
-    encoding duty the threshold offset sits near 7-7.7 mV, against about 3.7 mV settled.
-  - **The online timeline changes the feedback write itself.**
+  stopped. In exploration (P2-E2 review, seed 0), C1 at M = 1,000 was:
 
-    | measure, items 751-1,000 | P2-E3 protocol | online |
+  | rest before test | C1 |
+  |---|---|
+  | none | 0.875 |
+  | 5 s | 0.915 |
+  | 50 s | 0.94 |
+
+  A 10-item exploratory run (seed 6) found that a half cue repeated for 30 s cut the share of
+  items with recall >= 0.8 from 0.99 to 0.67.
+- **The test block is itself a settle.** P2-E3's 600-cue block lasts 180 s, against an
+  accommodation time constant of 10 s. So recall has to be measured by short probes interleaved
+  into learning.
+- **What the red-team found** (rough re-implementations, seeds 42-43, labelled exploratory):
+  - **Online index recall.** At M = 1,000 online C1 was 0.70-0.85. At 50 % encoding duty the
+    threshold offset sits near 7-7.7 mV, against about 3.7 mV settled.
+  - **The online timeline changes the feedback write:**
+
+    | measure, items 751-1,000 | P2-E3's protocol | online |
     |---|---|---|
-    | continuation responders \|R\| | 28.6 | 45 |
+    | \|R\| | 28.6 | 45 |
     | Jaccard(R, A) | 0.73 | 0.49 |
 
-    The online-written store fails content even after a settle (joint 0.81 / 0.89). The same
-    raster read through the P2-E3-protocol store gives 0.98 / 0.99.
+  - **The online-written store** fails content even after a settle (joint 0.81 / 0.89).
   - **So P2-E3's content PASS depended on its back-to-back protocol** (P2-E3 addendum 2).
-
-  This experiment measures these effects under predeclared conditions.
 
 ## Hypothesis
 
-The P2-E3 system, with every parameter frozen, keeps memory and content recall for recent and
-old items while it learns one item every 500 ms with no settle and no `quiet()`. The recall is
-caused by the cue. Recall survives 50 s of a repeated cue no worse than without the repetition,
-and recovers within 10 s.
+The P2-E3 system keeps memory and content recall for recent and old items while it learns one
+item every 500 ms with no settle and no `quiet()`. Every parameter is frozen. The recall is
+caused by the cue.
 
-**Labelled limitations, stated up front.** The experimenter still supplies:
-- **When to write** (the write oracle). Plateaus and feedback writes occur only inside
-  encodings, so the system is told what to store and what is a probe.
-- **The key.** Plateau cells are random and content-blind.
-- **The value.** Eligible lines are copied one-to-one onto `rec`.
-- **The operating point.** J, J_fb, g and accommodation tau are frozen. The red-team showed that
-  the operating point depends on input duty, and that the responder write's specificity depends
-  on the operating point at write time.
-- **The input statistics.** Items are independent random patterns. Correlated items are P2-E5's
-  question.
+When learning pauses and the input duty is held, a cue repeated 100 times over 50 s keeps
+recall no worse than a matched control. Recall recovers 10.5-14.5 s after the last repetition.
+
+**Labelled limitations.** The experimenter still supplies:
+- **When to write** (the write oracle). Plateaus and feedback writes happen only inside
+  encodings.
+- **The key.** Plateaus are random and content-blind.
+- **The value.** Eligible lines are copied one to one onto `rec`.
+- **The operating point.**
+  - J, J_fb, g and accommodation tau are frozen.
+  - The operating point depends on input duty.
+  - The responder write's specificity depends on the operating point at write time.
+- **The input statistics.** Items are independent random patterns. Correlated items are P2-E5.
+
+The habituation statistics (O4, O5) are measured on **copies with learning paused**. Sham
+encodings hold the input duty, the load and the memory layer's `vbar`. They do not reproduce the
+post-write memory burst, so `rec` on the copies sits about 1.5-3 mV nearer rest at slot onset
+(verification SHAM-1; no measurable effect on "both" in an n = 60 exploratory check).
 
 P2-E4 removes only two experimenter supplies from the gated numbers: the rest before testing,
 and the frozen-copy test regime.
 
-## No new mechanism; new protocol values, all fixed by argument before any gated run
+## No new mechanism; new protocol values, fixed by argument before any gated run
 
-Every model parameter is frozen from P2-E2 and P2-E3:
+Model parameters are frozen from P2-E2 and P2-E3:
 - J = 1.525 mV, accommodation tau 10 s;
 - J_fb = 2.80 mV, g = 0.3;
 - f_q, a, rates, encoding 200 ms, continuation 50 ms.
 
-The new protocol values are:
+The new protocol values:
 
 | value | setting |
 |---|---|
 | interval I | 250 ms: a 50 ms pre-gap, a 100 ms probe slot, a 100 ms post-gap |
-| gated loads and blocks | 240-step blocks ending at M = 500 and 1,000 |
+| gated blocks | 240 steps ending at M = 500 and 1,000 |
+| never-probed pool | items 1-200, two cohorts of 100 |
 | block mix | below |
-| cohort pool | items 1-160 |
-| habituation | 50 items per load, 100 repeated presentations, 20-step recovery, 3 recovery and 3 collateral cues |
-| twins | below |
+| habituation | 50 items, 100 repetitions, a 20-step pause, 5 recovery and 5 collateral cues |
+| twins and arms | below |
 
 **Why I = 250 ms.** It is the shortest interval that holds one probe with:
 - a pre-gap of 2.5 membrane time constants after the continuation;
 - the 75 ms readout window inside the 100 ms cue;
 - a 100 ms post-gap before the next encoding.
 
-The red-team agreed to keep I = 250 ms. Moving it after exploration would be outcome-informed.
-I = 2,000 ms is a reported duty arm, and it **cannot satisfy the online clause** (predeclared).
+The red-team agreed to keep it. Moving it after exploration would be outcome-informed.
+I = 2,000 ms is a reported duty arm, predeclared as **unable to satisfy the online clause**.
 
-## Protocol: one continuous timeline per seed
+## Definitions
 
-**Ages.** An item learned at step j has age k - j at step k. Item k is age 0 in its own step's
-probe slot.
+- **Ages.** Item j has age k - j at step k. Item k is age 0 in its own step's slot.
+- **Unreserved.** An item is unreserved when it is in neither cohort. The rule applies at every
+  step.
+- **Slot ticks.** Every score window starts at slot tick k = 0, the slot's first tick, when its
+  rates are set (blank slots included).
+- **Memory responders R50:** cells with >= 1 spike at k = 0..49.
+- **Regenerated lines:** `rec` lines with >= 1 spike at k = 0..74 (for P2-E3's 50 ms variant,
+  k = 0..49).
+- **Recall, spurious and ignition** are P2-E1's per-cue measures, applied to one slot:
+  - recall = |A ∩ R50| / |A|, and 0 when A is empty;
+  - spurious = |R50 \ A|, which must be < 0.5 |A|;
+  - ignition = |R50|, which must be < 0.5 mean|A|. Here mean|A| is the mean plateau-set size
+    over items 1..M of the gated load: one value per block.
+- **Content joint:** >= 40 of the 50 missing lines regenerated, and < 10 intrusions (lines
+  outside the item's 100).
+- **"Both":** recall >= 0.8 and the content joint.
+- **A novel cue** is the 50-line half cue of a fresh 100-line item, drawn with its mask. The
+  item is never stored and never reused.
+
+**Streams.** Every generator is `stream(seed, sid, *ints)`, and ids 12-18 are P2-E4's. The
+encoding uses P2-E1's streams and the continuation uses P2-E3's stream 9.
+
+| key | use |
+|---|---|
+| (seed, 12, k) | background in step k's pre-gap and post-gap |
+| (seed, 13, k) | step k's slot input |
+| (seed, 14, k) | step k's rolling kind, target and mask |
+| (seed, 15, 0) | the cohorts |
+| (seed, 15, M, attempt) | the block builder: order, targets, masks, blank designations, pseudo-targets |
+| (seed, 16, M, 0) | habituation item selection, collateral tie-breaks, the 89 control items, masks |
+| (seed, 16, M, x + 1, s) | every input draw of copy step s for item x, shared by both copies; the sham pattern is its first draw |
+| (seed, 17, k) | step k's novel item on the main line |
+| (seed, 18, arm, ...) | the twins and arms: novel-duty twin 1; twin B 2; writes during probes 3; out-of-distribution 4; duty arm 5 |
+
+The forward store stays bit-identical to P2-E1's. BTSP reads only the encoding's input spikes,
+which come from `_learn_in` (a fixed draw of m uniforms per tick), and nothing else consumes
+that stream.
+
+## Protocol: the main timeline, one per seed
 
 **Learning step k:**
-1. **Encoding** of item k (200 ms), with plateaus, eligibility and the BTSP write exactly as in
-   P2-E1.
-2. **Continuation** (50 ms), with the clipped feedback write from responders exactly as in
-   P2-E3.
-3. **Interval:** 50 ms background, 100 ms probe slot, 100 ms background.
+1. **Encoding** (200 ms), exactly as in P2-E1.
+2. **Continuation** (50 ms) and the feedback write, exactly as in P2-E3.
+3. **Interval:** 50 ms background, the 100 ms slot, 100 ms background.
 
-There is no `quiet()` and no settle anywhere on the main line.
+There is no `quiet()` and no settle.
 
-**Streams.** The encoding uses P2-E1's streams; the continuation uses P2-E3's stream 9. P2-E4's
-own stream ids:
+**`rec`** is a live engine population. It starts at rest at tick 0, is never reset, runs through
+encodings, and has no outputs. The live feedback projection is reloaded right after each write.
+**Gated numbers come from this continuous simulation.**
 
-| id | use |
-|---|---|
-| 12 | interval background |
-| 13 | probe-slot input |
-| 14 | rolling schedule |
-| 15 | block schedules and cohorts |
-| 16 | habituation |
-| 17 | novel items (never stored, never reused) |
-| 18 | twins and reported arms |
+**Cohorts.** Items 1-200 are split into cohort 500 and cohort 1,000, 100 each (stream (seed, 15,
+0)). On the main line:
+- **Cohort 1,000:** cued only in block 1,000's cohort slots, and in oldest-probed rolling slots
+  after step 1,000.
+- **Cohort 500:** cued in block 500's cohort slots, in oldest-probed rolling slots after step
+  500, and as 15 of block 1,000's uniform cues (the probed-history comparison).
+- **Both cohorts:** never a blank target, never a full cue, never a habituation item, collateral
+  item or control item.
+- **Scope.** These rules bind the main line. Copies cannot feed history back (validity 6), so
+  settled twins may run P2-E3's own test sets.
 
-The forward store must stay bit-identical to P2-E1's. BTSP reads only the encoding's input
-spikes, from `_learn_in` (a fixed draw of m uniforms per tick), which nothing else consumes.
+**Rolling slots** (every step outside a gated block). The kind is drawn i.i.d. per step from
+stream (seed, 14, k):
 
-**The reconstruction layer `rec`** (owner's ruling 2):
-- **A live engine population** on the main timeline and on every copy. It starts at rest at
-  tick 0, is never reset, and runs through encodings. It has no outputs, so it cannot affect
-  memory.
-- **The live feedback projection** is reloaded from the feedback store right after each write.
-- **Gated numbers come from this continuous simulation.**
-- **The replay is used only in reported readouts:**
-  - settled-twin comparability with P2-E3;
-  - store swaps.
-
-  There it is checked spike for spike against the carried live `rec` (see Validity).
-
-**The never-probed cohort pool** (owner's ruling 2):
-- **Items 1-160.** Two disjoint cohorts of 80 are drawn at seed start (stream 15): cohort 500 and
-  cohort 1,000.
-- **The rule.** A cohort item receives no probe of any kind before its own block. That includes
-  full cues, blank targets, habituation duty and collateral duty.
-- **Before step 162**, no unreserved stored item of age >= 1 exists. Rolling slots in steps 1-161
-  therefore hold novel cues (85 %) or untargeted blank slots (15 %).
-- **M = 250 is not a gated load.** Its retention cannot be measured without an unreserved
-  oldest pool (red-team blocker M1/B1/FID-1). It is reported from rolling probes over steps
-  201-250.
-
-**Rolling slots** (steps outside gated blocks, from step 162; stream 14):
-
-| kind | share |
-|---|---|
-| recent (ages 0-20) | 20 % |
-| uniform (unreserved, ages >= 21) | 20 % |
-| oldest-probed (cohort 500 items, after step 500; otherwise uniform) | 10 % |
-| novel | 25 % |
-| full | 10 % |
-| blank (target ages 0-20) | 15 % |
-
-**Gated blocks.** For M in {500, 1,000}: steps M-239 .. M (loads 261-500 and 761-1,000). Each
-block holds exactly:
-
-| kind | count | rule |
+| kind | share | target |
 |---|---|---|
-| recent | 50 | ages uniform on 0-20 |
-| uniform | 50 | unreserved items of age >= 21, distinct |
-| cohort | 80 | this load's cohort |
-| novel | 30 | |
-| blank | 20 | target ages 0-20 |
-| full | 10 | |
+| recent | 20 % | an unreserved item of age 0-20 |
+| uniform | 20 % | an unreserved item of age >= 21 |
+| oldest-probed | 10 % | a cohort item whose block has passed |
+| novel | 25 % | |
+| full | 10 % | an unreserved item of any age |
+| blank | 15 % | an unreserved item of age 0-20 |
 
-- **Stratified order.** The block is cut into 10 sub-blocks of 24 steps. Each sub-block holds 5
-  recent, 5 uniform, 8 cohort, 3 novel, 2 blank and 1 full, in random order (stream 15) (M7).
-- **No stored item is cued twice within a block.**
-- **Each half cue's mask** is drawn at seed start (stream 15) and reused by the paired settled
-  retest.
-- **The schedule builder** asserts every rule (counts, reservations, no repeats, ages) at seed
-  start. If a draw is infeasible, it redraws with stream (seed, 15, attempt), deterministically,
-  and records the attempt.
-- **Its unit test** runs on non-gated seeds (90+) only, so no gated-seed material is exposed.
+- Targets are drawn uniformly from the kind's eligible set. Repeats across rolling steps are
+  allowed.
+- A kind whose eligible set is empty becomes a novel cue. So steps 1-200 hold only novel cues,
+  and uniform slots become novel until step 221.
 
-**Habituation arm,** at M = 500 and 1,000 (red-team M2, M3, FID-2, C2, C3, m4). After step M:
-- **Items.** 50 items are drawn (stream 16) from unreserved stored items of age >= 21, excluding
-  both cohorts.
-- **Copies.** Each item gets a **repeated** and a **control** deep copy, `rec` live. Both run the
-  main line's step rhythm with **sham encodings**, which hold the input duty and the operating
-  point without adding load:
-  - a sham encoding is 200 ms of a fresh random 100-line pattern (stream 16) at encoding rates,
-    then 50 ms of the same pattern;
-  - there are no plateaus, no BTSP update and no feedback write;
-  - both copies get identical sham patterns and slot input draws, so repetition 1 is identical.
+**Gated blocks** (M in {500, 1,000}; steps M-239 .. M, loads 261-500 and 761-1,000). Each block
+holds exactly:
 
-  | steps | repeated copy's slots | control copy's slots |
-  |---|---|---|
-  | 1-100 | the item's half cue (one fixed mask) every step | the item's cue at step 1 and steps 91-100; at steps 2-90, half cues of 89 other unreserved stored items (distinct, stream 16, outside the 50) |
-  | 101-120 | blank (10 s) | blank (10 s) |
-  | 121-126 | item, collateral, item, collateral, item, collateral | same |
+| kind | count | detail |
+|---|---|---|
+| recent | 50 | |
+| uniform | 50 | block 1,000: 15 cohort-500 items plus 35 unreserved |
+| cohort | 100 | this load's cohort |
+| novel | 20 | |
+| blank | 20 | 5 at age 0, in odd sub-blocks; 15 at ages 1-20 |
 
-  The control copy's 89 other cues match the repeated copy's cue duty.
-- **The collateral item** is the unreserved stored item (outside the 50) whose assembly A
-  overlaps the repeated item's assembly most, with ties going to the lowest index. Its half-cue
-  mask is fixed.
-- **"Both"** means memory recall >= 0.8 (50 ms) and the content joint (75 ms).
-- **Statistics per item:**
+- **Order.** The block is 10 sub-blocks of 24 steps. Each holds 5 recent, 5 uniform, 10 cohort,
+  2 novel and 2 blank, in random order. Block 1,000's 15 cohort-500 uniform cues are spread
+  2, 2, 2, 2, 2, 1, 1, 1, 1, 1 over the sub-blocks.
+- **The sampler.** The builder fills slots in step order. Each targeted slot draws uniformly
+  from its kind's eligible set, minus every item already targeted in the block, cued or blank.
 
-  | statistic | definition |
+  | kind | eligible set |
   |---|---|
-  | scored | repetition 1 passes both |
-  | L_rep | passes among repetitions 91-100 on the repeated copy |
-  | L_ctl | passes among steps 91-100 on the control copy |
-  | eligible for O4 | scored, and L_ctl >= 8 |
-  | habituated | eligible, and L_rep <= L_ctl - 3 |
-  | recovery | of the three recovery cues, >= 2 pass both; per copy |
-  | collateral | of the three collateral cues, >= 2 pass both; per copy |
+  | recent and blank | unreserved items of age 0-20 |
+  | uniform | unreserved items of age >= 21 |
+  | cohort | this load's cohort |
 
-**Twins and references at each gated load:**
-1. **Settled twin A** (comparability; replay check). A deep copy after step M, carried live
-   `rec` attached. It runs P2-E3's `run_phase` (the 50 s settle and P2-E3's 600-cue test) and
-   logs the carried `rec`'s spikes. Readouts on its test raster:
-   - P2-E3's replay with the online store, compared spike for spike with the carried `rec`;
-   - the store swaps listed under Reported.
-2. **Settled twin B** (paired retest, red-team M4, M7, FID-7). A deep copy after step M, carried
-   live `rec`. It gets P2-E3's 50 s settle, then the block's 180 half cues, with the same masks,
-   in the same order, at P2-E3's cue rhythm (100 ms on, 200 ms off). This gives the per-cue
-   paired comparison of online against settled.
-3. **Novel-duty twin** (probe history, M4, M13). A second timeline from step 1, identical except
-   that **every** slot, gated blocks included, holds a fresh novel cue (stream 18). It has the
-   same input duty and no retrieval of stored items. At M = 500 and 1,000 it records its stores
-   and runs settled twin A's readout.
-4. **P2-E3-protocol reference line** (implementation M1). `E3.learn` (with `quiet()`, back to
-   back) on the same seed, to M = 1,000, with P2-E3's settled test at M = 500 and 1,000. Its
-   forward store equals the main line's, and its feedback store is used for store swaps.
+- **Realised ages.** Recent ages are therefore skewed toward 0. The realised age distribution is
+  reported.
+- **Masks.** Half-cue masks, and the designated missing halves of blank targets, are drawn with
+  each slot (stream 15).
+- **Pseudo-targets.** Each novel slot also gets a pseudo-target by the blank-target rule. It is
+  never cued; it only serves the leak baseline.
+- **Infeasible schedules.** An attempt fails only if an eligible set is empty, and is then
+  redrawn as (seed, 15, M, attempt + 1). The unit test builds the schedule for seeds 90+ only.
+- **Half cues.** O1 and O2 pool all 200 half cues (50 recent, 50 uniform, 100 cohort).
+
+## Habituation arm (M = 500 and 1,000; on copies)
+
+**Selection** (stream (seed, 16, M, 0)):
+- **The candidate set C:** unreserved stored items of age >= 21.
+- **The 50 items** are drawn from C.
+- **Collateral.** Each item x gets a collateral item y in C, outside the 50, that maximises
+  |A(x) ∩ A(y)| in cells. Ties are broken uniformly by the same stream. The median maximum
+  overlap is about 2 of 20 cells, so the collateral tests little spread to overlapping
+  assemblies. Overlap and age are reported.
+- **Control items.** Each item x gets 89 other items, drawn from C outside the 50 and excluding
+  x's collateral.
+- **Masks.** One mask per item, and one per collateral, from the same stream. Every cue of x and
+  of y uses its own mask on both copies.
+
+**The copies.** Each item x gets a **repeated** and a **control** deep copy of the main line,
+taken right after step M, with `rec` live. A copy step s has the main line's structure:
+1. a **sham encoding** of 200 ms: a fresh random 100-line pattern at encoding rates (the first
+   draw of (seed, 16, M, x + 1, s));
+2. 50 ms of the same pattern;
+3. a 50 ms pre-gap;
+4. the 100 ms slot;
+5. a 100 ms post-gap.
+
+There are no plateaus, no BTSP update and no feedback write. All input of step s comes from
+(seed, 16, M, x + 1, s) on both copies.
+
+| copy steps | repeated copy's slot | control copy's slot |
+|---|---|---|
+| 1-100 | x's half cue | x at step 1 and steps 91-100; the 89 control items at steps 2-90 |
+| 101-120 | blank | blank |
+| 121-130 | x, y, x, y, ... (x at the odd steps) | the same |
+
+**Per-item statistics:**
+
+| statistic | definition |
+|---|---|
+| scored | copy step 1 passes "both" |
+| L_rep | "both" passes in the repeated copy's steps 91-100 |
+| L_ctl | "both" passes in the control copy's steps 91-100 |
+| eligible | scored, and L_ctl >= 8 |
+| habituated | eligible, and L_rep <= L_ctl - 3 |
+| recovery | on each copy, >= 3 of x's 5 recovery cues pass "both" |
+| collateral | on each copy, >= 3 of y's 5 cues pass "both" |
+
+O5 is taken over all 50 items.
+
+## Twins and references (reported)
+
+1. **Settled twin A**, from the snapshot at step M, with the carried live `rec`:
+   - P2-E3's `run_phase(e, M)`: `settle_drift(M, 1)`, then P2-E2's `evaluate` on P2-E3's test
+     set;
+   - the carried `rec`'s spikes are logged;
+   - P2-E3's replay of the raster with the online store gives the P2-E3-comparable numbers, and
+     is compared spike for spike with the carried `rec`;
+   - a mismatch is reported as a count of differing spikes plus its effect on the joint. It leaves
+     twin A valid.
+2. **Settled twin B.** A deep copy of twin A right after its settle (the same `settle_drift(M,
+   1)`):
+   - a 200 ms lead-in, then the block's 200 half cues in block order, with the same masks;
+   - 100 ms on, 200 ms off, input from (seed, 18, 2, M);
+   - memory scored as in P2-E1, and content from the carried live `rec` at k = 0..74;
+   - this gives the paired per-cue comparison of online against settled (McNemar).
+3. **Novel-duty twin.** A second timeline from step 1, identical except:
+   - every cue slot holds a novel cue of the same form: half cues are 50-line novel half cues,
+     and full cues novel 100-line patterns, from (seed, 18, 1, k);
+   - blank slots stay blank.
+
+   It has the same input duty with no retrieval of stored items. At M = 500 and 1,000 it records
+   its stores and twin A's readout.
+4. **P2-E3-protocol reference line.** `E3.learn` on the same seed, to 1,000, with P2-E3's
+   `run_phase` and `readout` at 500 and 1,000. Its feedback store serves the store swaps.
 
 ## Kill test (gated seeds 16-20, all fresh; each seed runs once)
 
@@ -240,206 +298,237 @@ Each criterion must hold on every gated seed at M = 500 and at M = 1,000.
 
 | criterion | owner's term | what must hold |
 |---|---|---|
-| **O1 memory, online** | continuous recall, interference resistance | Of the block's 180 half cues (50 recent, 50 uniform, 80 cohort): recall >= 0.8 (50 ms) for >= 90 % (C1); spurious < 0.5 \|A\| for >= 90 % (C2). Of its 30 novel cues: ignition < 0.5 mean \|A\| for >= 90 % (C3) |
-| **O2 content, online** | continuous recall, interference resistance | P2-E3's joint criterion (>= 40 of 50 missing lines, < 10 intrusions, 75 ms) for >= 90 % of the 180 half cues; D3 (< 10 lines) for >= 90 % of the 30 novel cues |
-| **O3 retention** (never-probed cohort) | oldest-item retention; also Stage 1's "after 60 s of ongoing activity" (C7) | Of the 80 cohort cues: memory recall >= 0.8 for >= 90 %, and the content joint for >= 90 % |
-| **O4 habituation** | repeated-cue habituation | At least 25 of the 50 items are eligible, and <= 10 % of eligible items habituated |
-| **O5 recovery** | recovery | Recovery: >= 90 % pass on the repeated copy, among items that pass recovery on the control copy, with at least 25 such items. Collateral: >= 90 % pass on the repeated copy, among items whose collateral passes on the control copy, with at least 25 such items |
+| **O1 memory, online** | continuous recall; interference resistance | Of the 200 half cues: recall >= 0.8 for >= 90 % (C1) and spurious < 0.5\|A\| for >= 90 % (C2). Of the 20 novel cues: ignition < 0.5 mean\|A\| for >= 90 % (C3) |
+| **O2 content, online** | continuous recall; interference resistance | The content joint for >= 90 % of the 200 half cues; < 10 regenerated lines for >= 90 % of the 20 novel cues (D3) |
+| **O3 retention** (never-probed cohort) | oldest-item retention; Stage 1's "after 60 s of ongoing activity" | Of the 100 cohort cues: recall >= 0.8 for >= 90 %, and the content joint for >= 90 % |
+| **O4 habituation** (owner's ruling 2, read as "no more habituation than without repetition"; the owner may overrule this reading) | repeated-cue habituation | >= 25 of the 50 items eligible, and <= 10 % of eligible items habituated |
+| **O5 recovery** | recovery | Recovery: >= 90 % of items pass on the repeated copy, among the >= 25 items that pass on the control copy. Collateral: >= 90 % pass on the repeated copy, among the >= 25 that pass on the control copy |
 
-When a minimum count is not met, the criterion **fails** (not estimable). It is never skipped.
+- **When a minimum count is not met,** the criterion fails as not estimable. It is never skipped.
+- **Interference.** It is carried by the uniform and cohort cues of old items while learning
+  continues. The forward store is bit-identical to P2-E1 whatever the regime, so online
+  interference can act only through `vbar` and the responder write. Per-kind rates are reported
+  in the verdict text, not gated separately.
+- **An O3 memory failure** means Stage 1's clause "holds ... after 60 s of ongoing activity" is
+  not met online, for the P2-E3 system.
+- **The P2-E3 addendum's item 8** (a gated control that could pass if the claim were false). It
+  is met for O4 and O5 by the paired control copies, whose outcome is not fixed by construction.
+  For the recall claim itself, no artefact control can fail in this architecture: validity check
+  9 demonstrates this (ledger M4, FID-7).
 
-**How the owner's terms map** (FID-4, M8):
-- **Continuous recall:** recent probes, inside O1 and O2.
-- **Interference resistance:** uniform and cohort probes of old items while learning continues,
-  inside O1, O2 and O3.
-- **What interference can act through.** The forward store is bit-identical to P2-E1 whatever
-  the online regime. So online interference acts only through the operating point (`vbar`) and
-  the responder write.
-- **Per-kind rates** (recent, uniform, cohort) are reported in the verdict text. They are not
-  gated separately, because that would need 90-150 cues per kind (completeness review C1).
+## Validity (checked first; a gated failure makes the seed INVALID)
 
-**Validity** (precedence: validity first, then the criteria):
 1. The forward store's sha256 equals P2-E1 learning at M = 500 and 1,000.
-2. The eligible fraction is >= 0.95; mean |A| is 18.5-21.5.
+2. The eligible fraction is >= 0.95, and mean |A| is 18.5-21.5.
 3. The feedback store equals the union of R(x) x E(x) over the items learned so far.
-4. **No store changes across any probe slot.** An O(1) identity check of the stores' key arrays
-   runs at every slot, and full digests at block ends.
-5. **The live projection is current.** At every gated slot its load version equals the feedback
-   store's write version, and the inhibition weight equals g x J_fb (C4b).
-6. **The main line is untouched by every twin and copy.** Digests of the stores, `vbar`, mem v,
-   t_last, delay rings, `rec` state, net.t and every generator state are taken before and after
-   each twin and copy (C4a).
+4. **No store changes in any probe slot.** An O(1) identity check runs on the stores' key arrays
+   at every slot, with full digests at block ends.
+5. **The live projection is current.** At every gated slot, the projection's load version equals
+   the feedback store's write version, and the inhibition weight equals g x J_fb.
+6. **The main line is untouched by every copy.** Digests of the stores, `vbar`, mem v, t_last,
+   the delay rings, `rec` state, net.t and every generator state are taken before and after
+   each copy and each habituation arm.
 7. **The realised probe log passes an audit:**
-   - cohort items were never cued or targeted before their block;
+   - the cohort rules hold;
    - counts are exact;
-   - nothing repeats within a block (C4c).
-8. **Repetition 1 is identical on the repeated and control copies of every item.**
-9. **The blank-slot leak check (O0, relabelled; M4, m2, FID-7).** The 20 blank slots per block
-   target items of ages 0-20.
-   - **Two statistics:**
-     - **the leak statistic:** the mean fraction of the target's assembly active within 50 ms,
-       and of its designated missing lines regenerated within 75 ms;
-     - **the positive control:** the same measure over the last 50 ms of the age-0 item's own
-       continuation, read from the live log. It shows the measure detects activity when there
-       is any.
-   - **Pass if all hold:**
-     - <= 1 of 20 blank slots has target recall >= 0.8;
-     - the mean leak statistic is <= the same-block novel-slot baseline + 0.05;
-     - the positive-control mean is >= 0.5.
-   - **In this architecture the check cannot fail except through a leak or bug.** The memory
-     layer has no recurrence, so nothing persists past the pre-gap (red-team exploration: 0
-     activity in 644 blank slots). It is therefore a validity check, not evidence.
+   - no item is targeted twice within a block.
+8. **Repetition 1 is identical.** The memory and `rec` spike rasters of copy step 1 are equal on
+   both copies of every item.
+9. **The blank-slot leak check** (no artefact control can fail here; this check shows it).
+   - **Leak statistics.** L_A is the mean, over the 20 blank slots, of |A_t ∩ R50| / |A_t|. L_C
+     is the mean of |miss_t ∩ rec75| / 50, where miss_t is the target's designated missing half.
+   - **Baselines** B_A and B_C are the same means over the 20 novel slots' pseudo-targets.
+   - **Pass if all three hold:**
+     1. <= 1 of 20 blank targets has recall >= 0.8;
+     2. L_A <= B_A + 0.05;
+     3. L_C <= B_C + 0.05.
+   - **The positive control (memory) must also hold.** Over the 20 blank-slot steps, the mean
+     fraction of that step's age-0 item's assembly with >= 1 spike in its own 50 ms continuation
+     is >= 0.5.
+   - **The content part has no positive control.** An item's feedback is written after its
+     continuation. Its sensitivity is shown by the recent cued slots, reported beside it.
 
-A validity failure in a **reported** arm invalidates only that arm. The settled twins' replay
-check is one of these: a mismatch is reported as a count of differing spikes and its effect on
-the joint, not as INVALID, because carried `rec` state can differ by 1 ulp from rest (m1,
-FID-8).
+A validity failure in a reported arm invalidates only that arm.
 
-**Verdict** (a vector plus a label; M9, FID-3):
-- **The vector.** Pass or fail for each of O1 (C1, C2, C3), O2 (joint, D3), O3 (memory,
-  content), O4 and O5 (recovery, collateral), per load. Seeds are pooled by the all-seeds rule,
-  and per-seed values are recorded.
-- **The labels:**
-  - **INVALID:** a gated validity check fails on any seed.
-  - **PASS:** every criterion holds.
-  - Otherwise, every applicable label, joined:
-    - **ONLINE INDEX FAIL:** any memory criterion of O1 or O3 fails.
-    - **ONLINE CONTENT FAIL:** any content criterion of O2 or O3 fails.
-    - **HABITUATION FAIL:** O4 fails.
-    - **RECOVERY FAIL:** O5 fails.
+## Verdict (a vector plus labels)
 
-  A label never hides another.
+- **The vector.** Pass, fail, or fail (not estimable), for each part at each load:
+  - O1: C1, C2, C3;
+  - O2: joint, D3;
+  - O3: memory, content;
+  - O4;
+  - O5: recovery, collateral.
+
+  Per-seed values are recorded.
+- **Labels:**
+
+  | label | when |
+  |---|---|
+  | INVALID | a gated validity check fails on any seed |
+  | PASS | every criterion holds |
+  | ONLINE INDEX FAIL | an O1 or O3 memory part fails |
+  | ONLINE CONTENT FAIL | an O2 or O3 content part fails |
+  | HABITUATION FAIL | O4 fails with >= 25 items eligible |
+  | HABITUATION NOT ESTIMABLE | O4 fails only because fewer than 25 items are eligible |
+  | RECOVERY FAIL | O5 fails on a seed and load where `power.p_paired_majority` (cues = 5, need = 3) gives a zero-effect pass probability >= 0.8 at the control copies' observed per-cue "both" rate |
+  | RECOVERY NOT ESTIMABLE | O5 fails only on seeds and loads where that probability is below 0.8 |
+
+  Unless the verdict is INVALID or PASS, every applicable failure label is joined; none hides
+  another. Not-estimable labels still fail the gate.
 - **Run once.** Gated seeds run once. A re-run needs the owner's ruling and keeps the first
   records.
 
-## Power (before freezing; owner's ruling 2; red-team M5, M6, FID-6, C1)
+## Power (computed before freezing; `plant2/power.py`; record kind `power_reference`)
 
-Computed by `plant2/power.py` and recorded with this contract:
-`bench/results/plant2.jsonl`, kind `power_reference`.
+**O1-O3.** Exact binomials, with a logit-normal seed effect (SD 0.18, the recorded excess
+spread), over all five seeds and both loads. The reference rates are the recorded settled rates
+of the gated seeds.
 
-**O1-O3.** Exact binomials for each cue set, a logit-normal seed effect with SD 0.18 (the
-recorded excess spread, about 0.01, on the probability scale), and all five seeds at both loads.
+- **Memory measures** (C1, C2, C3, oldest-item recall) are pooled over P2-E2 seeds 6-10 and
+  P2-E3 seeds 11-15: the same memory network, tested settled.
+- **Content measures** (joint, D3, D4) come from P2-E3 seeds 11-15 alone.
+- **Recorded values of 1.000** enter as 0.999.
 
-- **Reference rates** are the recorded settled rates of P2-E2 and P2-E3's gated seeds:
+| measure | M = 500 | M = 1,000 |
+|---|---|---|
+| C1 | 0.969 | 0.9435 |
+| C2 | 0.999 | 0.986 |
+| C3 | 0.999 | 0.9955 |
+| joint | 0.994 | 0.975 |
+| D3 | 0.999 | 0.998 |
+| oldest recall | 0.969 | 0.953 |
+| D4 | 0.998 | 0.972 |
 
-  | measure | M = 500 | M = 1,000 |
+| rates | P(O1-O3 pass, all seeds and loads) |
+|---|---|
+| pooled memory rates | **0.855** |
+| P2-E3-only memory rates (C1 0.972 / 0.938) | 0.788 |
+| the earlier draft's counts | 0.62 |
+
+Within a block, each cue is a distinct item scored once, so binomial variance is an upper bound.
+
+**O4 and O5.**
+- **The item model.** Beta per-item reliability with intraclass correlation 0.09 (red-team
+  estimate), 50 items, five seeds.
+- **The "both" rate.** C1 x joint, which is conservative: 0.963 at M = 500 and 0.920 at M = 1,000.
+- **Zero-habituation pass probabilities:**
+
+  | O4 | O5 recovery (majority of 5) | O5 collateral (majority of 5) |
   |---|---|---|
-  | C1 | 0.970 | 0.944 |
-  | C2 | 0.999 | 0.989 |
-  | C3 | 0.999 | 0.994 |
-  | joint | 0.994 | 0.975 |
-  | D3 | 0.999 | 0.998 |
-  | oldest recall | 0.972 | 0.954 |
-  | D4 | 0.998 | 0.972 |
+  | 0.981 | 0.996 | 0.997 |
 
-  Within a block each cue is a distinct item scored once, so item heterogeneity can only shrink
-  variance below binomial (M6b).
-- **Result.** A system with **no online cost** passes O1-O3 on all seeds and loads with P = 0.83.
-  - At M = 1,000: O1 0.91, O3 0.91.
-  - The draft's sizes (120/60/40) gave 0.65, which is why the counts changed.
+- **With modest habituation** (late per-cue rate x 0.85), O4 fails with certainty, because about
+  22 % of eligible items habituate.
+- **The earlier draft's unpaired rule** passed with only 0.41 at one load and 0.17 at both
+  (rate 0.93, no habituation).
 
-**O4 and O5.** Beta per-item reliability with intraclass correlation 0.09 (red-team estimate,
-seeds 42-43), 50 items, both loads, all seeds, zero habituation:
+**The full rule, zero online cost:**
 
-| per-cue rate | O4 | O5 recovery | O5 collateral | O5 both |
-|---|---|---|---|---|
-| 0.95 | 0.998 | 0.994 | 0.994 | 0.988 |
-| 0.93 | 0.987 | 0.952 | 0.950 | 0.905 |
-| 0.90 | 0.87 | 0.68 | 0.69 | 0.47 |
+| rates | P(PASS) |
+|---|---|
+| pooled memory rates | 0.833-0.853 |
+| P2-E3-only memory rates | 0.768-0.786 |
 
-O5 is weak below a per-cue rate of about 0.92; at the online rates expected at M = 1,000 it
-cannot pass, whatever recovery does.
+The range runs between "both" rates of 0.963/0.920 and 0.968/0.944. The P2-E3-only figure is
+just below the 0.8 target. That is stated, not hidden: blocks cannot grow past 240 steps without
+widening the load spread (red-team M7).
 
-Under real habituation (late per-cue rate x 0.85), O4 fails with certainty, with about 22 % of
-eligible items habituated. So O4 fails for habituation and not for item noise. The draft's
-unpaired rule passed with only 0.62 at 0.93 with no habituation (M3).
-
-**After implementation, before any gated seed.**
-- **The exploration runs.** The real driver runs on seeds 42 and 43.
-- **The Monte Carlo.** The full-rule Monte Carlo is re-run from their per-criterion rates. For
-  O0-O3 it uses a binomial on the mean rates, with the seed effect above and the rates'
-  uncertainty propagated. For O4 and O5 it uses a bootstrap of whole items from the exploration
-  copies.
+**After implementation, before any gated seed:**
+- **Exploration.** The real driver runs on seeds 42-43.
+- **The Monte Carlo is re-run.** It uses exact binomials with propagated rate uncertainty for
+  O1-O3, and a bootstrap of whole items from the exploration copies for O4-O5.
 - **What is committed:**
   - P(PASS) as an interval;
-  - the probability of each criterion and of each label;
-  - the per-cue rate that would give P(PASS) >= 0.8, as one common logit shift of all rates;
+  - per-criterion and per-label probabilities;
+  - the per-cue rate that gives P(PASS) >= 0.8, as one common logit shift of all rates;
   - the plant2 tree hash and the contract digest.
 - **The guard.** A `--gated` run refuses to start unless:
-  - that predictions commit is an ancestor of HEAD;
+  - that commit is an ancestor of HEAD;
   - the tree is clean;
-  - the plant2 tree hash and contract digest equal the recorded ones (M10).
+  - the tree hash and contract digest match.
 
-## Reported, not gated
+## Reported, not gated (each with a prediction)
 
-Each arm carries a prediction (C6).
-
-| arm | what is reported | prediction |
+| arm | reported | prediction |
 |---|---|---|
-| online against settled, paired (twin B) | per kind and load: online minus settled pass rates for memory and content; McNemar | memory: online lower by 0.15-0.25 at M = 1,000 and 0.03-0.08 at M = 500. Content: online about equal or **higher** (the settle raises intrusions from the online-written store) |
-| write against readout cost (store swaps on twin A's raster) | the joint through (i) the online store, (ii) the reference line's store, (iii) the plateau-set store | (i) 0.80-0.90 at M = 1,000; (ii) and (iii) 0.97-1.0 |
-| responder write | \|R(x)\|, R - A, Jaccard(R, A) and the continuation offset by age bin: main line, novel-duty twin, reference line, duty arm | main \|R\| about 45 against about 28.6 for the reference at M = 1,000; Jaccard about 0.5 against 0.73 |
-| probe history (novel-duty twin against main) | stores, \|R\|, the settled readout | small differences, of uncertain sign (no item-specific path) |
-| operating point | `vbar` offset at probe time per block; `rec` v at slot onset; manipulation check: block offset minus twin A's settled offset | about 7-7.7 mV online against about 3.7 mV settled at M = 1,000; about 2.5-3.5 against about 1.9 at M = 500; `rec` 2-4 mV below rest at slot onset |
-| retention | recall and joint against age, from rolling probes; probed (cohort 500, via oldest-probed slots) against never-probed (cohort 1,000) retention at M = 1,000 | falls with age; probed against never-probed near zero under the write oracle (M14) |
-| causality | cued minus blank by age, with age 0 shown separately | blank about 0; age-0 cued recall about 0.88-1.0 |
-| habituation detail | per-repetition recall and joint; assembly and global `vbar` on each copy; the habituated fraction; recovery among habituated items | habituation present (exploratory: 1 of 8-10 items held 8 of 10 late repetitions on copies that settled); at M = 1,000 eligibility may fall under 25 |
-| M = 250 | rolling probes over steps 201-250 | C1 about 0.92-1.0; joint about 1.0 |
-| duty arm (I = 2,000 ms, post-gap 1,850 ms) | same blocks, M <= 1,000, online and settled twin A. Predeclared: **cannot satisfy the online clause** | online memory passes (C1 about 0.96-0.98); the store collapses (settled joint about 0.17) |
-| beyond capacity (stress test) | the main line continues to M = 3,000; stress blocks ending at 1,500, 2,000 and 3,000 (100 recent ages 0-100, 60 uniform, 40 novel, 20 blank, 20 full) | blackout: the joint falls below 0.3 by M = 1,500 and about 0 at 2,000; rec saturates |
-| writes during probe slots (store/recall oracle partly removed; stress test) | a copy at M = 1,000 runs 200 more steps. Each non-blank probe slot also draws plateaus at f_q per cell, applies BTSP to lines with >= 3 spikes in the 100 ms slot, and writes feedback from memory cells responding in the slot's last 50 ms. Still scheduled: slot boundaries, the eligibility window and the write time; background never writes. "Stored": a later presentation of the identical probe recalls its new assembly at >= 0.8. Compared with the main line at matched items (M = 1,200) and matched plateau episodes (about 1,370). BTSP depressions of existing items are reported | about 170 probes written, nearly all "stored", by arithmetic (C5). Older-item recall falls as at matched load |
-| out-of-distribution probes | a copy at M = 1,000 with sham rhythm: 40 lures (novel items sharing 50 lines with a stored item), 40 cues of 30 % of an item's lines, 40 half cues with 10 of 50 lines swapped for noise | lures recalled as the stored item (> 0.8); 30 % cues: C1 low (about 0.2-0.5); noisy half cues: C1 below half cues |
-| efficiency | bits per synapse (stored and potential); relative widths of the inherited parameter windows (J ±5 %, J_fb ±29 %) | about 0.2 bits per synapse |
+| online against settled (twin B) | per kind and load: online minus settled pass rates for memory and content; McNemar | memory: online lower by 0.15-0.25 at M = 1,000 and 0.03-0.08 at M = 500. Content: about equal, or online higher |
+| write against readout cost (store swaps on twin A's raster) | the joint through the online store, the reference store and the plateau-set store | 0.80-0.90; 0.97-1.0; 0.97-1.0 (M = 1,000) |
+| responder write | \|R\|, R - A, Jaccard(R, A) and the continuation offset by age bin: main line, novel-duty twin, reference line, duty arm | at M = 1,000: main \|R\| about 45 against about 28.6 for the reference; Jaccard about 0.5 against 0.73 |
+| probe history | novel-duty twin against main: stores, \|R\|, settled readout | small differences, sign uncertain |
+| probed against never-probed | block 1,000: the 15 cohort-500 uniform cues against the 100 cohort-1,000 cues (same block, similar ages) | about zero difference under the write oracle |
+| operating point | `vbar` offset at probe time per block; `rec` v at slot onset; block offset minus twin A's settled offset | about 7-7.7 mV online against about 3.7 settled at M = 1,000; about 2.5-3.5 against about 1.9 at M = 500; `rec` 2-4 mV below rest |
+| retention against age | rolling probes; the realised recent-age distribution | recall falls with age |
+| causality | cued minus blank by age, age 0 separately; L_A, L_C and baselines | blank about 0; age-0 cued recall about 0.88-1.0 |
+| habituation detail | per-repetition recall and "both"; the L_rep - L_ctl distribution and McNemar on "L >= 8"; the habituated fraction; recovery among habituated items; global and assembly `vbar` and `rec` onset v on every copy against the main line; collateral overlap and age | habituation present at M = 500; at M = 1,000 eligibility likely under 25 |
+| M = 250 | rolling probes in steps 221-250 | C1 about 0.92-1.0, joint about 1.0 |
+| duty arm (I = 2,000 ms; a 1,850 ms post-gap; blocks built by the same rules and streams) | online and twin A, M <= 1,000; predeclared unable to satisfy the online clause | online memory passes (C1 about 0.96-0.98); store collapses (settled joint about 0.17) |
+| beyond capacity (stress test) | the main line continues to M = 3,000. Stress blocks end at 1,500, 2,000 and 3,000, each with 100 recent cues at ages 0-100, 60 uniform, 40 novel, 20 blank and 20 full | blackout: joint < 0.3 by M = 1,500 and about 0 at 2,000 |
+| writes during probe slots (store/recall oracle partly removed; stress test) | a copy from the step-1,000 snapshot runs steps 1,001-1,200 on the main line's rolling schedule (items keep `_pat`, `_plat` and `_coin`). In addition, every non-blank slot draws plateaus at f_q per cell from (seed, 18, 3, k), applies BTSP with coins from the same stream to lines with >= 3 spikes in the 100 ms slot, and writes feedback from memory cells responding in the slot's last 50 ms. Still scheduled: slot boundaries, the eligibility window and the write time; background never writes. After step 1,200 each written probe is re-presented once, in write order, in the online rhythm with sham encodings; it counts as "stored" if recall of its new assembly reaches >= 0.8. Compared with the main line at matched items (M = 1,200) and matched plateau episodes (about 1,370). BTSP depressions of existing items are reported | about 170 probes written, nearly all "stored" (by arithmetic); older-item recall falls as at matched load |
+| out-of-distribution probes (a copy at 1,000 with the sham rhythm; stream 18, 4) | 40 lures (novel items sharing 50 lines with a stored unreserved item), 40 cues of 30 % of an item's lines, 40 half cues with 10 of 50 lines swapped for noise | lures recalled as the stored item; 30 % cues: C1 about 0.2-0.5; noisy cues below half cues |
+| efficiency | bits per synapse; inherited window widths (J ±5 %, J_fb ±29 %) | about 0.2 bits per synapse |
 
-**Cut on review, recorded in the ledger:**
-- the a = 50 and a = 200 transfer timelines move to the capacity contract;
-- the re-exposure arm moves to the familiarity and representation contract (FID-9).
+**Cut on review** (ledger FID-9):
+- the a = 50 and 200 transfer timelines go to the capacity contract;
+- re-exposure goes to the familiarity and representation contract.
+
+## Order of runs on one seed
+
+1. Main line steps 1-500. Keep snapshot S500 (a deep copy) and run the M = 500 habituation arm
+   from it.
+2. Main line steps 501-1,000. Keep S1000, run the M = 1,000 habituation arm from it, and run the
+   P2-E1 forward-store checks (plain E1 to 500 and 1,000).
+3. Append `kill_test_seed`, the gated record. Validity check 6 is gated over steps 1-2.
+4. Run the reported arms, then append `reported_arms`:
+   - twins A and B from S500 and S1000;
+   - writes during probes and out-of-distribution probes from S1000;
+   - main line steps 1,001-3,000;
+   - the reference line, the novel-duty twin and the duty arm, each from step 1.
+
+**Cost:** about 35 min gated and 35-50 min reported per seed. Snapshots take about 0.1-0.2 GB.
 
 ## Predictions before implementation
 
-These are the red-team's exploratory numbers (rough re-implementations, seeds 42-43). They stay
-on record. Predictions from the real driver will be **appended** below them, never replacing
-them (M10).
+These are the red-team's exploratory numbers. Predictions from the real driver will be
+**appended** below them, never replacing them.
 
 | criterion | prediction |
 |---|---|
-| O1 | **FAIL at M = 1,000** (C1 about 0.70-0.85). At M = 500 borderline (0.89-0.96). C2 and C3 hold |
-| O2 | holds at M = 500. At M = 1,000 borderline (online joint 0.935-1.0) |
-| O3 | memory **FAIL at M = 1,000** (ages 781+: about 0.70-0.80); borderline at 500. Content about 0.93 |
-| O4 | at M = 1,000 likely not estimable (eligible < 25 when per-cue recall is about 0.77); at M = 500 uncertain |
-| O5 | likely holds at M = 500; uncertain at M = 1,000 |
+| O1 | **FAIL at M = 1,000** (C1 about 0.70-0.85); borderline at 500 (0.89-0.96); C2 and C3 hold |
+| O2 | holds at 500; borderline at 1,000 (online joint 0.935-1.0) |
+| O3 | memory **FAIL at M = 1,000** (cohort ages 561-999; proxy for ages >= 281: 0.70-0.80); borderline at 500; content about 0.93 |
+| O4 | at M = 1,000 likely not estimable (eligible < 25 at a per-cue "both" rate of about 0.77); at 500 uncertain |
+| O5 | at M = 1,000 fails from sampling (zero-effect pass probability about 0.003 at 0.77), so RECOVERY NOT ESTIMABLE; likely holds at 500 |
 | validity | holds |
 
-**Expected labels:** ONLINE INDEX FAIL, probably with HABITUATION FAIL (not estimable at
-M = 1,000). P(PASS) < 0.05.
+**Expected labels:** ONLINE INDEX FAIL, with HABITUATION NOT ESTIMABLE and RECOVERY NOT ESTIMABLE
+at M = 1,000, and possibly ONLINE CONTENT FAIL. P(PASS) < 0.05.
 
-## Decision (predeclared; FID-4)
+## Decision (predeclared)
 
 - **On PASS.** Stage 1's online clause is met, for the P2-E3 system on independent random items,
-  at loads within the demonstrated capacity.
-  - Stage 1 still needs the structured-input clause (P2-E5) and capacity growth.
-  - No claim of lifelong memory is made until bounded capacity and graceful forgetting are shown.
-  - Any later change to the feedback write or the operating point must re-pass P2-E4's gates on
-    fresh seeds. The driver is built so its gates can be re-run cheaply on a changed system.
+  within the demonstrated capacity.
+  - Stage 1 still needs P2-E5 (structured input) and capacity growth.
+  - No claim of lifelong memory is made before bounded capacity and graceful forgetting are
+    shown.
+  - Any later change to the write or the operating point must re-pass P2-E4's gates on fresh
+    seeds. The driver is built to make that cheap.
 - **On any FAIL.**
-  - The failure is recorded.
+  - It is recorded.
   - The claim that accommodation provides a usable online operating point is withdrawn for the
     failing loads.
-  - Work proceeds to P2-E5 (structured input), as the owner ordered.
-  - Whether a separately contracted operating-point mechanism comes before or after the
-    contamination fix is the owner's decision. No parameter of P2-E2 or P2-E3 is retuned.
-- **The duty arm,** however it comes out, does not satisfy the online clause.
+  - Work proceeds to P2-E5, as the owner ordered.
+  - Where a separately contracted operating-point mechanism sits relative to the contamination
+    fix is the owner's decision. Nothing is retuned.
+- **On INVALID.** It is recorded and reported to the owner. A re-run needs the owner's ruling.
+- **The duty arm** never satisfies the online clause.
 
 ## Files
 
 | file | contents |
 |---|---|
-| `plant2/experiments/p2_e4_online.py` | the driver (subclass of E3; E3 is not edited) |
+| `plant2/experiments/p2_e4_online.py` | the driver (a subclass of E3; E3 is not edited) |
 | `plant2/power.py` | power functions |
 | `plant2/tests/test_p2_e4.py` | tests |
 | `bench/results/plant2.jsonl` | records (append-only): `power_reference`, `exploration_seed`, `power_predictions`, `kill_test_seed`, `kill_test_verdict`, `reported_arms` |
 
-- **Record order.** The gated record per seed is written before any reported arm runs.
-- **Seeds.** Exploration on 42-43; gated seeds 16-20.
-- **Cost estimate.** About 35 min per seed for the gated parts (habituation copies dominate,
-  without store upkeep) and about 20 min for the reported arms.
+**Seeds:** exploration 42-43; gated 16-20.
