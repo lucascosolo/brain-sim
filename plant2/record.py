@@ -21,7 +21,18 @@ def cache_dir(*parts):
 def git_state():
     def run(*args):
         return subprocess.run(["git", "-C", str(REPO), *args], capture_output=True, text=True).stdout.strip()
-    return {"commit": run("rev-parse", "HEAD"), "dirty": bool(run("status", "--porcelain", "--untracked-files=no"))}
+    untracked = [l for l in run("status", "--porcelain").splitlines() if l.startswith("??")]
+    return {"commit": run("rev-parse", "HEAD"), "dirty": bool(run("status", "--porcelain", "--untracked-files=no")),
+            "untracked": len(untracked)}
+
+
+def runtime():
+    """Interpreter, numpy and CPU-kernel settings: digests depend on numpy's SIMD kernels (AUDIT 2026-10-10)."""
+    import platform
+
+    import numpy as np
+    return {"python": platform.python_version(), "numpy": np.__version__, "machine": platform.machine(),
+            "npy_disable_cpu_features": os.environ.get("NPY_DISABLE_CPU_FEATURES", "")}
 
 
 def digest(obj):
