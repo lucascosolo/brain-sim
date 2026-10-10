@@ -274,7 +274,57 @@ Also:
 
 ## Calibration result
 
-(appended after the calibration, before any gated seed)
+**Run 2026-10-10 on seed 0**, code 68beb4c, contract digest e829ac7011a8c2cd.
+- **Records:** `kind` `calibration_point` x3 and `calibration_verdict`.
+- **Log:** `~/.cache/brain-sim/plant2/p2_e3/calibrate.log`.
+- **Convergence:** mean |dvbar| was 0.031 / 0.048 / 0.102 mV at M = 250 / 500 / 1,000, against a
+  0.2 mV bar. The signed drift was -0.013 / -0.023 / -0.089 mV.
+
+**A bug found and fixed before any gated run.**
+- **The bug.** The first calibration (code 8c240bc, digest 2583f5e1f7e30627) set
+  `window = 75` in the P2-E3 config, for the reconstruction readout. But P2-E1/E2's memory
+  criteria read the same key, which should be 50 ms. So the memory-layer numbers it reported
+  (D5) were computed at 75 ms. On seed 0 at M = 1,000 that gave C2 0.880.
+- **How it was found.** A diagnostic showed the cause was neither the continuation nor the
+  test code.
+- **The fix.** The readout window now has its own key (`rec_window`), and a test pins both
+  windows.
+- **The re-run.** The calibration was re-run with the fixed code. All 202 readout arms are
+  bit-identical between the two runs, because neither the memory raster nor the replay depends
+  on that key. J* is the same, and only the reported memory C2 at M = 1,000 changed, to 0.970.
+  Both runs' records stay in the append-only file.
+
+**Passing windows** (pass fractions D1/2 joint, D3 and D4 >= 0.90 at every load):
+
+| arm | passing J values at M = 250 / 500 / 1,000 | passing at all three loads |
+|---|---|---|
+| g = 0.3 | 84 / 83 / 33 | one contiguous run, **2.00-3.60 mV**, not censored |
+| g = 0 | 35 / 19 / 0 | **none**. The fallback is the J with the largest minimum: **1.45 mV** (joint 0.885 at M = 1,000) |
+
+**J_fb* = 2.80 mV.** The matched g = 0 arm runs at 1.45 mV, and it has no calibration window.
+
+**Seed-0 re-read at the frozen values** (the item-level predictions for the gated seeds):
+
+| M | arm | joint D1/2 | D1 | D2 | D3 | D4 | latency | HD ratio p10 / 50 / 90 |
+|---|---|---|---|---|---|---|---|---|
+| 250 | main (2.80, g 0.3) | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 22 ms | 0.00 / 0.02 / 0.08 |
+| 500 | main | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 23 ms | 0.00 / 0.04 / 0.08 |
+| 1,000 | main | 0.990 | 0.990 | 1.000 | 1.000 | 0.980 | 25 ms | 0.00 / 0.04 / 0.08 |
+| 250 | matched g 0 (1.45) | 0.950 | 0.950 | 1.000 | 1.000 | 0.920 | 31 ms | |
+| 500 | matched g 0 | 0.930 | 0.930 | 1.000 | 1.000 | 0.920 | 33 ms | |
+| 1,000 | matched g 0 | **0.885** | 0.910 | 0.975 | 1.000 | **0.880** | 34 ms | 0.02 / 0.04 / 0.66 |
+| 1,000 | g 0 at 2.80 | **0.130** | 1.000 | **0.130** | 0.995 | 0.120 | 23 ms | 0.14 / 2.26 / 12.6 |
+
+Memory layer (D5), seed 0: C1 0.985 / 0.955 / 0.945, C2 1.0 / 1.0 / 0.970, C3 1.0 / 1.0 / 1.0.
+
+**Predictions for gated seeds 11-15, revised from these numbers before any gated seed:**
+- **Main arm:** joint >= 0.97 at M <= 500 and 0.95-0.99 at M = 1,000; D3 >= 0.99; D4 within
+  0.03 of joint.
+- **Latency:** 22-26 ms. That is barely later than the memory layer's own 22 ms, because rec
+  cells fire on the first wave of memory spikes.
+- **Matched g = 0 arm:** fails at M = 1,000 on most seeds (joint about 0.88).
+- **Chance of PASS: about 70 %.** The remaining risk is D5 (memory C1 at M = 1,000; seed 0 has
+  0.945) and seed-to-seed spread in the joint score at M = 1,000.
 
 ## Result
 

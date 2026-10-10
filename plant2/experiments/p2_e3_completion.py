@@ -419,6 +419,10 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("calibrate")
+    vp = sub.add_parser("verdict", help="verdict over the latest gated kill_test_seed records at these J values")
+    vp.add_argument("--J", type=float, required=True)
+    vp.add_argument("--J0", type=float, required=True)
+    vp.add_argument("--j0-fallback", action="store_true")
     r = sub.add_parser("run")
     r.add_argument("--J", type=float, required=True)
     r.add_argument("--J0", type=float, required=True)
@@ -436,6 +440,19 @@ def main(argv=None):
 
     if args.cmd == "calibrate":
         calibrate(log=log)
+        return 0
+    if args.cmd == "verdict":
+        import json
+        rows = [json.loads(l) for l in record.RESULTS.read_text().splitlines()]
+        latest = {}
+        for r in rows:
+            if (r.get("experiment") == "P2-E3" and r.get("kind") == "kill_test_seed" and r.get("gated")
+                    and r.get("J_star") == args.J and r.get("J0") == args.J0 and r.get("contract_digest") == DIGEST):
+                latest[r["seed"]] = r
+        missing = [s for s in GATED_SEEDS if s not in latest]
+        if missing:
+            raise SystemExit(f"no gated record for seeds {missing}")
+        verdict([latest[s] for s in GATED_SEEDS], args.J, args.J0, j0_calibrated=not args.j0_fallback, log=log)
         return 0
     recs = [run_seed(CONTRACT, s, args.J, args.J0, args.gated, log=log) for s in args.seeds]
     if args.verdict:
