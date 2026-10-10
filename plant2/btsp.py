@@ -49,6 +49,16 @@ class BinarySynapses:
         return int(add.size), int(present.sum())
 
 
+    def add(self, new_keys):
+        """Set the given synapses to 1 (a clipped, one-shot write); already-stored keys are unchanged."""
+        new_keys = np.unique(np.asarray(new_keys, np.int64))
+        if not new_keys.size:
+            return 0
+        new_keys = new_keys[~np.isin(new_keys, self.keys, assume_unique=True)]
+        self.keys = np.insert(self.keys, np.searchsorted(self.keys, new_keys), new_keys)
+        return int(new_keys.size)
+
+
 def btsp_update(store, plateau_cells, eligible_inputs, rng, p_flip=0.5):
     """Apply Wu & Maass Eq. 1 for one episode. Returns (potentiated, depressed) counts."""
     plateau_cells = np.asarray(plateau_cells, np.int64)

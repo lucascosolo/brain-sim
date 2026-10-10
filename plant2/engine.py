@@ -125,6 +125,22 @@ class Projection:
         np.add.at(ring, (slots, self.post[idx]), self.weight[idx])
 
 
+class GlobalInhibition:
+    """Every spike of `src` delivers -weight (mV) to every cell of `dst` after `delay` ticks.
+
+    A population-level proxy for an interneuron pool driven by `src` (P2-E3's fixed element)."""
+
+    def __init__(self, src, dst, weight, delay):
+        if not 1 <= delay <= dst.d_max:
+            raise ValueError("delay must lie in 1..d_max of the target population")
+        self.src, self.dst, self.weight, self.delay = src, dst, f32(weight), delay
+
+    def deliver(self, spikes, t):
+        if spikes.size:
+            ring = self.dst.ring
+            ring[(t + self.delay) % ring.shape[0]] -= self.weight * spikes.size
+
+
 class Net:
     """Ticks sources and LIF populations and routes spikes through projections."""
 
