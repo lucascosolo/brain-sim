@@ -348,3 +348,39 @@ Given by the owner after reviewing P2-E2 and its independent reviews. Recorded a
   owner's approval.
 - The objective is genuine, generalisable, experience-driven learning, not collecting passing
   benchmarks.
+
+## 2026-10-10: P2-E3 reviewed; evaluation against the north star; work paused for the owner
+
+**What happened.**
+- **P2-E3 (content completion) passed** on 5/5 fresh gated seeds.
+- **Four independent reviewers** found no bug that changes a reported number.
+- **Their corrections are appended** to the P2-E3 document, with nothing above them edited:
+  - the plateau-set control was read backwards: the responder-based write adds nothing
+    measurable;
+  - the claim is scoped to independent random items;
+  - the feedback store saturates past capacity;
+  - "inhibition required" holds at 0.25 items per cell only.
+- **The readout's span counter was fixed**, and scoring tests were added.
+
+**The evaluation** (`docs/plant2/EVAL-after-P2-E3.md`). P2-E3 is plumbing that later stages
+need, not evidence of learning power. It is a spiking Willshaw hetero-associative memory with
+random keys. An exploratory check on items that share about 16 % of their lines (two seeds)
+collapses content completion: joint 0.15-0.17 at M = 500, against 0.99 for independent items.
+
+**What was decided.**
+- **Chosen:** stop before committing the P2-E4 (online memory) contract, and put five decisions
+  to the owner. The decisions cover:
+  - a structured-input clause in Stage 1;
+  - P2-E4's scope past capacity and without the write oracle;
+  - inhibition in the memory layer for Stage 2;
+  - whether content-using mechanisms (an error-correcting write, familiarity gating) come
+    before Stage 2;
+  - the Stage 3 gate.
+
+  Both north-star reviewers recommended this pause, and the answers change what P2-E4 should
+  gate.
+- **Rejected:** committing P2-E4 as drafted and running it. The draft is revised
+  (`docs/plant2/P2-E4-online-memory.draft.md`) but has not been red-teamed. Gated seeds 16-20
+  are untouched.
+- **Rejected:** starting a new mechanism to rescue the structured-input result. That would be
+  unplanned tuning of a finding that has not yet been gated.
