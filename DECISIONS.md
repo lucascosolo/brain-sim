@@ -384,3 +384,87 @@ collapses content completion: joint 0.15-0.17 at M = 500, against 0.99 for indep
   are untouched.
 - **Rejected:** starting a new mechanism to rescue the structured-input result. That would be
   unplanned tuning of a finding that has not yet been gated.
+
+## 2026-10-10: the owner's rulings after the P2-E3 evaluation
+
+**Provenance.** The owner sent these rulings in reply to `docs/plant2/EVAL-after-P2-E3.md`. They
+were drafted with an outside assistant's help and relayed by the owner as their own decisions.
+They are recorded here in substance.
+
+1. **Approved: structured-input robustness becomes a Stage 1 gate.**
+   - **The test.** A prospective, predeclared test of item-specific episodic recall on correlated
+     inputs: related exemplars with about 16 % sibling overlap, scored with the existing
+     content-completion and specificity criteria.
+   - **Loads and seeds.** M = 500, and ultimately M = 1,000, on fresh seeds.
+   - **Diagnostic arms.** Lower and higher overlap levels.
+   - **P2-E3 is unchanged.** Its PASS stands, scoped to independent random items.
+   - **The objective.** To remember previously experienced correlated items without
+     contamination. Generalising to a never-seen family member belongs to Stage 3.
+2. **Approved with a condition: P2-E4 stays focused on online memory.**
+   - **Gated:** continuous recall, interference resistance, retention of the oldest items,
+     habituation and recovery, all at loads within the demonstrated capacity.
+   - **Reported stress tests, not P2-E4 gates:** learning past capacity to M = 3,000, and the
+     arms without the write oracle.
+   - **A future requirement.** Bounded capacity and graceful forgetting must be met before any
+     claim of robust, lifelong episodic memory.
+   - **What P2-E4 keeps:** the continuous timeline, frozen parameters, the no-settle rule, and
+     an honest distinction between experimenter-scheduled writes and autonomous learning.
+   - **To add before P2-E4 is frozen:**
+     - a blank-cue control proving that recall is caused by the probe, not by lingering
+       encoding activity;
+     - a never-probed cohort of the oldest items, separating retention from the effects of
+       repeated probes;
+     - power checks that account for dependent measurements and the full five-seed acceptance
+       rule;
+     - verification that the optimised reconstruction replay matches continuous simulation.
+3. **Conditionally approved: fixed inhibition in the Stage 2 memory layer.**
+   - **When.** Stage 2 contracts may declare fixed, activity-proportional inhibition as a
+     stabilising circuit element when evidence justifies it.
+   - **Required:**
+     - a matched no-inhibition comparison;
+     - frozen parameters;
+     - independent controls;
+     - tests showing that it does not just suppress all activity or force an answer.
+   - **Not allowed.** P2-E3's coefficient does not carry over automatically, and inhibition is
+     never treated as a learning mechanism.
+4. **Priority: resolve structured-memory contamination before Stage 2.**
+   - **First step.** Run the structured-input test on the existing system with no new
+     mechanism.
+   - **If it fails,** investigate the responder-based feedback write and its cross-contamination,
+     against the plateau-set baseline.
+   - **The error-correcting write** (driven by the mismatch between input and regenerated
+     content) is an approved research direction, not an assumed solution. Its contract must test
+     two things:
+     - whether the feedback supplies useful error information;
+     - whether corrections preserve unrelated memories.
+   - **One new mechanism per contract.**
+   - **Familiarity-gated allocation is deferred** until it is settled how repeated inputs should
+     be represented in different contexts. Stage 2 needs distinct episode identities when the
+     same item appears in different sequences, and familiarity must not erase them.
+5. **Approved: a stronger Stage 3 gate.**
+   - **The prototype effect and exemplar specificity must pass jointly.**
+   - **Label efficiency** is tested at predeclared hard distortion levels, including about 0.8
+     where appropriate. The level must not be chosen merely to make the raw-input baseline fail.
+   - **Comparisons:** raw input, a never-trained twin, nearest-centroid and k-nearest-neighbour
+     classifiers.
+   - **The bar.** Meaningful absolute accuracy, plus the predeclared label-efficiency gain.
+   - **Averaging or superposition at retrieval does not count** as learned abstraction.
+
+**Execution order.**
+1. Red-team and freeze P2-E4, implement it, and run it on untouched gated seeds 16-20.
+2. Run the structured-input diagnostic before any Stage 2 work. If it fails, a separately
+   contracted correction mechanism comes first.
+3. Capacity scaling continues, measuring content accuracy as well as index recall.
+
+**Standing.**
+- **Every experiment is evaluated** by whether it reduces the cognition the experimenter
+  supplies and increases what the system learns or decides from its own experience.
+- **Unchanged rules:**
+  - independent review;
+  - append-only results;
+  - predeclared kill tests;
+  - full provenance;
+  - no parameter rescue after a failed gate;
+  - no deletion;
+  - the plant stays frozen;
+  - no merge into `main` without the owner's approval.

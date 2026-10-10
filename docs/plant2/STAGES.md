@@ -42,9 +42,9 @@ experiment's own contract says otherwise, against a never-trained or shuffled co
 
 | stage | capacity it adds | gate (all numeric bars predeclared per experiment) |
 |---|---|---|
-| 1 | one-shot episodic memory | Items shown once are stored so that a half cue re-evokes >= 80 % of the item's written assembly within 50 ms for >= 90 % of items at a load of >= 0.25 items per memory cell; unlearned cues ignite < half an assembly; holds for the oldest items and after 60 s of ongoing activity. Then: the half cue regenerates the missing half of the input (content completion), and capacity grows about linearly with cell count. |
+| 1 | one-shot episodic memory | Items shown once are stored so that a half cue re-evokes >= 80 % of the item's written assembly within 50 ms for >= 90 % of items at a load of >= 0.25 items per memory cell; unlearned cues ignite < half an assembly; holds for the oldest items and after 60 s of ongoing activity. Then: the half cue regenerates the missing half of the input (content completion), and capacity grows about linearly with cell count. Also (owner, 2026-10-10): recall holds online, while learning continues, with no settle (interference, oldest-item retention, repeated-cue habituation and recovery); and item-specific recall holds on correlated inputs (exemplars with about 16 % sibling overlap, existing content-completion and specificity criteria, M = 500 and ultimately 1,000, fresh seeds). |
 | 2 | sequences | After one exposure, sequences of 8 items that share items with other sequences replay in order from their first item with >= 90 % correct transitions, >= 50 sequences stored, shared items disambiguated by context >= 80 %. |
-| 3 | abstraction over experience | From exemplars of unseen prototypes, the never-seen prototype is recalled more completely than the seen exemplars (prototype effect), and a fixed linear readout of the network state classifies held-out exemplars with at least 2x fewer labels than on raw input or on a never-trained twin. |
+| 3 | abstraction over experience | From exemplars of unseen prototypes, the never-seen prototype is recalled more completely than the seen exemplars (prototype effect), jointly with exemplar specificity (each seen exemplar keeps its own distinguishing features), and a fixed linear readout of the network state classifies held-out exemplars with at least 2x fewer labels than on raw input or on a never-trained twin, with meaningful absolute accuracy, at predeclared hard distortion levels (including about 0.8 where appropriate), also against nearest-centroid and k-nearest-neighbour baselines. Averaging or superposition at retrieval alone does not count (owner, 2026-10-10). |
 | 4 | usable behaviour | Closed loop with a reward signal (three-factor rule; scalar neuromodulator, labelled proxy): bandit reversal re-learned within 20 trials; a delayed-reward T-maze (2 s delay) at >= 90 % within 200 trials; gridworld paths within 1.5x optimal within 100 episodes; compared with tabular Q-learning and a never-trained twin. |
 | 5 | model-based problem solving | After reward-free exploration, routes to a newly announced goal are generated internally (replay or preplay of learned transitions) and succeed first try on >= 80 % of held-out start-goal pairs, including a detour when a learned path is blocked; transitive inference on a 6-item hierarchy >= 85 %. |
 | 6 | working memory and binding | Four or more role-filler bindings held over 10 s and queried at >= 90 %; queries on novel role-filler combinations answered without retraining. |
@@ -58,6 +58,17 @@ Notes from the P2-E1 review (`review/plant2/P2-E1/`):
 - Capacity that grows linearly with cell count needs a signal-to-noise mechanism of its own:
   sparser codes over more inputs, recurrent completion with a stabiliser, or matched
   inhibition. No operating-point mechanism gets credit for it.
+
+Owner's requirements of 2026-10-10 (`DECISIONS.md`):
+- Bounded capacity and graceful forgetting must be shown before any claim of robust, lifelong
+  episodic memory.
+- Stage 2 contracts may declare fixed, activity-proportional inhibition in the memory layer as a
+  stabilising element when evidence justifies it, with a matched no-inhibition comparison,
+  frozen parameters and tests that it neither silences all activity nor forces an answer. No
+  coefficient carries over from P2-E3.
+- Familiarity-gated allocation waits until it is settled how a repeated item keeps distinct
+  episode identities in different contexts.
+- Every experiment is judged by whether it reduces the cognition the experimenter supplies.
 
 The old ladder maps onto this one: old 1 (episode memory) is 1, old 2 (sequences) is 2, old 3
 (structure and scale) is 7, old 4 (symbol-like tokens) is 8. Abstraction, behaviour, planning
@@ -83,5 +94,6 @@ and working memory are the north star's additions.
 Stage 1 also needs a predeclared **online-memory** experiment: recall while learning continues,
 with no 50 s settle, covering interference, retention and repeated-cue habituation. Order:
 P2-E3 (content completion), then an evaluation against the north star, then online memory and
-capacity. The evaluation after P2-E3 is `docs/plant2/EVAL-after-P2-E3.md`; it puts four questions
-to the owner before the online-memory contract is committed.
+capacity. The evaluation after P2-E3 is `docs/plant2/EVAL-after-P2-E3.md`; the owner's rulings on it
+(2026-10-10) set the order: P2-E4 (online memory), then the structured-input diagnostic and,
+if it fails, a correction mechanism before any Stage 2 work; capacity scaling continues.
