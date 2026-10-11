@@ -158,3 +158,121 @@ synapses unchanged**. It does not show that the threshold offset alone caused th
 Wherever the predictions above say "network state rather than erased memories", read
 "state- or protocol-dependent, not erasure". Isolating accommodation would need a separately
 contracted intervention.
+
+## Exploration results (seeds 42-43; exploratory, not gated results)
+
+Run 2026-10-11 with `analysis/p2e4_diagnosis.py --seed 42` and `--seed 43`, after the
+exploration records were committed. The `diagnosis` records are in `bench/results/plant2.jsonl`
+(commits ba97fcc and 78b9251).
+
+**Validity.** Both re-simulations are valid:
+- 1,000 logged main-line steps were compared per seed, with 0 mismatches;
+- twin B reproduced every recorded aggregate at both loads (`D3_verified` true).
+
+The gated diagnosis (seeds 16-20) runs only after the P2-E4 verdict.
+
+### D1: index against content (200 half cues per seed and load)
+
+| seed | load | both | content without index | index without content | neither |
+|---|---|---|---|---|---|
+| 42 | 500 | 178 | 20 (10 %) | 1 | 1 |
+| 43 | 500 | 183 | 16 (8 %) | 0 | 1 |
+| 42 | 1,000 | 136 | 54 (27 %) | 2 | 8 |
+| 43 | 1,000 | 156 | 40 (20 %) | 2 | 2 |
+
+**Prediction held.** At M = 1,000, content without index is 20-27 % (predicted 15-30 %), and
+index without content is 1 % (predicted under 3 %).
+
+### D2: "content without index" against "both" at M = 1,000 (medians over cues)
+
+| measure | both (42 / 43) | content without index (42 / 43) | prediction | outcome |
+|---|---|---|---|---|
+| A(x) recall at 50 ms | 0.94 / 0.93 | 0.68 / 0.73 | 0.5-0.8 | held |
+| share rescued by a 75 ms window (A recall >= 0.8) | - | **0.93 / 0.98** | a minority | **failed**: the large majority |
+| R(x) recall at 50 ms | 0.88 / 0.86 | 0.60 / 0.59 | at least A's | **failed**: below A's |
+| median first-spike tick of A(x) cells | 25 / 26 | 33.5 / 34 | later by >= 5 ms | held (+8 ms) |
+| assembly offset at slot onset | 8.13 / 8.09 mV | 8.42 / 8.49 mV | higher | held (+0.3-0.4 mV) |
+| global offset at slot onset | 6.86 / 6.89 mV | 7.09 / 7.14 mV | not predicted | higher (+0.23-0.25 mV) |
+| item age | 649 / 685 | 729 / 660 | older | **not held** (older on 42, younger on 43) |
+| \|R(x)\|, \|R(x) ∩ A(x)\| | 23, 20 / 22, 19 | 22.5, 20 / 23, 20 | - | no difference |
+| regenerated missing lines with an A(x) candidate (median share) | 1.0 / 1.0 | 1.0 / 1.0 | most | held |
+| ... with only R(x)-not-A(x) candidates | 0 / 0 | 0 / 0 | under a quarter | held |
+
+The M = 500 cells show the same pattern on a smaller count (A recall 0.72-0.74, +7-10 ms later,
+75 ms rescue 0.94-1.0).
+
+**Why the A and R latencies are identical.** At recall, the few R(x)-not-A(x) cells (about 3 per
+item) are almost silent; this is why R recall is below A recall. So the spiking R cells are
+essentially the spiking A cells, and the medians coincide. It is not a bug.
+
+**Reading (narrowed, no causal claim):**
+- **Slower, not absent.** The online index failures are mostly slowed retrievals. The
+  assembly's first spikes come about 8 ms later, and more than 90 % of those cues reach the
+  recall bar within 75 ms.
+- **The same cells carry the content.** The content readout counts reconstruction lines within
+  75 ms. Every regenerated missing line has an earlier-spiking A(x) candidate, so the same late
+  assembly carries the content.
+- **Most of the D1 dissociation is a timing difference between the 50 ms index window and the
+  75 ms content window,** not two separately failing memories.
+- **These cues start at a slightly higher threshold offset,** both global and assembly
+  (+0.2-0.4 mV), consistent with the operating-point account. D2 is correlational. Nothing here
+  changes a criterion: C1's 50 ms window is frozen, and the O1 failure stands.
+
+### D3: settled twin B, the same stored synapses
+
+| seed | load | index failures online | pass after settle | McNemar index (online pass, settled fail / the reverse) | content failures online | pass after settle | McNemar content |
+|---|---|---|---|---|---|---|---|
+| 42 | 500 | 21 | 100 % | 7 / 21 | 2 | 50 % | 1 / 1 |
+| 43 | 500 | 17 | 100 % | 4 / 17 | 1 | 100 % | 0 / 1 |
+| 42 | 1,000 | 62 | 95 % | 7 / 59 | 10 | 80 % | **22 / 8** |
+| 43 | 1,000 | 42 | 95 % | 8 / 40 | 4 | 100 % | **27 / 4** |
+
+**Prediction held for the index.** 95-100 % of online index failures pass after the settle
+(predicted >= 70 %). Per the narrowed reading, this is state- or protocol-dependent recovery
+with the synapses unchanged, not erasure. It does not isolate the threshold offset.
+
+**Not predicted: content at M = 1,000 is worse after the settle.**
+- 22 and 27 cues pass content online but fail after the settle, against 8 and 4 the reverse.
+- This matches twin A, where the online-written store reads 0.815 and 0.89 under P2-E3's
+  protocol, against 0.995 for the plateau-set store on the same raster.
+- **The reading:** the online-written store is contaminated. The online state's high offset
+  suppresses the intrusions, and the settled state does not.
+
+### D4: habituation (copies; all eligible items)
+
+| seed | load | eligible | habituated | offset rise, habituated / not | corr(drop, rise) | recovery among habituated | matched online items (habituated / not) |
+|---|---|---|---|---|---|---|---|
+| 42 | 500 | 31 | 22 | 3.28 / 3.29 mV | -0.03 | 0.86 | 10 / 1 |
+| 43 | 500 | 22 | 10 | 3.29 / 3.24 mV | 0.05 | 1.00 | 3 / 5 |
+| 42 | 1,000 | 4 | 3 | 3.24 / 3.34 mV | -0.37 | 1.00 | 0 / 0 |
+| 43 | 1,000 | 6 | 6 | 3.03 / - mV | 0.20 | 0.83 | 1 / 0 |
+
+- **Prediction partly failed.** The assembly offset does rise with repetition, by about 3.3 mV,
+  but **habituated and non-habituated items rise equally**. The size of an item's drop does
+  not track its offset rise (|r| <= 0.05 at M = 500).
+- **The association with online index failure is not estimable.** The median habituation item
+  was never probed online (0 probes), and the matched groups have 0-10 items.
+- **What this rules out, at the item level:** "habituated items accommodate more" as the
+  explanation. Whatever separates habituating items from the rest lies elsewhere, for example
+  in each item's drive margin. That margin was not measured here and needs its own predeclared
+  measure.
+
+### What the diagnosis says about the two problems
+
+The owner's guidance separates two problems:
+1. learning-time contamination of the content store;
+2. operating-point instability of index access.
+
+In exploration they are coupled through the threshold offset:
+- **The main line** runs at a high offset (6.9 mV at M = 1,000). Index retrieval is slowed
+  (D2), but intrusions from the contaminated store are held down (D3 content).
+- **The duty arm** (`reported_arms`; predeclared unable to satisfy the online clause) runs at a
+  lower offset (about 4.1 mV at M = 1,000). It restores online index recall (C1 0.935-0.965).
+  But the store it writes is contaminated: |R| grows to about 58 at ages 501-750 on seed 43,
+  and its settled joint is 0.24 on seed 43.
+
+**Implication.** Fixing the operating point alone would be expected to expose the
+contamination. That is a reason to settle the contamination question first, under structured
+input (P2-E5), as the owner ordered.
+
+This is a reading of exploratory, correlational data on two seeds. It is not a result.
