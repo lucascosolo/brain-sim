@@ -1,6 +1,6 @@
 # P2-E4 post-run diagnosis plan (predeclared, reported, not a gate)
 
-Written 2026-10-11, before any P2-E4 gated seed (16-20) has run, following the owner's comments
+Written 2026-10-10, before any P2-E4 gated seed (16-20) has run, following the owner's comments
 on the exploration results of seeds 42-43. P2-E4's frozen contract (cd17cde) and its frozen
 driver are not changed. Nothing here can alter a gated number, label or validity check.
 
