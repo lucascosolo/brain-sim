@@ -532,3 +532,85 @@ at M = 1,000, and possibly ONLINE CONTENT FAIL. P(PASS) < 0.05.
 | `bench/results/plant2.jsonl` | records (append-only): `power_reference`, `exploration_seed`, `power_predictions`, `kill_test_seed`, `kill_test_verdict`, `reported_arms` |
 
 **Seeds:** exploration 42-43; gated 16-20.
+
+## Predictions from the real driver (exploration seeds 42-43)
+
+Appended 2026-10-11, after implementation and before any gated seed. The sections above are
+unchanged.
+
+**Source.** `power_predictions` record, timestamp 2026-10-11T00:37:57Z, made by
+`p2_e4_online predict`:
+
+| field | value |
+|---|---|
+| contract digest | f8f8838bce35d38c |
+| plant2 tree | 9152f1e4 |
+| commit | 37b1c84 |
+| posterior draws | 300 |
+| simulations | 1,500 |
+| exploration records | from commit 737e8b1 |
+| skipped records | none |
+
+**Observed exploration counts, pooled over seeds 42 and 43** (passing cues of cues scored):
+
+| part | M = 500 | M = 1,000 |
+|---|---|---|
+| C1 (index recall of half cues) | 362 / 400 (0.905) | 296 / 400 (0.740) |
+| C2 (spurious) | 400 / 400 | 400 / 400 |
+| C3 (novel ignition) | 40 / 40 | 40 / 40 |
+| content joint | 397 / 400 (0.993) | 386 / 400 (0.965) |
+| D3 (novel regeneration) | 40 / 40 | 40 / 40 |
+| O3 memory (never-probed cohort) | 177 / 200 (0.885) | 148 / 200 (0.740) |
+| O3 content | 200 / 200 | 191 / 200 (0.955) |
+| control-copy "both" rate (habituation arm) | 0.799 | 0.586 |
+
+**Probability that each criterion holds on all five gated seeds.** These are full-rule simulations.
+Each cue's rate is drawn from its posterior, the seed effect has an SD of 0.18 on the logit scale,
+and O4-O5 come from a bootstrap of whole habituation items.
+
+| criterion | M = 500 | M = 1,000 |
+|---|---|---|
+| O1 C1 | 0.155 | 0.000 |
+| O1 C2 | 1.000 | 1.000 |
+| O1 C3 | 0.868 | 0.882 |
+| O2 joint | 1.000 | 0.985 |
+| O2 D3 | 0.878 | 0.873 |
+| O3 memory | 0.044 | 0.000 |
+| O3 content | 1.000 | 0.831 |
+| O4 | 0.000 | 0.000 |
+| O5 recovery | 0.207 | 0.344 |
+| O5 collateral | 1.000 | 0.991 |
+
+**P(PASS)** is 0. The median over posterior draws is 0, with a 5-95 % interval of [0, 0], and none
+of the 1,500 joint simulations passed. The probability that O1 index recall passes alone is
+4 × 10^-4 at M = 500 and below 10^-38 at M = 1,000.
+
+**Expected labels** (fraction of joint simulations carrying each):
+
+| label | probability |
+|---|---|
+| ONLINE INDEX FAIL | 1.00 |
+| HABITUATION FAIL | 1.00 |
+| RECOVERY NOT ESTIMABLE | 0.57 |
+| ONLINE CONTENT FAIL | 0.37 |
+| RECOVERY FAIL | 0.36 |
+
+RECOVERY NOT ESTIMABLE and RECOVERY FAIL are exclusive in the labelling. Together, recovery fails in
+about 0.93 of simulations. That mostly comes from requiring >= 90 % on all ten seed-loads at a
+per-seed pass probability of 0.74-0.80. It is not evidence of a recovery deficit: recovery passed
+on both exploration seeds.
+
+**Distance from the bar.** P(PASS) reaches 0.8 only if every per-cue rate is moved together by
++1.90 on the logit scale. That would put C1 at 0.98 at M = 500 and 0.95 at M = 1,000, and the
+control "both" rate at 0.96 and 0.90. This is not a near-miss.
+
+**How this differs from the predictions before implementation.**
+- **Habituation.** Those predicted HABITUATION NOT ESTIMABLE at M = 1,000. The driver now predicts
+  HABITUATION FAIL, carried by M = 500: 22 of 31 eligible items habituated on seed 42, and 10 of
+  22 on seed 43, against a bar of 10 %.
+- **O3 memory now also fails at M = 500.** Its probability is 0.044, against "borderline" before.
+- **The rest stands:** ONLINE INDEX FAIL, possible ONLINE CONTENT FAIL, recovery not estimable at
+  M = 1,000.
+
+**Consequence under the Decision above.** A FAIL is expected. The gated seeds still run, exactly as
+frozen, because the contract requires the independent gated evaluation. Nothing is retuned.
