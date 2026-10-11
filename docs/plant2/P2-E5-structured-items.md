@@ -759,3 +759,107 @@ seeds are scheduled after P2-E4's gated lanes finish.
 | `plant2/tests/test_p2_e5.py` | tests on seeds 90 and up: generator statistics and stream keys (k >= 1), the reported block leaving gated scores identical, the read-only wrapper leaving the stores identical to unmodified E3, validity 7, labels, Part B-E readings on synthetic records, guard |
 | `analysis/p2e5_power.py` | the power reference (outside plant2/ while P2-E4's tree is frozen) |
 | `bench/results/plant2.jsonl` | records, append-only: `power_reference`, `exploration_seed`, `power_predictions`, `kill_test_seed`, `reported_arm`, `kill_test_verdict` |
+
+## Predictions from the real driver (exploration seeds 44-45)
+
+Appended 2026-10-11, after implementation and before any gated seed. The sections above are
+unchanged.
+
+**Source.** The `power_predictions` record made by `p2_e5_structured predict` at 05:06:53Z:
+
+| field | value |
+|---|---|
+| contract digest | 8ab1cb47ff6ac06e |
+| plant2 tree | dc16f182 |
+| exploration records | committed up to 8c99564 |
+| posterior draws | 400 |
+| skipped records | none |
+| reported arms used | every arm on both seeds; none crashed; none dropped by the tree filter |
+
+All exploration arms were valid at both loads on both seeds.
+
+**Observed gated-arm counts, pooled over seeds 44 and 45** (passing cues of cues scored):
+
+| part | M = 500 | M = 1,000 |
+|---|---|---|
+| C1 | 372 / 400 (0.93) | 370 / 400 (0.925) |
+| C2 | 369 / 400 (0.92) | 194 / 400 (0.485) |
+| C3 | 400 / 400 | 397 / 400 |
+| C4 recall | 188 / 200 | 191 / 200 |
+| C4 spurious | 177 / 200 (0.885; seed 44 0.84, seed 45 0.93) | 82 / 200 (0.41) |
+| S2 (joint) | 52 / 400 (0.13) | 2 / 400 |
+| S3 | 400 / 400 | 389 / 400 (0.97) |
+| S4 | 14 / 200 (0.07) | 0 / 200 |
+
+**Probability that each criterion holds on all five gated seeds** (median over draws):
+
+| criterion | M = 500 | M = 1,000 |
+|---|---|---|
+| C1 | 0.64 | 0.49 |
+| C2 | 0.38 | 0.00 |
+| C3 | 1.00 | 1.00 |
+| C4 recall | 0.70 | 0.93 |
+| C4 spurious | 0.008 | 0.00 |
+| S2 | 0.00 | 0.00 |
+| S3 | 1.00 | 1.00 |
+| S4 | 0.00 | 0.00 |
+
+**P(PASS)** is 0: the median over draws is 0, with a 5-95 % interval of [0, 0]. Both labels,
+STRUCTURED INDEX FAIL and STRUCTURED CONTENT FAIL, are expected with probability 1.0. As the
+owner asked, this means no pass was observed in simulation. It is not a proof that a pass is
+impossible.
+
+**Readings on the exploration seeds** (computed by the frozen `readings` with one seed allowed;
+on the gated seeds they need at least four):
+
+| part | M = 500 | M = 1,000 |
+|---|---|---|
+| B: losses in cues (L_c / L_i / L_o), seeds 44, 45 | 53 / 0 / 29; 62 / 0 / 37 | 119 / 47 / 74; 126 / 42 / 69 |
+| B: reading | CONTAMINATION-DOMINANT | CONTAMINATION-DOMINANT (index and operating-point losses also material) |
+| C: count AUC; R_3 against the plateau-set store (frozen / grid best) | 0.9994-0.9995; 0.955-0.965 vs 0.95-0.965 / 0.99-1.0 vs 0.99-1.0 | 0.995; 0.16 vs 0.125-0.145 / 0.69-0.705 vs 0.665-0.69 |
+| C: reading | AVAILABLE FROM ACTIVITY (both loads) | |
+| D: R (online / P2-E3-protocol median intrusions) | 1.86, 1.82 | 1.90, 1.69 |
+| D: reading | WORSENS | WORSENS |
+| D: twin A joints, online / P2-E3 protocol / plateau-set / R_3 | 0.035-0.10 / 0.09-0.165 / 0.95-0.965 / 0.95-0.96 | 0.00 / 0.00-0.01 / 0.125-0.145 / 0.13-0.135 (AT FLOOR) |
+| E: s = 100 | joint 0.985-1.0 | joint 0.98 |
+| E: s = 100 reading | REPLICATES | |
+| E: pooled control | joint 0.99; CORRELATION-ATTRIBUTABLE | joint 0.145-0.17, plateau-set 0.525-0.545, C2 0.815-0.82; LINE LOAD SUFFICIENT, CORRELATION WORSENS |
+| E: s = 80 / s = 40 joints | 0.99-1.0 / 0.0 (C2 0.125-0.15) | 0.65-0.755 / 0.0 (C2 0.04-0.045) |
+| E: F = 40 joint (plateau-set) | 0.705-0.715 (0.99-1.0) | 0.065-0.09 (0.86-0.875) |
+| loads disagree | no | |
+
+**The online arm at M = 1,000, which the predictions above left unexplored:**
+
+| measure | seed 44 | seed 45 |
+|---|---|---|
+| online block C1 / C2 / C3 / joint | 0.57 / 0.97 / 1.0 / 0.045 | 0.595 / 0.975 / 1.0 / 0.06 |
+| twin B memory, online / settled | 0.57 / 0.94 | 0.595 / 0.94 |
+| settled C2 on the same synapses (twin A) | 0.495 | 0.47 |
+| threshold offset, online block / settled | 8.2 / 3.6 mV | 8.4 / 3.6 mV |
+| responders \|R\| at items 751-1,000, Jaccard(R, A) | 257, 0.09 | 277, 0.09 |
+| count AUC | 0.998 | 0.998 |
+
+- **Online, the index is specific but slow.** Online C2 holds at 0.97-0.975 while the settled
+  state on the same synapses gives 0.47-0.495; online C1 is 0.57-0.595 against 0.94 settled.
+  The trade-off P2-E4 found for content therefore also governs index specificity on correlated
+  items. The online state differs in its higher threshold offset among other things; which
+  variable is responsible is not isolated.
+- **The online write recruits far more cells than on independent items**: |R| 257-277 at items
+  751-1,000 (Jaccard with A about 0.09), against 41-45 in P2-E4. Even so, cells reaching >= 3
+  continuation spikes still pick out the assembly (count AUC 0.998).
+
+**How this differs from the predictions written before implementation:**
+- **Within or near the predicted ranges:** S1, S2, S4, the plateau-set, main and R_3 stores, Parts
+  B, C and D, s = 100, s = 80, s = 40, the pooled control and F = 40.
+- **S3 at M = 1,000** is 0.97-0.975, just below the qualitative ">= 0.98". Its five-seed pass
+  probability under the frozen bar is still 1.00.
+- **C4 spurious at M = 1,000** is 0.40-0.42, just below the predicted 0.35-0.47 midpoint and
+  inside the range.
+- **Part D at M = 1,000** reads WORSENS (predicted "WORSENS or MIXED"), with every joint AT
+  FLOOR.
+- **The online arm at M = 1,000** is new information (above).
+
+**Consequence under the Decision above.** A FAIL is expected, with STRUCTURED INDEX FAIL at both
+loads, so the result goes to the owner before any mechanism contract. The gated seeds still run,
+exactly as frozen: the record on fresh seeds is the baseline, and Parts B-D decide which
+contract comes next. Nothing is retuned.
