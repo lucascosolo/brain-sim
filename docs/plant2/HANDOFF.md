@@ -1,4 +1,4 @@
-# plant2 handoff (2026-10-11, updated about 16:25 UTC)
+# plant2 handoff (2026-10-11, updated about 17:00 UTC)
 
 This is the state of work for whoever continues, human or agent. Branch `plant2-stage1`; nothing is
 merged to `main` without the owner saying "merge".
@@ -37,10 +37,10 @@ merged to `main` without the owner saying "merge".
   STRUCTURED INDEX FAIL + STRUCTURED CONTENT FAIL; Part B CONTAMINATION-DOMINANT at both loads; Part C
   AVAILABLE FROM ACTIVITY; Part D WORSENS at both loads; s100 REPLICATES; pooled CORRELATION-ATTRIBUTABLE
   (M = 500) and LINE LOAD SUFFICIENT, CORRELATION WORSENS (M = 1,000).
-- **Running:** the independent results review, workflow wf_02fd9470-832 (methodology, code, constructive and
-  skeptical north-star lenses). Then: render it into `review/plant2/P2-E5/results-*.md`, ledger rows, the
-  Result appended to the contract, the STAGES row, and the report to the owner (the Decision routes any
-  STRUCTURED INDEX FAIL to the owner before any mechanism contract).
+- **Closed out:** results review (wf_02fd9470-832) rendered and in the ledger; Result appended
+  (20273ed); STAGES row; `docs/plant2/EVAL-after-P2-E5.md` for the owner; DECISIONS entry.
+- **Waiting on the owner.** No mechanism contract is drafted before the rulings in
+  EVAL-after-P2-E5 (which supersedes the open list below where they overlap).
 - **The verdict text must say** that validity 5's `proj_current` and `inh_ok` parts, in the
   online arm's `slot_checks_ok`, hold by construction (P2-E4 code review, F1).
 

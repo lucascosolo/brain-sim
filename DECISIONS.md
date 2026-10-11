@@ -735,3 +735,34 @@ drafted before P2-E5's verdict and these rulings.
 **Not done, by the owner's direction:**
 - the current experiments are not modified;
 - P2-E5 runs exactly as frozen.
+
+## 2026-10-11: P2-E5 run and closed out; the result goes to the owner before any mechanism contract
+
+**Result.** STRUCTURED INDEX FAIL + STRUCTURED CONTENT FAIL on 5 of 5 valid fresh gated seeds
+(f25d3ed). It is appended to the contract (20273ed). The four-lens results review is in
+`review/plant2/P2-E5/results-*.md`, and its 30 findings are in the ledger: 27 accepted, 3 deferred
+to the owner. Both independent recomputations matched the records exactly. Nothing was re-run or
+retuned.
+
+**Corrections recorded.**
+- "Online, the index is specific but slow" (appended predictions, and my report to the owner) is
+  withdrawn. The comparison was unpaired, and latency was not measured.
+- "No pass observed in simulation" is withdrawn. P(PASS) was an analytic product, numerically zero.
+- Part C is reworded: the plateau key is recoverable from activity. It is a measurement, not a
+  mechanism.
+- Part B at M = 1,000 is CONTAMINATION-DOMINANT under the predeclared grid-best convention, and
+  would read INDEX-DOMINANT at the frozen readout. Both are reported. The predeclared reading
+  stands.
+
+**Put to the owner** (`docs/plant2/EVAL-after-P2-E5.md`):
+- the STRUCTURED INDEX FAIL, which no feedback write can change;
+- the finding that no store reaches the content bar at M = 1,000 on these rasters;
+- the reviewers' disagreement over the next step, with a recommendation: the burst-gated write as a
+  reported replay, then the forward index as the next gated mechanism;
+- the choice of F;
+- the Part B convention;
+- the questions still pending from EVAL-after-P2-E4.
+
+**Not done:**
+- No mechanism contract is drafted before the owner rules.
+- Familiarity-gated allocation stays deferred.
