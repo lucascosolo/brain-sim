@@ -1,4 +1,4 @@
-# plant2 handoff (2026-10-11, updated about 04:50 UTC)
+# plant2 handoff (2026-10-11, updated about 05:12 UTC)
 
 This is the state of work for whoever continues, human or agent. Branch `plant2-stage1`; nothing is
 merged to `main` without the owner saying "merge".
@@ -30,17 +30,16 @@ merged to `main` without the owner saying "merge".
   - **Exploration seeds 44-45** are running the reported arms (s100, s80, s40, pooled, F40,
     online). Logs are in `~/.cache/brain-sim/plant2/p2_e5/explore_{44,45}.log`. Commit
     `bench/results/plant2.jsonl` as records arrive.
-- **When both seeds print "reported arms done":**
-  1. Commit the records.
-  2. Run `PYTHONPATH=. .venv/bin/python -m plant2.experiments.p2_e5_structured predict`. This
-     writes the `power_predictions` record.
-  3. Append "Predictions from the real driver (exploration seeds 44-45)" to the contract. It must
-     be append-only, because the guard requires the frozen contract to be a byte prefix of
-     HEAD's.
-  4. Commit, so that the tree is clean and the record is in HEAD.
-  5. Run gated seeds 21-25, two lanes, once each: `... p2_e5_structured run --seeds N --gated`.
-     Run-once markers are in `~/.cache/brain-sim/plant2/p2_e5/`. Commit records as they arrive.
-  6. Run `... p2_e5_structured verdict`, then an independent review.
+- **Done (05:07-05:10 UTC):** exploration seeds 44-45 finished every arm, valid; `predict`
+  wrote the `power_predictions` record (P(PASS) 0; both STRUCTURED FAIL labels expected); the
+  predictions were appended to the contract (694038c); the guard passes.
+- **Running:** gated seeds 21-25, each once, in two lanes started about 05:10 UTC
+  (`~/.cache/brain-sim/plant2/p2_e5/gated_lane1.log`: seeds 21, 22, 23;
+  `gated_lane2.log`: seeds 24, 25). Run-once markers are `gated_seed*.started` in the same
+  directory. Commit `bench/results/plant2.jsonl` as records arrive; never restart a seed whose
+  marker exists.
+- **Then:** `... p2_e5_structured verdict`, an independent review, the Result appended to the
+  contract, the STAGES row, and the report to the owner.
 - **The verdict text must say** that validity 5's `proj_current` and `inh_ok` parts, in the
   online arm's `slot_checks_ok`, hold by construction (P2-E4 code review, F1).
 
