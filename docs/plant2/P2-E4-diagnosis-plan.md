@@ -103,3 +103,38 @@ separable).
 - Any mechanism suggested by it needs its own contract, one at a time, with the owner's ruling
   where the mechanism belongs to a gated family. Accommodation, the operating-point mechanism,
   is in such a family.
+
+## Corrections after the owner's code review (2026-10-11; before the analysis was run on any seed)
+
+The owner reviewed commit e6c5385. Four corrections were made to `analysis/` only; nothing under
+`plant2/` changed.
+
+1. **D2 claimed too much.** The old measure ("lines whose feedback came only from cells outside
+   A(x)") counted inputs from any spiking cell. It did not require that cell to belong to R(x),
+   nor that it fired before the line.
+   - **Replaced by candidate-input fractions.** A candidate input is a feedback synapse from a
+     memory cell whose first spike within 75 ms came at least one tick (the feedback delay) before
+     the line's first spike. Each regenerated missing line is classed as having:
+     - an A(x) candidate;
+     - only R(x)-not-A(x) candidates;
+     - only candidates outside both;
+     - no earlier candidate.
+   - **A candidate is a possible contributor, not a proven one.** No causal claim rests on D2. A
+     causal claim would need a separately contracted ablation.
+2. **D3's check was weaker than stated.**
+   - **What the record allows.** The reported-arms record holds twin B only as aggregates per kind,
+     not per-cue pairs. So the strongest available check is to reproduce every recorded
+     aggregate per kind: n, the four pass fractions, and both McNemar discordant counts, which
+     pin the discordant pairs.
+   - **A missing record** now leaves D3 "not verified" (`D3_verified` false). It is no longer
+     counted as valid.
+3. **D4 now reports its matched sample sizes:**
+   - the number of habituated and non-habituated items that have an online index measurement;
+   - the median number of online probes per item.
+4. **The replay check now covers every logged main-line step.** It runs from step 1 to the second
+   gated load. Each step must exist, and must match kind, target, block and age as well as every
+   scoring field. A missing step counts as a mismatch.
+
+**What reproduction establishes.** Deterministic reproduction shows consistency with the recorded
+simulation, not proof of a causal explanation. D3 can give strong evidence that network state
+matters. D2 and D4 narrow the explanation; they do not establish it.

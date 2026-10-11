@@ -20,7 +20,8 @@ from plant2 import record
 from plant2.experiments import p2_e4_online as e4
 
 HALF3 = ("recent", "uniform", "cohort")
-COMPARE = ("recall", "spurious", "missing", "intrusions", "joint", "n_R50", "n_rec")
+COMPARE = ("kind", "target", "block", "age", "recall", "spurious", "missing", "intrusions", "joint", "n_R50", "n_rec",
+           "ignition", "lines", "leak_A", "leak_C")
 _orig_score_slot = e4.score_slot
 
 
@@ -56,19 +57,27 @@ def diag_score_slot(e, s, fm, fr):
         missing = np.setdiff1d(item, s["cue"])
         regen = np.intersect1d(missing, rec)
         lat = lambda cells: float(np.median(fm[cells][sp75[cells]])) if cells.size and sp75[cells].any() else None
-        only_R = None
+        cand = None
         if regen.size:
+            # candidate inputs: feedback synapses from memory cells whose first spike (k = 0..74) came at least one tick
+            # (the feedback delay) before the line's first spike. A candidate is a possible contributor, not a proven one.
             pre, post = e.fb.keys // m, e.fb.keys % m
-            fire = np.flatnonzero(sp75)
-            sel = np.isin(post, regen) & np.isin(pre, fire)
-            from_A = np.unique(post[sel & np.isin(pre, A)])
-            from_other = np.unique(post[sel & ~np.isin(pre, A)])
-            only_R = float(np.setdiff1d(from_other, from_A).size / regen.size)
+            sel = np.isin(post, regen) & sp75[pre]
+            sel &= fm[pre] <= fr[post] - 1
+            RnA = np.setdiff1d(R, A)
+            lines_A = np.unique(post[sel & np.isin(pre, A)])
+            lines_RnA = np.unique(post[sel & np.isin(pre, RnA)])
+            lines_other = np.unique(post[sel & ~np.isin(pre, A) & ~np.isin(pre, RnA)])
+            no_A = np.setdiff1d(regen, lines_A)
+            cand = dict(n_regen=int(regen.size), with_A_candidate=float(lines_A.size / regen.size),
+                        only_R_not_A_candidates=float(np.setdiff1d(np.intersect1d(no_A, lines_RnA), lines_other).size / regen.size),
+                        only_other_candidates=float(np.setdiff1d(np.intersect1d(no_A, lines_other), lines_RnA).size / regen.size),
+                        no_earlier_candidate=float(np.setdiff1d(no_A, np.union1d(lines_RnA, lines_other)).size / regen.size))
         v = e._onset_vbar
         d["diag"] = dict(
             A_recall75=float(sp75[A].mean()) if A.size else 0.0, R_recall50=float(sp50[R].mean()) if R.size else None,
             R_size=int(R.size), R_and_A=int(np.intersect1d(R, A).size), latency_A=lat(A), latency_R=lat(R),
-            regen_only_from_non_A=only_R,
+            regen_candidates=cand,
             offset_global=None if v is None else float(v.mean() - float(e.mem.v_rest)),
             offset_assembly=None if v is None or not A.size else float(v[A].mean() - float(e.mem.v_rest)))
     return d
@@ -108,6 +117,25 @@ def twin_B_pairs(B, S, M):
     return pairs
 
 
+def twin_B_matches(pairs, recorded):
+    """Every recorded twin-B aggregate (per kind: n, the four pass fractions, both McNemar counts) must be reproduced.
+    The record holds no per-cue pairs, so this is the strongest check available; no record means not verified."""
+    if recorded is None:
+        return None
+    for kd, r in recorded.items():
+        P = [p for p in pairs if kd == "all" or p["kind"] == kd]
+        mine = dict(n=len(P), memory_online=frac([p["index_online"] for p in P]), memory_settled=frac([p["index_settled"] for p in P]),
+                    content_online=frac([p["content_online"] for p in P]), content_settled=frac([p["content_settled"] for p in P]),
+                    mcnemar_memory=[sum(p["index_online"] and not p["index_settled"] for p in P),
+                                    sum(not p["index_online"] and p["index_settled"] for p in P)],
+                    mcnemar_content=[sum(p["content_online"] and not p["content_settled"] for p in P),
+                                     sum(not p["content_online"] and p["content_settled"] for p in P)])
+        for k, v in r.items():
+            if isinstance(v, float) and abs(v - mine[k]) > 1e-12 or not isinstance(v, float) and v != mine[k]:
+                return False
+    return True
+
+
 def frac(x):
     return float(np.mean(x)) if len(x) else None
 
@@ -128,7 +156,10 @@ def summarise(cues, pairs, hab_items, main_log, c):
             A75_rescues=frac([x["A_recall75"] >= c["recall_bar"] for x in D]) if sub and name in ("content_only", "neither") else None,
             R_recall50=med([x["R_recall50"] for x in D]), R_size=med([x["R_size"] for x in D]), R_and_A=med([x["R_and_A"] for x in D]),
             latency_A=med([x["latency_A"] for x in D]), latency_R=med([x["latency_R"] for x in D]),
-            regen_only_from_non_A=med([x["regen_only_from_non_A"] for x in D]), age=med([d["age"] for d in sub]),
+            regen_with_A_candidate=med([x["regen_candidates"]["with_A_candidate"] for x in D if x["regen_candidates"]]),
+            regen_only_R_not_A_candidates=med([x["regen_candidates"]["only_R_not_A_candidates"] for x in D if x["regen_candidates"]]),
+            regen_only_other_candidates=med([x["regen_candidates"]["only_other_candidates"] for x in D if x["regen_candidates"]]),
+            age=med([d["age"] for d in sub]),
             offset_global=med([x["offset_global"] for x in D]), offset_assembly=med([x["offset_assembly"] for x in D]))
     n = len(cues)
     d3 = {}
@@ -155,7 +186,11 @@ def summarise(cues, pairs, hab_items, main_log, c):
     el = [r for r in rows if r["eligible"]]
     hab = [r for r in el if r["habituated"]]
     non = [r for r in el if not r["habituated"]]
+    probes = {h["x"]: len(per_item.get(h["x"], [])) for h in hab_items}
     d4 = dict(n_eligible=len(el), n_habituated=len(hab),
+              n_matched_online_habituated=sum(r["online_index"] is not None for r in hab),
+              n_matched_online_not=sum(r["online_index"] is not None for r in non),
+              online_probes_per_item_median=med(list(probes.values())),
               offset_rise_habituated=med([r["offset_rise"] for r in hab]), offset_rise_not=med([r["offset_rise"] for r in non]),
               corr_drop_offset_rise=float(np.corrcoef([r["drop"] for r in el], [r["offset_rise"] for r in el])[0, 1]) if len(el) > 2 else None,
               online_index_habituated=med([r["online_index"] for r in hab]), online_index_not=med([r["online_index"] for r in non]),
@@ -188,28 +223,30 @@ def run(seed, gated, results_path=record.RESULTS, log=print, c=None):
         main = DiagOnline(c, seed)
         out = dict(experiment="P2-E4", kind="diagnosis", seed=seed, gated=gated, source_timestamp=src["timestamp"],
                    plan="docs/plant2/P2-E4-diagnosis-plan.md", loads={})
-        mismatches = 0
+        mismatches, checked = 0, set()
         for M in c["gate_M"]:
             main.run_to(M)
             for d in main.log:
-                if d["step"] in logged and d["step"] > M - c["block"] and d["step"] <= M:
-                    ref = logged[d["step"]]
-                    if any(d.get(k) != ref.get(k) for k in COMPARE):
-                        mismatches += 1
+                if d["step"] in checked:
+                    continue
+                checked.add(d["step"])
+                ref = logged.get(d["step"])
+                if ref is None or any(d.get(k) != ref.get(k) for k in COMPARE):
+                    mismatches += 1
             cues = [d for d in main.log if d.get("block") == M and d["kind"] in HALF3]
             twin = copy.deepcopy(main)
             twin.diag_main = False
             twin.settle_drift(M, 1)
             pairs = twin_B_pairs(twin, main, M)
-            rec_tb = rep[0]["loads"][str(M)]["twin_B"]["all"] if rep else None
-            tb_ok = None if rec_tb is None else (
-                abs(frac([p["index_settled"] for p in pairs]) - rec_tb["memory_settled"]) < 1e-12
-                and abs(frac([p["content_settled"] for p in pairs]) - rec_tb["content_settled"]) < 1e-12)
+            tb_ok = twin_B_matches(pairs, rep[0]["loads"][str(M)]["twin_B"] if rep else None)
             out["loads"][str(M)] = dict(**summarise(cues, pairs, src["loads"][str(M)]["hab_items"], main.log, c),
                                         twin_B_matches_record=tb_ok)
             log(f"seed {seed} M={M}: D1 {out['loads'][str(M)]['D1']} D3 {out['loads'][str(M)]['D3']} ({time.time() - t0:.0f} s)")
-        out["reproduction_mismatches"] = mismatches
-        out["valid"] = mismatches == 0 and all(v["twin_B_matches_record"] in (True, None) for v in out["loads"].values())
+        missing_steps = sorted(set(logged) - checked)
+        out["reproduction_mismatches"] = mismatches + len(missing_steps)
+        out["steps_compared"] = len(checked)
+        out["valid"] = out["reproduction_mismatches"] == 0  # D1, D2 and D4 rest on this
+        out["D3_verified"] = all(v["twin_B_matches_record"] is True for v in out["loads"].values())
     finally:
         e4.score_slot = _orig_score_slot
     out.update(timestamp=record.now(), git=record.git_state(), runtime=record.runtime(), wall_s=round(time.time() - t0, 1))
