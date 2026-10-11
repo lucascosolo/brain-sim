@@ -192,6 +192,17 @@ def test_labels_and_readings_on_synthetic_records():
                       e5.first_records(recs3, "reported_arm", arm="gated_diagnostics"),
                       {a: e5.first_records(recs3, "reported_arm", arm=a) for a in e5.P2E3_ARMS + ("online",)}, ["500"])
     assert rd3["s100"] == "REPLICATION FAIL" and not rd3["500"]["part_B"]["per_seed"]["22"]["attributable"]
+    # a seed whose diagnostics crashed is left out of Part C's denominator (four non-void seeds remain)
+    recs7 = [r for r in recs if not (r.get("arm") == "gated_diagnostics" and r["seed"] == 21)]
+    recs7.append(dict(_diag(21, 198, 124), loads={}, crashed=dict(failed_loads=["500", "1000"], errors=["x"])))
+    rd7 = e5.readings(e5.CONTRACT, e5.first_records(recs7, "kill_test_seed"),
+                      e5.first_records(recs7, "reported_arm", arm="gated_diagnostics"),
+                      {a: e5.first_records(recs7, "reported_arm", arm=a) for a in e5.P2E3_ARMS + ("online",)}, ["500", "1000"])
+    assert rd7["part_C"] == "AVAILABLE FROM ACTIVITY" and rd7["500"]["part_C"]["per_seed"][0] is None
+    recs8 = [r for r in recs if r.get("arm") != "gated_diagnostics"]
+    rd8 = e5.readings(e5.CONTRACT, e5.first_records(recs8, "kill_test_seed"), {},
+                      {a: e5.first_records(recs8, "reported_arm", arm=a) for a in e5.P2E3_ARMS + ("online",)}, ["500"])
+    assert rd8["part_C"] == "NOT ESTIMABLE"
     # an invalid gated seed makes the verdict INVALID
     recs4 = [_gated_rec(s, valid=(s != 23)) for s in seeds]
     v4 = e5.verdict(recs4, results_path=record.cache_dir("test-runs") / "p2e5_synthetic_verdict.jsonl", log=out.append)
@@ -206,7 +217,7 @@ def test_labels_and_readings_on_synthetic_records():
     recs6 = [r for r in recs if not (r.get("arm") == "online" and r["seed"] == 21)]
     part = _arm("online", 21, valid=True, ratio=1.8, L_o=dict(loss=29), twin_A=TA)
     part["loads"].pop("1000")
-    part["crashed"] = dict(after_loads=["500"], error="MemoryError()")
+    part["crashed"] = dict(failed_loads=["1000"], errors=["MemoryError()"])
     recs6.append(part)
     rd6 = e5.readings(e5.CONTRACT, e5.first_records(recs6, "kill_test_seed"),
                       e5.first_records(recs6, "reported_arm", arm="gated_diagnostics"),
@@ -292,7 +303,8 @@ def test_reported_arm_crash_at_second_load_keeps_the_first(run_dir, monkeypatch)
         return orig(*a, **k)
     monkeypatch.setattr(e5, "p2e3_gate", flaky)
     out = e5.run_p2e3_arm("s100", TINY, 98, False, path, log=lambda m: None)
-    assert list(out["loads"]) == ["120"] and out["crashed"]["after_loads"] == ["120"]
-    assert "MemoryError" in out["crashed"]["error"]
+    # the crash is in scoring the second load: that load alone is void
+    assert list(out["loads"]) == ["120"] and out["crashed"]["failed_loads"] == ["200"]
+    assert "MemoryError" in out["crashed"]["errors"][0]
     rec = json.loads(path.read_text().splitlines()[-1])
-    assert rec["loads"]["120"]["valid"] and "1000" not in rec["loads"]
+    assert list(rec["loads"]) == ["120"] and rec["loads"]["120"]["valid"] and rec["crashed"]["failed_loads"] == ["200"]

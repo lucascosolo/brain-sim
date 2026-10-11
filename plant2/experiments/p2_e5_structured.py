@@ -429,9 +429,10 @@ def load_validity(c, T, main, M):
              capture_ok=bool(T["capture_ok"]), fb_union_ok=bool(T["fb_union_ok"]), r1_equals_main=bool(T["r1_equals_main"]))
     v["mean_elig_frac"] = float(np.mean(main.learn_log["elig_frac"][:M]))
     v["mean_A"] = float(np.mean([a.size for a in main.A[:M]]))
+    v["validity3_items"] = [1, M]  # per load, so a load survives a later load's crash
     v["elig_ok"] = v["mean_elig_frac"] >= e1.BARS["elig_valid"]
     v["mean_A_ok"] = c.get("mean_A_lo", e1.BARS["mean_A_lo"]) <= v["mean_A"] <= c.get("mean_A_hi", e1.BARS["mean_A_hi"])
-    return v, bool(all(x for k, x in v.items() if k not in ("mean_elig_frac", "mean_A")))
+    return v, bool(all(x for k, x in v.items() if k not in ("mean_elig_frac", "mean_A", "validity3_items")))
 
 
 def load_valid(v, M):
@@ -738,8 +739,8 @@ def gated_diagnostics(c, seed, gated, loads, main, gen, results_path, log):
     Js, gs = grid_arrays(c)
     n_half, n_novel = c["n_old"] + c["n_rand"], c["n_novel"]
     J1, g1 = np.array([c["J_fb"]]), np.array([c["g"]])
-    try:
-        for M, T in loads.items():
+    for M, T in loads.items():
+        try:
             e = T["e"]
             n_old = min(c["n_old"], M)
             r3 = store_from(main, M, k=c["grid_k"])
@@ -768,9 +769,11 @@ def gated_diagnostics(c, seed, gated, loads, main, gen, results_path, log):
             log(f"seed {seed} diagnostics M={M}: plateau best {grids['plateau']['best']['joint']:.3f} main best "
                 f"{grids['main']['best']['joint']:.3f} R3 best {grids['R3']['best']['joint']:.3f} | count AUC "
                 f"{out['loads'][str(M)]['activity']['count_auc']} ({time.time() - t0:.0f} s)")
-    except Exception as ex:  # a crash voids only the loads not yet recorded (contract: Voids)
-        out["crashed"] = dict(after_loads=sorted(out["loads"]), error=repr(ex))
-        log(f"seed {seed} gated_diagnostics: CRASHED after loads {sorted(out['loads'])}: {ex!r}")
+        except Exception as ex:  # a crash voids only this load (contract: Voids)
+            out.setdefault("crashed", dict(failed_loads=[], errors=[]))
+            out["crashed"]["failed_loads"].append(str(M))
+            out["crashed"]["errors"].append(repr(ex))
+            log(f"seed {seed} gated_diagnostics M={M}: CRASHED {ex!r} (this load is void)")
     out.update(timestamp=record.now(), git=record.git_state(), runtime=record.runtime(), wall_s=round(time.time() - t0, 1))
     record.append(out, results_path)
     return out
@@ -791,6 +794,15 @@ def run_p2e3_arm(arm, c, seed, gated, results_path, log):
                loads={})
 
     def on_load(M, T, main, gen):
+        try:
+            process(M, T, main, gen)
+        except Exception as ex:  # a crash while scoring one load voids only that load (contract: Voids)
+            out.setdefault("crashed", dict(failed_loads=[], errors=[]))
+            out["crashed"]["failed_loads"].append(str(M))
+            out["crashed"]["errors"].append(repr(ex))
+            log(f"seed {seed} {arm} M={M}: CRASHED {ex!r} (this load is void)")
+
+    def process(M, T, main, gen):
         e = T["e"]
         n_old = min(c["n_old"], M)
         v, valid = load_validity(c, T, main, M)
@@ -815,8 +827,10 @@ def run_p2e3_arm(arm, c, seed, gated, results_path, log):
             f"C2 {T['out']['criteria']['C2_frac']:.3f} | valid {valid}")
     try:
         run_timeline(arm, c, seed, log, on_load=on_load)
-    except Exception as ex:  # a crash voids only the loads not yet recorded (contract: Voids)
-        out["crashed"] = dict(after_loads=sorted(out["loads"]), error=repr(ex))
+    except Exception as ex:  # a crash while learning voids only the loads not yet recorded (contract: Voids)
+        out.setdefault("crashed", dict(failed_loads=[], errors=[]))
+        out["crashed"]["after_loads"] = sorted(out["loads"])
+        out["crashed"]["errors"].append(repr(ex))
         log(f"seed {seed} {arm}: CRASHED after loads {sorted(out['loads'])}: {ex!r}")
     out.update(timestamp=record.now(), git=record.git_state(), runtime=record.runtime(), wall_s=round(time.time() - t0, 1))
     record.append(out, results_path)
@@ -848,9 +862,16 @@ def run_online_arm(seed, gated, gated_info, results_path, log, c4=None, c=CONTRA
     blobs = blob_check()
     out = dict(experiment="P2-E5", kind="reported_arm", arm="online", seed=seed, gated=gated, contract_digest=record.digest(c),
                online_contract_digest=record.digest(c4), blobs=blobs, loads={})
-    try:
-        for M in c4["gate_M"]:
+    for M in c4["gate_M"]:
+        try:
             o.run_to(M)
+        except Exception as ex:  # a crash while learning voids this and every later load (contract: Voids)
+            out.setdefault("crashed", dict(failed_loads=[], errors=[]))
+            out["crashed"]["after_loads"] = sorted(out["loads"])
+            out["crashed"]["errors"].append(repr(ex))
+            log(f"seed {seed} online: CRASHED while learning to {M}: {ex!r}")
+            break
+        try:
             S = copy.deepcopy(o)
             d0 = e4.state_digest(S)
             crit = e4.block_criteria(o, M)
@@ -885,9 +906,11 @@ def run_online_arm(seed, gated, gated_info, results_path, log, c4=None, c=CONTRA
             log(f"seed {seed} online M={M}: block C1 {crit['rates']['C1']:.3f} C2 {crit['rates']['C2']:.3f} joint "
                 f"{crit['rates']['joint']:.3f} | twin A online {A1['main']['joint']:.3f} ref "
                 f"{ref['joint'] if ref else None} | R {L['ratio']} | L_o {L['L_o']} | valid {valid} ({time.time() - t0:.0f} s)")
-    except Exception as ex:  # a crash voids only the loads not yet recorded (contract: Voids)
-        out["crashed"] = dict(after_loads=sorted(out["loads"]), error=repr(ex))
-        log(f"seed {seed} online: CRASHED after loads {sorted(out['loads'])}: {ex!r}")
+        except Exception as ex:  # a crash while scoring one load voids only that load (contract: Voids)
+            out.setdefault("crashed", dict(failed_loads=[], errors=[]))
+            out["crashed"]["failed_loads"].append(str(M))
+            out["crashed"]["errors"].append(repr(ex))
+            log(f"seed {seed} online M={M}: CRASHED {ex!r} (this load is void)")
     out.update(timestamp=record.now(), git=record.git_state(), runtime=record.runtime(), wall_s=round(time.time() - t0, 1))
     record.append(out, results_path)
     return out
@@ -1002,8 +1025,8 @@ def readings(c, gated, diag, arms, loads):
         okC = []
         for s in seeds:
             D = (diag.get(s) or {}).get("loads", {}).get(M)
-            if D is None:
-                okC.append(False)
+            if D is None:  # void diagnostics: left out of the denominator (contract: Voids)
+                okC.append(None)
                 continue
             nn = D["n_half"]
             tol = cues_count(c["margin_frac"], nn)
@@ -1011,7 +1034,9 @@ def readings(c, gated, diag, arms, loads):
             g = D["grid"]
             okC.append(bool(au is not None and au >= c["auc_bar"] and g["R3"]["frozen_cues"] >= g["plateau"]["frozen_cues"] - tol
                             and g["R3"]["best_cues"] >= g["plateau"]["best_cues"] - tol))
-        C = dict(per_seed=okC, ok=bool(okC and all(okC)))
+        present = [x for x in okC if x is not None]
+        C = dict(per_seed=okC, ok=None if len(present) < need else bool(all(present)),
+                 reading="NOT ESTIMABLE" if len(present) < need else None)
         # Part D
         ratios, joints = [], {}
         for s in seeds:
@@ -1059,14 +1084,14 @@ def readings(c, gated, diag, arms, loads):
             Er = "MIXED"
         dose = {}
         for a_, b_ in (("s80", "main"), ("main", "s40")):
-            mc = []
+            mc = {}
             for s in seeds:
                 ja = (arms.get(a_, {}).get(s) or {}).get("loads", {}).get(M) if a_ != "main" else gated[s]["loads"][M]
                 jb = (arms.get(b_, {}).get(s) or {}).get("loads", {}).get(M) if b_ != "main" else gated[s]["loads"][M]
                 if ja and jb and ja.get("valid", True) and jb.get("valid", True) and ja.get("per_cue") and jb.get("per_cue"):
                     xa = np.array([ch == "1" for ch in ja["per_cue"]["joint"]])
                     xb = np.array([ch == "1" for ch in jb["per_cue"]["joint"]])
-                    mc.append([int((xa & ~xb).sum()), int((~xa & xb).sum())])
+                    mc[str(s)] = [int((xa & ~xb).sum()), int((~xa & xb).sum())]
             dose[f"{a_}_vs_{b_}"] = mc
         out[M] = dict(part_B=B, part_C=C, part_D=Dd, pooled=dict(rows=prow, reading=Er), dose_response=dose)
     # s100, ordered rule over (seed, load)
@@ -1078,7 +1103,9 @@ def readings(c, gated, diag, arms, loads):
                 fails = True
         nonvoid += bool(all(aLs.get(M, {}).get("valid") for M in loads))
     out["s100"] = "REPLICATION FAIL" if fails else ("NOT ESTIMABLE" if nonvoid < c["min_seeds"] else "REPLICATES")
-    out["part_C"] = "AVAILABLE FROM ACTIVITY" if all(out[M]["part_C"]["ok"] for M in loads) else "NOT SHOWN"
+    okL = [out[M]["part_C"]["ok"] for M in loads]
+    out["part_C"] = ("NOT ESTIMABLE" if any(x is None for x in okL) else
+                     "AVAILABLE FROM ACTIVITY" if all(okL) else "NOT SHOWN")
     out["loads_disagree"] = len({out[M]["part_B"]["reading"] for M in loads}) > 1
     return out
 
@@ -1096,10 +1123,11 @@ def verdict(recs, results_path=record.RESULTS, log=print, c=CONTRACT, seeds=GATE
     arms = {a: first_records(recs, "reported_arm", arm=a) for a in P2E3_ARMS + ("online",)}
     rd = readings(c, gated, diag, arms, loads)
     spec_flag = None
-    if label == "PASS" and all(M in (diag.get(s) or {}).get("loads", {}) for s in gated for M in loads):
-        spec_flag = any(d["loads"][M]["contamination"]["label_permuted"]["perm_spec"] >
-                        c["specificity_ratio"] * d["loads"][M]["contamination"]["label_permuted"]["main_spec"]
-                        for d in diag.values() for M in loads)
+    if label == "PASS":
+        hit = [d["loads"][M]["contamination"]["label_permuted"] for d in diag.values() for M in loads if M in d.get("loads", {})]
+        complete = all(M in (diag.get(s) or {}).get("loads", {}) for s in gated for M in loads)
+        spec_flag = (True if any(x["perm_spec"] > c["specificity_ratio"] * x["main_spec"] for x in hit)
+                     else (False if complete else None))
     rec = dict(experiment="P2-E5", kind="kill_test_verdict", seeds=sorted(gated), verdict=label, labels=labs,
                invalid_seeds=invalid, vector=vector, readings=rd, pass_specificity_check_failed=spec_flag,
                per_seed={str(s): {M: r["counts"] for M, r in r_["loads"].items()} for s, r_ in gated.items()},
@@ -1160,12 +1188,16 @@ def predictions(recs, draws=400, rng_seed=5, results_path=record.RESULTS, log=pr
     arms = {a: first_records(cur, "reported_arm", gated=False, arm=a) for a in P2E3_ARMS + ("online",)}
     expl = {str(s): first[s] for s in first}
     inputs = readings(dict(c, min_seeds=1), {s: first[s] for s in first}, diag, arms, loads)
+    all_arm_recs = [r for r in recs if r.get("experiment") == "P2-E5" and r.get("kind") == "reported_arm" and r.get("seed") in EXPLORE_SEEDS]
+    arms_used = dict({a: sorted(arms[a]) for a in arms}, gated_diagnostics=sorted(diag),
+                     dropped_by_tree_filter=len(all_arm_recs) - len(cur),
+                     crashed={f"{r['arm']}:{r['seed']}": r["crashed"] for r in cur if r.get("crashed")})
     rec = dict(experiment="P2-E5", kind="power_predictions", contract_digest=DIGEST, plant2_tree=g["plant2_tree"],
                exploration_seeds=sorted(first), skipped_records=skipped, observed={M: {k: list(v) for k, v in o.items()} for M, o in obs.items()},
                p_pass_median=float(np.median(p_pass)), p_pass_interval_5_95=q(p_pass),
                p_label=dict(STRUCTURED_INDEX_FAIL=float(1 - np.mean(p_index)), STRUCTURED_CONTENT_FAIL=float(1 - np.mean(p_content))),
                p_criterion_5seeds={k: float(np.median(v)) for k, v in per.items()},
-               exploration_reading_inputs=inputs, draws=draws, timestamp=record.now(), git=g, runtime=record.runtime())
+               exploration_reading_inputs=inputs, reported_arms_used=arms_used, draws=draws, timestamp=record.now(), git=g, runtime=record.runtime())
     del expl
     record.append(rec, results_path)
     log(f"P2-E5 predictions: P(PASS) median {rec['p_pass_median']:.3g} {rec['p_pass_interval_5_95']}; labels {rec['p_label']}")
