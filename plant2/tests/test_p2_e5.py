@@ -1,5 +1,6 @@
 import copy
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -120,6 +121,15 @@ def test_readout_full_matches_p2e3_readout_and_block_leaves_gated_scores():
     assert all(fl.lines(k)[0].size == res["total"][k, 0] for k in range(len(cues)))
 
 
+def test_n_in_sorted_matches_isin():
+    rng = np.random.default_rng(90)
+    keys = np.unique(rng.integers(0, 10**6, 50_000))
+    for _ in range(20):
+        q = np.unique(rng.integers(0, 10**6, 40))
+        assert e5.n_in_sorted(q, keys) == int(np.isin(q, keys).sum())
+    assert e5.n_in_sorted(np.array([10**7]), keys) == 0 and e5.n_in_sorted(np.empty(0, np.int64), keys) == 0
+
+
 def test_auc():
     assert e5.auc([5, 5, 4], [1, 1]) == 1.0
     assert e5.auc([1], [1]) == 0.5
@@ -153,7 +163,8 @@ def test_labels_and_readings_on_synthetic_records():
     recs = [_gated_rec(s, vec_ok=False) for s in seeds]
     recs += [_diag(s, ub=198, own=124) for s in seeds]
     recs += [_arm("s100", s, valid=True, p2e3_gate=True) for s in seeds]
-    recs += [_arm("online", s, valid=True, ratio=1.8, L_o=dict(loss=29)) for s in seeds]
+    TA = dict(online=dict(joint=0.06), reference=dict(joint=0.12), plateau=dict(joint=0.93))
+    recs += [_arm("online", s, valid=True, ratio=1.8, L_o=dict(loss=29), twin_A=TA) for s in seeds]
     recs += [_arm("pooled", s, valid=True, vector=dict(S2=True), counts=dict(C2=198), plateau_cues=197) for s in seeds]
     out = []
     v = e5.verdict(recs, results_path=record.cache_dir("test-runs") / "p2e5_synthetic_verdict.jsonl", log=out.append)
@@ -162,11 +173,13 @@ def test_labels_and_readings_on_synthetic_records():
     for M in ("500", "1000"):
         assert rd[M]["part_B"]["reading"] == "CONTAMINATION-DOMINANT"  # L_c 180 - 124 = 56 against L_o 29 and L_i 0
         assert rd[M]["part_D"]["reading"] == "WORSENS"
+        assert rd[M]["part_D"]["joints"]["21"] == dict(online=12, reference=24, plateau=186, difference=-12, at_floor=False,
+                                                       A_digest_matches_gated=None)
         assert rd[M]["pooled"]["reading"] == "CORRELATION-ATTRIBUTABLE"
     assert rd["s100"] == "REPLICATES" and rd["part_C"] == "AVAILABLE FROM ACTIVITY"
     # one seed's L_o close to L_c: no dominance there; four still dominate
     recs2 = [r for r in recs if not (r.get("arm") == "online" and r["seed"] == 21)]
-    recs2.append(_arm("online", 21, valid=True, ratio=1.8, L_o=dict(loss=50)))
+    recs2.append(_arm("online", 21, valid=True, ratio=1.8, L_o=dict(loss=50), twin_A=TA))
     rd2 = e5.readings(e5.CONTRACT, e5.first_records(recs2, "kill_test_seed"),
                       e5.first_records(recs2, "reported_arm", arm="gated_diagnostics"),
                       {a: e5.first_records(recs2, "reported_arm", arm=a) for a in e5.P2E3_ARMS + ("online",)}, ["500"])
@@ -189,6 +202,17 @@ def test_labels_and_readings_on_synthetic_records():
                       e5.first_records(recs5, "reported_arm", arm="gated_diagnostics"),
                       {a: e5.first_records(recs5, "reported_arm", arm=a) for a in e5.P2E3_ARMS + ("online",)}, ["500"])
     assert rd5["500"]["part_B"]["reading"] == "NOT ATTRIBUTABLE" and rd5["500"]["part_D"]["reading"] == "NOT ESTIMABLE"
+    # a crashed arm that kept its M = 500 load: only M = 1,000 is void
+    recs6 = [r for r in recs if not (r.get("arm") == "online" and r["seed"] == 21)]
+    part = _arm("online", 21, valid=True, ratio=1.8, L_o=dict(loss=29), twin_A=TA)
+    part["loads"].pop("1000")
+    part["crashed"] = dict(after_loads=["500"], error="MemoryError()")
+    recs6.append(part)
+    rd6 = e5.readings(e5.CONTRACT, e5.first_records(recs6, "kill_test_seed"),
+                      e5.first_records(recs6, "reported_arm", arm="gated_diagnostics"),
+                      {a: e5.first_records(recs6, "reported_arm", arm=a) for a in e5.P2E3_ARMS + ("online",)}, ["500", "1000"])
+    assert rd6["500"]["part_B"]["per_seed"]["21"]["attributable"] and not rd6["1000"]["part_B"]["per_seed"]["21"]["attributable"]
+    assert rd6["1000"]["part_B"]["reading"] == "CONTAMINATION-DOMINANT"  # four attributable seeds remain
 
 
 def test_guard_refuses_without_predictions(monkeypatch):
@@ -200,6 +224,8 @@ def test_guard_refuses_without_predictions(monkeypatch):
     calls = {"show": R(0, "")}
 
     def fake_git(*a):
+        if a[0] == "show" and a[1].endswith(e5.CONTRACT_PATH):
+            return R(0, calls.get(a[1].split(":")[0], "frozen text\n"))
         if a[0] == "show":
             return calls["show"]
         if a[0] == "diff" and "--numstat" in a:
@@ -211,6 +237,12 @@ def test_guard_refuses_without_predictions(monkeypatch):
     calls["show"] = R(0, json.dumps(dict(experiment="P2-E5", kind="power_predictions", contract_digest=e5.DIGEST,
                                          plant2_tree="x")))
     assert e5.guard([]) == set()
+    calls["HEAD"] = "frozen text\nappended\n"
+    assert e5.guard([]) == set()
+    calls["HEAD"] = "inserted\nfrozen text\n"
+    with pytest.raises(SystemExit, match="prefix"):
+        e5.guard([])
+    calls.pop("HEAD")
     monkeypatch.setattr(e5.record, "git_state", lambda: dict(plant2_dirty=True, plant2_tree="x"))
     with pytest.raises(SystemExit, match="uncommitted"):
         e5.guard([])
@@ -233,8 +265,34 @@ def test_tiny_seed_end_to_end(run_dir):
     for M in ("120", "200"):
         assert all(v[M].values()), v[M]
     assert v["shuffled_ok"] and v["overlap_ok"]
+    import gzip
+    import io
+    blob = Path(g["persistence"]["path"]).read_bytes()
+    assert __import__("hashlib").sha256(blob).hexdigest() == g["persistence"]["sha256_file"]
+    z = np.load(io.BytesIO(gzip.decompress(blob)))
+    assert {"cue_kind_200", "cue_missing_200", "half_recall50_200", "learn_raster", "test_raster_200"} <= set(z.files)
+    assert z["cue_kind_200"].size == 100 and z["learn_raster_offsets"].size == 201
     d = [r for r in recs if r.get("arm") == "gated_diagnostics"][0]["loads"]["200"]
     assert d["activity"]["count_auc"] > 0.9
     assert set(d["grid"]) == {"main", "plateau", "R3"}
     on = [r for r in recs if r.get("arm") == "online"][0]["loads"]["200"]
     assert on["validity"]["capture_ok"] and on["validity"]["twins_untouched"] and on["L_o"]["n"] > 0
+
+
+@pytest.mark.slow
+def test_reported_arm_crash_at_second_load_keeps_the_first(run_dir, monkeypatch):
+    path = run_dir / "results.jsonl"
+    orig = e5.p2e3_gate
+    calls = []
+
+    def flaky(*a, **k):
+        calls.append(1)
+        if len(calls) == 2:
+            raise MemoryError("synthetic")
+        return orig(*a, **k)
+    monkeypatch.setattr(e5, "p2e3_gate", flaky)
+    out = e5.run_p2e3_arm("s100", TINY, 98, False, path, log=lambda m: None)
+    assert list(out["loads"]) == ["120"] and out["crashed"]["after_loads"] == ["120"]
+    assert "MemoryError" in out["crashed"]["error"]
+    rec = json.loads(path.read_text().splitlines()[-1])
+    assert rec["loads"]["120"]["valid"] and "1000" not in rec["loads"]

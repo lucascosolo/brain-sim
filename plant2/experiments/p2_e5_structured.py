@@ -13,6 +13,7 @@ and P2-E4's online driver, are reused unchanged.
 """
 import argparse
 import copy
+import gzip
 import hashlib
 import io
 import json
@@ -302,6 +303,16 @@ def per_cue_index(out, e, c):
     return (rec >= c["recall_bar"]) & (sp < c["spurious_of_A"] * A)
 
 
+def n_in_sorted(q, keys):
+    """How many of the (unique) keys q are stored in the sorted key array (exact; replaces np.isin on a large store)."""
+    q = np.asarray(q, np.int64)
+    if not q.size or not keys.size:
+        return 0
+    p = np.searchsorted(keys, q)
+    p[p == keys.size] = keys.size - 1
+    return int((keys[p] == q).sum())
+
+
 def bits(x):
     return "".join("1" if v else "0" for v in np.asarray(x, bool))
 
@@ -355,8 +366,9 @@ def criteria_vector(mem_out, main_arm, n_half, n_novel, n_old, c):
     return {k: bool(counts[k] >= bar(n_of[k])) for k in VECTOR_PARTS}, counts
 
 
-def run_timeline(arm, c, seed, log, keep=False):
-    """Learn to each gated load on the P2-E3 protocol and test a copy. Returns (per-load results, main line, gen)."""
+def run_timeline(arm, c, seed, log, on_load=None):
+    """Learn to each gated load on the P2-E3 protocol and test a copy. Returns (per-load results, main line, gen).
+    With on_load, each load is handed over as soon as it is done (and not kept), so a later crash keeps it."""
     gen = make_gen(arm, c, seed)
     main = E5(c, seed, gen)
     plain = e1.E1(dict(c, J=e1.CONTRACT["J"]), seed)
@@ -387,8 +399,11 @@ def run_timeline(arm, c, seed, log, keep=False):
         T["learning"] = e3.learning_summary(main, M)
         T["fwd_digest"], T["fb_digest"] = e3.digest(main.store.keys), e3.digest(main.fb.keys)
         T["A_digest"] = hashlib.sha256(b"".join(a.astype(np.int64).tobytes() for a in main.A[:M])).hexdigest()[:16]
-        loads[M] = T
         log(f"seed {seed} {arm} M={M}: learned and tested ({time.time() - t0:.0f} s)")
+        if on_load is not None:
+            on_load(M, T, main, gen)
+        else:
+            loads[M] = T
     return loads, main, gen
 
 
@@ -405,6 +420,18 @@ def arm_validity(c, loads, main):
     v["elig_ok"] = v["mean_elig_frac"] >= e1.BARS["elig_valid"]
     v["mean_A_ok"] = c.get("mean_A_lo", e1.BARS["mean_A_lo"]) <= v["mean_A"] <= c.get("mean_A_hi", e1.BARS["mean_A_hi"])
     return v
+
+
+def load_validity(c, T, main, M):
+    """Validity 1-4 and 7 for one load of a reported P2-E3-protocol arm (contract: Voids)."""
+    v = dict(fwd_equals_p2e1=bool(T["fwd_equals_p2e1"]), stores_unchanged_by_tests=bool(T["unchanged"]),
+             main_untouched=bool(T["main_untouched"]), converged=bool(T["drift"][0] <= e3.e2.CONVERGE_BAR_MV),
+             capture_ok=bool(T["capture_ok"]), fb_union_ok=bool(T["fb_union_ok"]), r1_equals_main=bool(T["r1_equals_main"]))
+    v["mean_elig_frac"] = float(np.mean(main.learn_log["elig_frac"][:M]))
+    v["mean_A"] = float(np.mean([a.size for a in main.A[:M]]))
+    v["elig_ok"] = v["mean_elig_frac"] >= e1.BARS["elig_valid"]
+    v["mean_A_ok"] = c.get("mean_A_lo", e1.BARS["mean_A_lo"]) <= v["mean_A"] <= c.get("mean_A_hi", e1.BARS["mean_A_hi"])
+    return v, bool(all(x for k, x in v.items() if k not in ("mean_elig_frac", "mean_A")))
 
 
 def load_valid(v, M):
@@ -433,9 +460,10 @@ def sibling_overlap(items, fam, M):
 
 
 def persist(seed, gated, main, loads, c):
-    """Learning raster, E, A, R, continuation counts and first ticks, test rasters (gated arm), by path and sha256."""
+    """Per-cue outcomes, learning raster, E, A, R, continuation counts and first ticks, test rasters (gated arm): an
+    uncompressed .npz inside gzip, by path and sha256."""
     kind = "gated" if gated else "explore"
-    path = record.cache_dir("p2_e5") / f"seed{seed}_{kind}_{record.now().replace(':', '')}.npz"
+    path = record.cache_dir("p2_e5") / f"seed{seed}_{kind}_{record.now().replace(':', '')}.npz.gz"
     g1 = max(loads)
     arrs = {}
 
@@ -455,11 +483,20 @@ def persist(seed, gated, main, loads, c):
         pack(f"test_raster_{M}", [t * c["n"] + R[t].astype(np.int64) for t in ticks])
         arrs[f"test_n_ticks_gated_{M}"] = np.array([T["n_ticks"]])
         arrs[f"test_onsets_{M}"] = np.array(T["onsets"] + (T["block"]["onsets"] if T["block"] else []), np.int64)
+        # per-cue outcomes of the gated test (all 600 cues at the frozen readout; memory measures per half/novel cue)
+        res, kinds = T["main_res"], np.array([{"half": 0, "novel": 1, "full": 2}[q["kind"]] for q in T["cues"]], np.int8)
+        arrs[f"cue_kind_{M}"] = kinds
+        for k in ("missing", "item", "total", "visible", "missing_short", "item_short", "total_short"):
+            arrs[f"cue_{k}_{M}"] = res[k][:, 0].astype(np.int32)
+        arrs[f"half_recall50_{M}"] = np.array(T["out"]["recall"][50], float)
+        arrs[f"half_spurious_{M}"] = np.array(T["out"]["spurious"], np.int32)
+        arrs[f"half_A_size_{M}"] = np.array(T["out"]["A_size"], np.int32)
+        arrs[f"novel_ignition_{M}"] = np.array(T["out"]["ignition"], np.int32)
     buf = io.BytesIO()
-    np.savez_compressed(buf, **arrs)
-    data = buf.getvalue()
+    np.savez(buf, **arrs)
+    data = gzip.compress(buf.getvalue(), mtime=0)
     path.write_bytes(data)
-    return dict(path=str(path), sha256_file=hashlib.sha256(data).hexdigest())
+    return dict(path=str(path), format="npz inside gzip", sha256_file=hashlib.sha256(data).hexdigest())
 
 
 def run_gated_arm(c, seed, gated, results_path, log):
@@ -613,8 +650,8 @@ def contamination(T, gen, M, c, fl_main, fl_plat, fl_perm, store_main):
             cue = q["cue"]
             cue_p, cue_s = np.intersect1d(cue, P), np.setdiff1d(cue, P)
             keys = e.store.keys
-            spur_proto.append(float(np.mean([np.isin(cue_p * n + x, keys).sum() for x in sp])))
-            spur_spec.append(float(np.mean([np.isin(cue_s * n + x, keys).sum() for x in sp])))
+            spur_proto.append(float(np.mean([n_in_sorted(cue_p * n + x, keys) for x in sp])))
+            spur_spec.append(float(np.mean([n_in_sorted(cue_s * n + x, keys) for x in sp])))
         # label-permuted against main: regenerated fractions of the missing prototype and item-specific lines
         miss = q["missing"]
         mp, ms = np.intersect1d(miss, P), np.setdiff1d(miss, P)
@@ -701,35 +738,39 @@ def gated_diagnostics(c, seed, gated, loads, main, gen, results_path, log):
     Js, gs = grid_arrays(c)
     n_half, n_novel = c["n_old"] + c["n_rand"], c["n_novel"]
     J1, g1 = np.array([c["J_fb"]]), np.array([c["g"]])
-    for M, T in loads.items():
-        e = T["e"]
-        n_old = min(c["n_old"], M)
-        r3 = store_from(main, M, k=c["grid_k"])
-        grids = {}
-        for name, st in (("main", T["fb_store"]), ("plateau", T["fb_plateau"]), ("R3", r3)):
-            arms = readout_full(e, M, T["raster"], T["n_ticks"], T["onsets"], Js, gs, store=st)[0]
-            grids[name] = grid_summary(arms, c, n_half, n_old, n_novel)
-        rk = {}
-        for k in c["R_k"]:
-            a = readout_full(e, M, T["raster"], T["n_ticks"], T["onsets"], J1, g1, store=store_from(main, M, k=k))[0][0]
-            rk[str(k)] = dict(joint=a["joint"], D1=a["D1"], D2=a["D2"], D4=a["D4"], cues=cues_count(a["joint"], n_half))
-        fls = {}
-        for name, st, pi in (("main", T["fb_store"], None), ("plateau", T["fb_plateau"], None)):
+    try:
+        for M, T in loads.items():
+            e = T["e"]
+            n_old = min(c["n_old"], M)
+            r3 = store_from(main, M, k=c["grid_k"])
+            grids = {}
+            for name, st in (("main", T["fb_store"]), ("plateau", T["fb_plateau"]), ("R3", r3)):
+                arms = readout_full(e, M, T["raster"], T["n_ticks"], T["onsets"], Js, gs, store=st)[0]
+                grids[name] = grid_summary(arms, c, n_half, n_old, n_novel)
+            rk = {}
+            for k in c["R_k"]:
+                a = readout_full(e, M, T["raster"], T["n_ticks"], T["onsets"], J1, g1, store=store_from(main, M, k=k))[0][0]
+                rk[str(k)] = dict(joint=a["joint"], D1=a["D1"], D2=a["D2"], D4=a["D4"], cues=cues_count(a["joint"], n_half))
+            fls = {}
+            for name, st, pi in (("main", T["fb_store"], None), ("plateau", T["fb_plateau"], None)):
+                fl = FirstLines(T["onsets"], c["rec_window"], T["n_ticks"])
+                readout_full(e, M, T["raster"], T["n_ticks"], T["onsets"], J1, g1, store=st, trace=fl)
+                fls[name] = fl
+            ps, pi = permuted_store(e, M, gen.fam)
             fl = FirstLines(T["onsets"], c["rec_window"], T["n_ticks"])
-            readout_full(e, M, T["raster"], T["n_ticks"], T["onsets"], J1, g1, store=st, trace=fl)
-            fls[name] = fl
-        ps, pi = permuted_store(e, M, gen.fam)
-        fl = FirstLines(T["onsets"], c["rec_window"], T["n_ticks"])
-        perm_arm = readout_full(e, M, T["raster"], T["n_ticks"], T["onsets"], J1, g1, store=ps, pi=pi, trace=fl)[0][0]
-        fls["perm"] = fl
-        F_ = contamination(T, gen, M, c, fls["main"], fls["plateau"], fls["perm"], T["fb_store"])
-        F_["label_permuted_arm"] = dict(joint=perm_arm["joint"], D1=perm_arm["D1"], D2=perm_arm["D2"])
-        G_ = block_stats(T, main.items, gen.fam, gen.protos, M, c, T["fb_store"])
-        out["loads"][str(M)] = dict(grid=grids, R_k=rk, activity=activity_identity(main, M, c), contamination=F_,
-                                    block=G_, n_half=n_half)
-        log(f"seed {seed} diagnostics M={M}: plateau best {grids['plateau']['best']['joint']:.3f} main best "
-            f"{grids['main']['best']['joint']:.3f} R3 best {grids['R3']['best']['joint']:.3f} | count AUC "
-            f"{out['loads'][str(M)]['activity']['count_auc']} ({time.time() - t0:.0f} s)")
+            perm_arm = readout_full(e, M, T["raster"], T["n_ticks"], T["onsets"], J1, g1, store=ps, pi=pi, trace=fl)[0][0]
+            fls["perm"] = fl
+            F_ = contamination(T, gen, M, c, fls["main"], fls["plateau"], fls["perm"], T["fb_store"])
+            F_["label_permuted_arm"] = dict(joint=perm_arm["joint"], D1=perm_arm["D1"], D2=perm_arm["D2"])
+            G_ = block_stats(T, main.items, gen.fam, gen.protos, M, c, T["fb_store"])
+            out["loads"][str(M)] = dict(grid=grids, R_k=rk, activity=activity_identity(main, M, c), contamination=F_,
+                                        block=G_, n_half=n_half)
+            log(f"seed {seed} diagnostics M={M}: plateau best {grids['plateau']['best']['joint']:.3f} main best "
+                f"{grids['main']['best']['joint']:.3f} R3 best {grids['R3']['best']['joint']:.3f} | count AUC "
+                f"{out['loads'][str(M)]['activity']['count_auc']} ({time.time() - t0:.0f} s)")
+    except Exception as ex:  # a crash voids only the loads not yet recorded (contract: Voids)
+        out["crashed"] = dict(after_loads=sorted(out["loads"]), error=repr(ex))
+        log(f"seed {seed} gated_diagnostics: CRASHED after loads {sorted(out['loads'])}: {ex!r}")
     out.update(timestamp=record.now(), git=record.git_state(), runtime=record.runtime(), wall_s=round(time.time() - t0, 1))
     record.append(out, results_path)
     return out
@@ -742,23 +783,23 @@ def p2e3_gate(mem_out, main_arm, n_half, n_novel, n_old, c):
     return bool(all(vec.values()))
 
 
-def run_p2e3_arm(arm, c, seed, gated, results_path, log, main_gen=None):
+def run_p2e3_arm(arm, c, seed, gated, results_path, log):
     t0 = time.time()
-    loads, main, gen = run_timeline(arm, c, seed, log)
-    v = arm_validity(c, loads, main)
     n_half, n_novel = c["n_old"] + c["n_rand"], c["n_novel"]
     J1, g1 = np.array([c["J_fb"]]), np.array([c["g"]])
     out = dict(experiment="P2-E5", kind="reported_arm", arm=arm, seed=seed, gated=gated, contract_digest=record.digest(c),
-               validity=v, loads={})
-    for M, T in loads.items():
+               loads={})
+
+    def on_load(M, T, main, gen):
         e = T["e"]
         n_old = min(c["n_old"], M)
+        v, valid = load_validity(c, T, main, M)
         arms, res, cues = readout_full(e, M, T["raster"], T["n_ticks"], T["onsets"], J1, g1)
         pl = readout_full(e, M, T["raster"], T["n_ticks"], T["onsets"], J1, g1, store=T["fb_plateau"])[0][0]
         vec, counts = criteria_vector(T["out"], arms[0], n_half, n_novel, n_old, c)
         L = dict(memory=e3.memory_summary(T["out"]), main=arms[0], plateau=pl, vector=vec, counts=counts,
                  plateau_cues=cues_count(pl["joint"], n_half), converge_mv=T["drift"][0], drift_signed_mv=T["drift"][1],
-                 learning=T["learning"], A_digest=T["A_digest"], valid=load_valid(v, M),
+                 learning=T["learning"], A_digest=T["A_digest"], validity=v, valid=valid,
                  per_cue=dict(joint=bits(per_cue_joint(res, cues, c)), index=bits(per_cue_index(T["out"], e, c))))
         if arm == "s100":
             L["p2e3_gate"] = p2e3_gate(T["out"], arms[0], n_half, n_novel, n_old, c)
@@ -771,7 +812,12 @@ def run_p2e3_arm(arm, c, seed, gated, results_path, log, main_gen=None):
                               for k, d in blk.items()}
         out["loads"][str(M)] = L
         log(f"seed {seed} {arm} M={M}: joint {arms[0]['joint']:.3f} D4 {arms[0]['D4']:.3f} plateau {pl['joint']:.3f} | "
-            f"C2 {T['out']['criteria']['C2_frac']:.3f} | valid {L['valid']}")
+            f"C2 {T['out']['criteria']['C2_frac']:.3f} | valid {valid}")
+    try:
+        run_timeline(arm, c, seed, log, on_load=on_load)
+    except Exception as ex:  # a crash voids only the loads not yet recorded (contract: Voids)
+        out["crashed"] = dict(after_loads=sorted(out["loads"]), error=repr(ex))
+        log(f"seed {seed} {arm}: CRASHED after loads {sorted(out['loads'])}: {ex!r}")
     out.update(timestamp=record.now(), git=record.git_state(), runtime=record.runtime(), wall_s=round(time.time() - t0, 1))
     record.append(out, results_path)
     return out
@@ -791,7 +837,7 @@ def blob_check():
     return out
 
 
-def run_online_arm(seed, gated, gated_fb, results_path, log, c4=None, c=CONTRACT):
+def run_online_arm(seed, gated, gated_info, results_path, log, c4=None, c=CONTRACT):
     t0 = time.time()
     c4 = e4.CONTRACT if c4 is None else c4
     spec = ARM_SPEC["main"]
@@ -802,40 +848,46 @@ def run_online_arm(seed, gated, gated_fb, results_path, log, c4=None, c=CONTRACT
     blobs = blob_check()
     out = dict(experiment="P2-E5", kind="reported_arm", arm="online", seed=seed, gated=gated, contract_digest=record.digest(c),
                online_contract_digest=record.digest(c4), blobs=blobs, loads={})
-    for M in c4["gate_M"]:
-        o.run_to(M)
-        S = copy.deepcopy(o)
-        d0 = e4.state_digest(S)
-        crit = e4.block_criteria(o, M)
-        A1, B = e4.twin_A(S, M, ref_store=gated_fb.get(M))
-        tb = e4.twin_B(B, S, M)
-        r3 = store_from(o, M, k=c["grid_k"])
-        A2, _ = e4.twin_A(S, M, ref_store=r3)
-        untouched = e4.state_digest(S) == d0
-        plain.learn(M)
-        n = tb["all"]["n"]
-        mc_m, mc_c = tb["all"]["mcnemar_memory"], tb["all"]["mcnemar_content"]
-        net_m, net_c = mc_m[1] - mc_m[0], mc_c[1] - mc_c[0]
-        on_med = A1["main"]["intrusions_median"]
-        ref = A1.get("swap_reference")
-        v = dict(fwd_equals_p2e1=e3.digest(plain.store.keys) == e3.digest(S.store.keys),
-                 elig_ok=float(np.mean(o.learn_log["elig_frac"][:M])) >= c4["elig_valid"],
-                 mean_A_ok=c4["mean_A_lo"] <= float(np.mean([a.size for a in o.A[:M]])) <= c4["mean_A_hi"],
-                 fb_union_ok=e4.fb_union_ok(S), capture_ok=capture_ok(o, M),
-                 slot_checks_ok=bool(all(crit["slot_checks"].values()) and all(d["writes_ok"] for d in o.log if d["step"] <= M)),
-                 audit_ok=not list(e4.realised_audit(o, M)), leak_ok=bool(crit["leak"]["ok"]), twins_untouched=bool(untouched),
-                 blobs_ok=bool(all(b["same"] for b in blobs.values())), reference_present=ref is not None)
-        valid = bool(all(v.values()))
-        L = dict(validity=v, valid=valid, block=dict(rates=crit["rates"], per_kind=crit["per_kind"], offset_mv=crit["offset_mv"]),
-                 twin_A=dict(online=A1["main"], reference=ref, plateau=A1["swap_plateau"], R3=A2.get("swap_reference"),
-                             offset_settled=A1["offset_settled"], drift=A1["drift"], memory=A1["memory"]),
-                 twin_B=tb, L_o=dict(net_memory=int(net_m), net_content=int(net_c), n=int(n), loss=int(max(0, net_m, net_c))),
-                 ratio=(on_med + 1) / (ref["intrusions_median"] + 1) if ref is not None else None,
-                 activity=activity_identity(o, M, c), responders=e4.responder_stats(o))
-        out["loads"][str(M)] = L
-        log(f"seed {seed} online M={M}: block C1 {crit['rates']['C1']:.3f} C2 {crit['rates']['C2']:.3f} joint "
-            f"{crit['rates']['joint']:.3f} | twin A online {A1['main']['joint']:.3f} ref "
-            f"{ref['joint'] if ref else None} | R {L['ratio']} | L_o {L['L_o']} | valid {valid} ({time.time() - t0:.0f} s)")
+    try:
+        for M in c4["gate_M"]:
+            o.run_to(M)
+            S = copy.deepcopy(o)
+            d0 = e4.state_digest(S)
+            crit = e4.block_criteria(o, M)
+            A1, B = e4.twin_A(S, M, ref_store=gated_info.get(M, {}).get("fb"))
+            tb = e4.twin_B(B, S, M)
+            r3 = store_from(o, M, k=c["grid_k"])
+            A2, _ = e4.twin_A(S, M, ref_store=r3)
+            untouched = e4.state_digest(S) == d0
+            plain.learn(M)
+            n = tb["all"]["n"]
+            mc_m, mc_c = tb["all"]["mcnemar_memory"], tb["all"]["mcnemar_content"]
+            net_m, net_c = mc_m[1] - mc_m[0], mc_c[1] - mc_c[0]
+            on_med = A1["main"]["intrusions_median"]
+            ref = A1.get("swap_reference")
+            v = dict(fwd_equals_p2e1=e3.digest(plain.store.keys) == e3.digest(S.store.keys),
+                     elig_ok=float(np.mean(o.learn_log["elig_frac"][:M])) >= c4["elig_valid"],
+                     mean_A_ok=c4["mean_A_lo"] <= float(np.mean([a.size for a in o.A[:M]])) <= c4["mean_A_hi"],
+                     fb_union_ok=e4.fb_union_ok(S), capture_ok=capture_ok(o, M),
+                     slot_checks_ok=bool(all(crit["slot_checks"].values()) and all(d["writes_ok"] for d in o.log if d["step"] <= M)),
+                     audit_ok=not list(e4.realised_audit(o, M)), leak_ok=bool(crit["leak"]["ok"]), twins_untouched=bool(untouched),
+                     blobs_ok=bool(all(b["same"] for b in blobs.values())), reference_present=ref is not None)
+            valid = bool(all(v.values()))
+            L = dict(validity=v, valid=valid, block=dict(rates=crit["rates"], per_kind=crit["per_kind"], offset_mv=crit["offset_mv"]),
+                     twin_A=dict(online=A1["main"], reference=ref, plateau=A1["swap_plateau"], R3=A2.get("swap_reference"),
+                                 offset_settled=A1["offset_settled"], drift=A1["drift"], memory=A1["memory"]),
+                     twin_B=tb, L_o=dict(net_memory=int(net_m), net_content=int(net_c), n=int(n), loss=int(max(0, net_m, net_c))),
+                     ratio=(on_med + 1) / (ref["intrusions_median"] + 1) if ref is not None else None,
+                     activity=activity_identity(o, M, c), responders=e4.responder_stats(o),
+                     A_digest=hashlib.sha256(b"".join(a.astype(np.int64).tobytes() for a in o.A[:M])).hexdigest()[:16])
+            L["A_digest_matches_gated"] = L["A_digest"] == gated_info.get(M, {}).get("A_digest")
+            out["loads"][str(M)] = L
+            log(f"seed {seed} online M={M}: block C1 {crit['rates']['C1']:.3f} C2 {crit['rates']['C2']:.3f} joint "
+                f"{crit['rates']['joint']:.3f} | twin A online {A1['main']['joint']:.3f} ref "
+                f"{ref['joint'] if ref else None} | R {L['ratio']} | L_o {L['L_o']} | valid {valid} ({time.time() - t0:.0f} s)")
+    except Exception as ex:  # a crash voids only the loads not yet recorded (contract: Voids)
+        out["crashed"] = dict(after_loads=sorted(out["loads"]), error=repr(ex))
+        log(f"seed {seed} online: CRASHED after loads {sorted(out['loads'])}: {ex!r}")
     out.update(timestamp=record.now(), git=record.git_state(), runtime=record.runtime(), wall_s=round(time.time() - t0, 1))
     record.append(out, results_path)
     return out
@@ -849,18 +901,24 @@ def run_seed(c, seed, gated, results_path=record.RESULTS, log=print, reported=Tr
     rec, loads, main, gen = run_gated_arm(c, seed, gated, results_path, log)
     if not reported:
         return rec
-    gated_diagnostics(c, seed, gated, loads, main, gen, results_path, log)
-    gated_fb = {M: T["fb_store"] for M, T in loads.items()}
+    gated_info = {M: dict(fb=T["fb_store"], A_digest=T["A_digest"]) for M, T in loads.items()}
+    try:
+        gated_diagnostics(c, seed, gated, loads, main, gen, results_path, log)
+    except Exception as ex:  # contained like any reported arm
+        record.append(dict(experiment="P2-E5", kind="reported_arm", arm="gated_diagnostics", seed=seed, gated=gated,
+                           contract_digest=record.digest(c), crashed=dict(after_loads=[], error=repr(ex)),
+                           timestamp=record.now(), git=record.git_state()), results_path)
+        log(f"seed {seed} gated_diagnostics: CRASHED {ex!r} (the arm is void)")
     del loads
     for arm in (arms or P2E3_ARMS + ("online",)):
         try:
             if arm == "online":
-                run_online_arm(seed, gated, gated_fb, results_path, log, c4=c4, c=c)
+                run_online_arm(seed, gated, gated_info, results_path, log, c4=c4, c=c)
             else:
                 run_p2e3_arm(arm, c, seed, gated, results_path, log)
         except Exception as ex:  # a crashed reported arm voids only that arm (contract: Voids)
             record.append(dict(experiment="P2-E5", kind="reported_arm", arm=arm, seed=seed, gated=gated,
-                               contract_digest=record.digest(c), crashed=repr(ex), timestamp=record.now(),
+                               contract_digest=record.digest(c), crashed=dict(after_loads=[], error=repr(ex)), timestamp=record.now(),
                                git=record.git_state()), results_path)
             log(f"seed {seed} {arm}: CRASHED {ex!r} (the arm is void)")
     log(f"seed {seed}: reported arms done")
@@ -902,21 +960,19 @@ def readings(c, gated, diag, arms, loads):
         n = None
         for s in seeds:
             d = diag.get(s)
-            if d is None or "loads" not in d:
+            D = (d or {}).get("loads", {}).get(M)
+            if D is None:
                 rows[s] = None
                 continue
-            D = d["loads"][M]
             n = D["n_half"]
             bar, mat, mar = power.bar_count(n, c["frac"]), cues_count(c["material_frac"], n), cues_count(c["margin_frac"], n)
             ub, own = D["grid"]["plateau"]["best_cues"], D["grid"]["main"]["best_cues"]
             Lc = max(0, min(ub, bar) - min(own, bar))
             Lc_frozen = max(0, min(D["grid"]["plateau"]["frozen_cues"], bar) - min(D["grid"]["main"]["frozen_cues"], bar))
             Li = max(0, bar - ub)
-            o = online.get(s)
-            oL = o["loads"].get(M) if o and "loads" in o else None
+            oL = (online.get(s) or {}).get("loads", {}).get(M)
             Lo = oL["L_o"]["loss"] if oL and oL["valid"] else None
-            a = s100.get(s)
-            aL = a["loads"].get(M) if a and "loads" in a else None
+            aL = (s100.get(s) or {}).get("loads", {}).get(M)
             attributable = bool(aL is not None and aL["valid"] and aL.get("p2e3_gate") and Lo is not None)
             dom = None
             if attributable:
@@ -945,11 +1001,10 @@ def readings(c, gated, diag, arms, loads):
         # Part C
         okC = []
         for s in seeds:
-            d = diag.get(s)
-            if d is None or "loads" not in d:
+            D = (diag.get(s) or {}).get("loads", {}).get(M)
+            if D is None:
                 okC.append(False)
                 continue
-            D = d["loads"][M]
             nn = D["n_half"]
             tol = cues_count(c["margin_frac"], nn)
             au = D["activity"]["count_auc"]
@@ -958,8 +1013,17 @@ def readings(c, gated, diag, arms, loads):
                             and g["R3"]["best_cues"] >= g["plateau"]["best_cues"] - tol))
         C = dict(per_seed=okC, ok=bool(okC and all(okC)))
         # Part D
-        ratios = [online[s]["loads"][M]["ratio"] for s in seeds if s in online and "loads" in online[s]
-                  and online[s]["loads"][M]["valid"] and online[s]["loads"][M]["ratio"] is not None]
+        ratios, joints = [], {}
+        for s in seeds:
+            oL = (online.get(s) or {}).get("loads", {}).get(M)
+            if not (oL and oL["valid"] and oL["ratio"] is not None):
+                continue
+            ratios.append(oL["ratio"])
+            tA, nn = oL["twin_A"], c["n_old"] + c["n_rand"]
+            on_c, ref_c, pl_c = (cues_count(tA[k]["joint"], nn) for k in ("online", "reference", "plateau"))
+            joints[str(s)] = dict(online=on_c, reference=ref_c, plateau=pl_c, difference=on_c - ref_c,
+                                  at_floor=bool(ref_c < cues_count(c["material_frac"], nn)),
+                                  A_digest_matches_gated=oL.get("A_digest_matches_gated"))
         if len(ratios) < need:
             Dr = "NOT ESTIMABLE"
         elif sum(x >= c["worsens_ratio"] for x in ratios) >= need:
@@ -968,18 +1032,16 @@ def readings(c, gated, diag, arms, loads):
             Dr = "NOT WORSE"
         else:
             Dr = "MIXED"
-        Dd = dict(ratios=ratios, reading=Dr)
+        Dd = dict(ratios=ratios, reading=Dr, joints=joints)
         # Part E: pooled
         prow = []
         for s in seeds:
-            p = pooled.get(s)
+            P_ = (pooled.get(s) or {}).get("loads", {}).get(M)
             g_ = gated[s]["loads"][M]
-            if not (p and "loads" in p and p["loads"][M]["valid"]) or g_["vector"]["S2"]:
+            if not (P_ and P_["valid"]) or g_["vector"]["S2"]:
                 continue
-            P_ = p["loads"][M]
-            nn = c["n_old"] + c["n_rand"]
-            d = diag.get(s)
-            main_plat = d["loads"][M]["grid"]["plateau"]["frozen_cues"] if d and "loads" in d else None
+            D = (diag.get(s) or {}).get("loads", {}).get(M)
+            main_plat = D["grid"]["plateau"]["frozen_cues"] if D else None
             mc2, pc2 = g_["counts"]["C2"], P_["counts"]["C2"]
             prow.append(dict(seed=s, pooled_passes_S2=bool(P_["vector"]["S2"]),
                              plateau_gain=None if main_plat is None else P_["plateau_cues"] - main_plat, C2_gain=pc2 - mc2))
@@ -1001,7 +1063,7 @@ def readings(c, gated, diag, arms, loads):
             for s in seeds:
                 ja = (arms.get(a_, {}).get(s) or {}).get("loads", {}).get(M) if a_ != "main" else gated[s]["loads"][M]
                 jb = (arms.get(b_, {}).get(s) or {}).get("loads", {}).get(M) if b_ != "main" else gated[s]["loads"][M]
-                if ja and jb and ja.get("per_cue") and jb.get("per_cue"):
+                if ja and jb and ja.get("valid", True) and jb.get("valid", True) and ja.get("per_cue") and jb.get("per_cue"):
                     xa = np.array([ch == "1" for ch in ja["per_cue"]["joint"]])
                     xb = np.array([ch == "1" for ch in jb["per_cue"]["joint"]])
                     mc.append([int((xa & ~xb).sum()), int((~xa & xb).sum())])
@@ -1010,13 +1072,11 @@ def readings(c, gated, diag, arms, loads):
     # s100, ordered rule over (seed, load)
     fails, nonvoid = False, 0
     for s in seeds:
-        a = s100.get(s)
-        ok_loads = a is not None and "loads" in a and all(a["loads"][M]["valid"] for M in loads)
-        if a is not None and "loads" in a:
-            for M in loads:
-                if a["loads"][M]["valid"] and not a["loads"][M].get("p2e3_gate"):
-                    fails = True
-        nonvoid += bool(ok_loads)
+        aLs = (s100.get(s) or {}).get("loads", {})
+        for M in loads:
+            if aLs.get(M, {}).get("valid") and not aLs[M].get("p2e3_gate"):
+                fails = True
+        nonvoid += bool(all(aLs.get(M, {}).get("valid") for M in loads))
     out["s100"] = "REPLICATION FAIL" if fails else ("NOT ESTIMABLE" if nonvoid < c["min_seeds"] else "REPLICATES")
     out["part_C"] = "AVAILABLE FROM ACTIVITY" if all(out[M]["part_C"]["ok"] for M in loads) else "NOT SHOWN"
     out["loads_disagree"] = len({out[M]["part_B"]["reading"] for M in loads}) > 1
@@ -1036,7 +1096,7 @@ def verdict(recs, results_path=record.RESULTS, log=print, c=CONTRACT, seeds=GATE
     arms = {a: first_records(recs, "reported_arm", arm=a) for a in P2E3_ARMS + ("online",)}
     rd = readings(c, gated, diag, arms, loads)
     spec_flag = None
-    if label == "PASS":
+    if label == "PASS" and all(M in (diag.get(s) or {}).get("loads", {}) for s in gated for M in loads):
         spec_flag = any(d["loads"][M]["contamination"]["label_permuted"]["perm_spec"] >
                         c["specificity_ratio"] * d["loads"][M]["contamination"]["label_permuted"]["main_spec"]
                         for d in diag.values() for M in loads)
@@ -1094,8 +1154,10 @@ def predictions(recs, draws=400, rng_seed=5, results_path=record.RESULTS, log=pr
         p_content.append(pc_)
         p_pass.append(pi_ * pc_)
     q = lambda x: [float(np.percentile(x, 5)), float(np.percentile(x, 95))]
-    diag = first_records(recs, "reported_arm", gated=False, arm="gated_diagnostics")
-    arms = {a: first_records(recs, "reported_arm", gated=False, arm=a) for a in P2E3_ARMS + ("online",)}
+    cur = [r for r in recs if r.get("experiment") == "P2-E5" and r.get("kind") == "reported_arm" and r.get("seed") in EXPLORE_SEEDS
+           and r.get("git", {}).get("plant2_tree") == g["plant2_tree"] and not r.get("git", {}).get("plant2_dirty", True)]
+    diag = first_records(cur, "reported_arm", gated=False, arm="gated_diagnostics")
+    arms = {a: first_records(cur, "reported_arm", gated=False, arm=a) for a in P2E3_ARMS + ("online",)}
     expl = {str(s): first[s] for s in first}
     inputs = readings(dict(c, min_seeds=1), {s: first[s] for s in first}, diag, arms, loads)
     rec = dict(experiment="P2-E5", kind="power_predictions", contract_digest=DIGEST, plant2_tree=g["plant2_tree"],
@@ -1133,6 +1195,9 @@ def guard(recs):
     num = r_num.stdout.split()
     if num and int(num[1]) != 0:
         raise SystemExit("guard: the frozen contract text was changed (only additions are allowed)")
+    frozen = _git("show", f"{CONTRACT_FROZEN_AT}:{CONTRACT_PATH}").stdout
+    if not _git("show", f"HEAD:{CONTRACT_PATH}").stdout.startswith(frozen):
+        raise SystemExit("guard: the frozen contract text is not a prefix of HEAD's (only appended lines are allowed)")
     head = _git("show", "HEAD:bench/results/plant2.jsonl").stdout.splitlines()
     pred = [json.loads(l) for l in head if '"power_predictions"' in l and '"P2-E5"' in l]
     pred = [p for p in pred if p.get("experiment") == "P2-E5"]
