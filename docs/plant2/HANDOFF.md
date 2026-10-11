@@ -1,4 +1,4 @@
-# plant2 handoff (2026-10-11, updated about 00:58 UTC)
+# plant2 handoff (2026-10-11, updated about 02:40 UTC)
 
 This is the state of work for whoever continues, human or agent. Branch `plant2-stage1`; nothing is
 merged to `main` without the owner saying "merge".
@@ -27,7 +27,8 @@ merged to `main` without the owner saying "merge".
     written up in the plan (614246b).
   - The predictions are committed (`power_predictions`; P(PASS) 0) and appended to the contract
     (124ecb2).
-- **Step 5 is running.** Gated seeds:
+- **Step 5 is running.** Seeds 16-19 have their gated records committed: all valid, all
+  failing. Gated seeds:
   - lane A runs seeds 16, 18 and 20;
   - lane B runs seeds 17 and 19;
   - logs are in `~/.cache/brain-sim/plant2/p2_e4/gated_lane{A,B}.log`, with start markers
@@ -82,29 +83,32 @@ offset is 6.9 mV.
 
 ## P2-E5 (structured items)
 
-- **The red-team is done and acted on.**
-  - Findings are in `review/plant2/P2-E5/`, and the ledger rows and `DECISIONS.md` entry are
-    written.
-  - The revised contract is `docs/plant2/P2-E5-structured-items.md` (commit 4846de0), not yet
-    frozen.
-  - The power reference script is `analysis/p2e5_power.py`. Append its record with `--append`
-    once the contract text is final.
-- **Verification** is running (workflow wf_6a157ebe-b58, task w0p7or3lw). It has three checkers:
-  numbers and power, coverage, and ambiguity.
-- **When it finishes:**
-  1. render the output into `review/plant2/P2-E5/verify-*.md`, adapting the render script
-     (`~/.cache/brain-sim/plant2/diag/render_redteam_e5.py`; verify outputs have
-     `{role, verdict, findings[{id, severity, title, where, evidence, fix}], computed}`);
-  2. record the ledger rows and act on the findings;
-  3. append the `power_reference` record;
-  4. freeze the contract (commit), and set CONTRACT_FROZEN_AT in the driver.
-- **Implementation** starts only after P2-E4's gated seeds finish, because the plant2 tree is
-  frozen until then. Exploration then runs on 44-45, followed by predictions, then gated seeds
-  21-25.
-- **Open questions for the owner** (they do not block freezing):
+- **The contract is frozen** at commit bc28cd9 (`docs/plant2/P2-E5-structured-items.md`), with
+  its `power_reference` record. It went through a red-team, a verification, a fix-check and a
+  final diff check. All are in `review/plant2/P2-E5/`, with every finding in the ledger.
+- **What is gated:** S1 (P2-E2's C1-C4), S2 joint, S3 leak check and S4 oldest. The condition is
+  s = 60 and F = 10, at M = 500 and 1,000, on seeds 21-25. Expected labels: STRUCTURED INDEX
+  FAIL and STRUCTURED CONTENT FAIL.
+- **Reported readings:**
+  - Part B ranks the failures (contamination, index, operating point);
+  - Part C measures own-cell identity from activity;
+  - Part D tests contamination under continuous learning, on P2-E4's frozen driver;
+  - Part E covers replication and confounds;
+  - Parts F and G cover where contamination lands and the reported cue kinds.
+- **Next:**
+  1. Write the driver `plant2/experiments/p2_e5_structured.py` and its tests. Develop them in a
+     side worktree or branch, because the main tree's plant2/ must stay clean until P2-E4's
+     gated seeds have written all their records.
+  2. Run an implementation review, then a fix-check.
+  3. Freeze the plant2 tree, run exploration on 44-45, predict, then gated 21-25 once each.
+- **Exploratory finding from the fix-check** (in the contract's Scope and in `DECISIONS.md`): on
+  structured items the online state reads the same contaminated store far better than the
+  settled state, with content 0.525-0.58 against 0.035-0.055, while index access falls. That is
+  the owner's trade-off.
+- **Open questions for the owner** (they do not block anything):
   - whether M = 1,000 should be gated now;
-  - whether the activity-gated write may be contracted beside the error-correcting write;
-  - how to treat forward-index cross-talk, a third problem outside the two named ones.
+  - whether the activity-gated write may be contracted;
+  - how to treat forward-index cross-talk.
 
 ## Owner guidance in force (`DECISIONS.md`, entries of 2026-10-10 and 2026-10-11)
 
