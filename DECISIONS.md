@@ -686,3 +686,52 @@ correlated items:
 **The freeze.** The contract is frozen with its `power_reference` record (`analysis/p2e5_power.py
 --append`). The P2-E5 driver is written only after P2-E4's gated seeds finish, because the plant2
 tree stays frozen until then.
+
+## 2026-10-11: P2-E4 closed out (Result, results review, gated diagnosis); evaluation for the owner
+
+**What was done.**
+- **The Result** was appended to P2-E4's contract, with readings added after the review
+  (89d5bde, 0a42d09). The verdict, ONLINE INDEX FAIL + HABITUATION FAIL + RECOVERY FAIL, stands
+  as recorded. Nothing was re-run, relabelled or retuned.
+- **An independent four-lens results review** (`review/plant2/P2-E4/results-*.md`) confirmed it.
+  The code reviewer recomputed every gated number, label and validity flag from the hashed logs,
+  and all matched. All 32 findings are in the ledger: 27 accepted, 5 deferred to the owner.
+- **The diagnosis plan** received a correction to its exploration write-up and the gated D1-D4
+  results, scored against their predictions:
+  - the causal offset sentences are withdrawn;
+  - exploration D1 is withdrawn as a test;
+  - D4 is reported net of the control copy (2.0-2.1 mV);
+  - "rules out" becomes "does not support".
+- **The P2-E4 row** was added to `docs/plant2/STAGES.md`.
+- **The evaluation for the owner** is `docs/plant2/EVAL-after-P2-E4.md`.
+
+**Recorded readings (the owner's wording kept).**
+- **The prediction:** zero passes in 1,500 simulations, not a mathematical proof.
+- **RECOVERY FAIL is read per seed and load** (seeds=1, loads=1), following the frozen rule. It
+  rests on seed 18 at M = 500, one item short, with p0 0.831 against the 0.8 bar. Read over all
+  seeds and loads, the label would be RECOVERY NOT ESTIMABLE.
+- **Validity 5's** `proj_current` and `inh_ok` parts hold by construction. Twin A's zero replay
+  mismatch is the evidence that the projection was current. P2-E5 reuses that check, and its
+  verdict text will say the same.
+- **The failure at high load is not a failure to store.**
+  - Online index failures are mostly slowed retrievals of intact assemblies: 86-100 % pass after a
+    settle on the same synapses.
+  - The online-written content store is contaminated, and the online regime masks it.
+- **Which state variable is responsible for the trade-off is not isolated.** The gated data do
+  not replicate the exploration's offset correlate.
+- **A newly named experimenter supply:** separate encoding and retrieval states, set by the
+  schedule. P2-E4 removes nothing at learning time.
+
+**Questions for the owner** (`EVAL-after-P2-E4.md`, last section). No mechanism contract is
+drafted before P2-E5's verdict and these rulings.
+1. May burst-gated feedback eligibility (at least 3 continuation spikes, k fixed by P2-E5 Part C)
+   be the next contract? It is the activity form of the owner's eligibility hypothesis.
+2. May fixed stabilising inhibition in the memory layer join a Stage 1 recurrent completion
+   mechanism?
+3. Where does forward-index cross-talk on correlated items go?
+4. Should one latency bar cover index and content in future contracts?
+5. Optional: a reported-only replay of seed 18's M = 500 habituation copies.
+
+**Not done, by the owner's direction:**
+- the current experiments are not modified;
+- P2-E5 runs exactly as frozen.
