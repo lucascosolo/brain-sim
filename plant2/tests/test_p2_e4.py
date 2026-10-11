@@ -213,7 +213,8 @@ def _fake_seed(seed, gated, kind, M_rates, hab=None, tree="t"):
 
 
 def test_verdict_reads_only_this_experiments_gated_records(run_dir):
-    real = e4.load_records()
+    # the real file now holds P2-E4's own gated records (first per seed wins), so they are left out here
+    real = [r for r in e4.load_records() if not (r.get("experiment") == "P2-E4" and r.get("kind") == "kill_test_seed")]
     fake = [_fake_seed(s, True, "kill_test_seed", dict(C1=1.0)) for s in e4.GATED_SEEDS]
     rec = e4.verdict(real + fake + [dict(fake[0], valid=False)], results_path=run_dir / "v.jsonl", log=lambda m: None)
     assert rec["verdict"] == "PASS" and rec["seeds"] == list(e4.GATED_SEEDS)  # the later duplicate of seed 16 is ignored
