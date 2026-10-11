@@ -144,3 +144,17 @@ D2 classes were not exhaustive: a line with both an R(x)-not-A(x) candidate and 
 outside both sets, and no A(x) candidate, fell in none of them. A fifth class,
 `mixed_non_A_candidates`, was added. The classes are now exclusive and exhaustive, so their
 fractions sum to 1 (tested in `analysis/tests/test_p2e4_diagnosis.py`).
+
+**Reading of D3, narrowed (owner review, 2026-10-11; before any run of the analysis).** Twin B keeps
+the stored synapses, the cue identities, the masks and the order. It also changes the presentation
+regime:
+- the cues come after a 50 s settle;
+- on a separate input stream;
+- at P2-E3's rhythm (100 ms on, 200 ms off);
+- with no learning episodes between them.
+
+So recovery in twin B shows that recall is **state- or protocol-dependent recovery with the
+synapses unchanged**. It does not show that the threshold offset alone caused the online failure.
+Wherever the predictions above say "network state rather than erased memories", read
+"state- or protocol-dependent, not erasure". Isolating accommodation would need a separately
+contracted intervention.

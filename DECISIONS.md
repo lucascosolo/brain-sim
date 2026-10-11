@@ -468,3 +468,36 @@ They are recorded here in substance.
   - no deletion;
   - the plant stays frozen;
   - no merge into `main` without the owner's approval.
+
+## 2026-10-11: owner's guidance after P2-E4 exploration (seeds 42-43)
+
+**Provenance.** The owner sent this guidance after reviewing the exploration results, the frozen
+code (unchanged) and the diagnosis code. It is recorded in substance.
+
+- **Complete P2-E4 exactly as frozen.**
+  - Record the exploratory failures, commit the power predictions, and run gated seeds 16-20 once
+    each.
+  - Nothing justifies changing the memory mechanism or the pass criteria.
+- **Two problems appear distinct.**
+  1. Learning-time contamination: the responder-based feedback write ties too many memory cells to
+     each experience. Settled twin A at M = 1,000 (exploratory) read the same memory raster through
+     three stores:
+
+     | store | seed 42 | seed 43 |
+     |---|---|---|
+     | online-written | 0.815 | 0.89 |
+     | P2-E3-protocol | 0.98 | 0.99 |
+     | assigned-assembly (plateau set) | 0.995 | 0.995 |
+
+  2. Operating-point instability: continuous input and repeated cues change which memories can be
+     reached, even when their synapses are intact.
+
+  They are not to be fixed together. One mechanism per contract.
+- **Twin B's recovery** would show state- or protocol-dependent recovery, not that the threshold
+  offset alone is the cause (`docs/plant2/P2-E4-diagnosis-plan.md`, narrowed reading of D3).
+- **The assigned-assembly (plateau-set) store is an upper-bound diagnostic, not an acceptable
+  solution.** A correction mechanism must let the network find which of its own active cells
+  represent the current experience, without being handed that identity. That is the research
+  target, not a further gain in recall on independent random items.
+- **The order after P2-E4.** Finish the diagnosis and the gated evaluation. Then put first
+  whichever failure remains most consequential under the structured-input tests (P2-E5).
