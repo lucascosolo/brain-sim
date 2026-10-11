@@ -547,3 +547,19 @@ completeness critic (workflow wf_7b8a1dd3-6aa). The findings are verbatim in
 
 None of these blocks freezing. The contract gates what the owner ordered and routes these
 questions to the owner through its Decision section.
+
+## Addendum (recorded 2026-10-11): owner's comments on P2-E4's first exploration results (2026-10-10)
+
+**Provenance.** This guidance was given before the diagnosis plan was written
+(`docs/plant2/P2-E4-diagnosis-plan.md`, which cites it). It was not recorded here at the time.
+It is recorded now in substance.
+
+The owner said P2-E4 is exposing a critical weakness in the current architecture, and asked:
+- **Do not intervene** in the frozen P2-E4 code or gates on the basis of the exploration results.
+- **Diagnose each item after the run:** content against A(x) recall, R(x) recall and latency.
+- **Isolate the operating point** with the settled twins.
+- **Keep habituation separate.**
+- **In P2-E5, test whether contamination worsens under continuous learning,** without adding a
+  second mechanism.
+
+P2-E5's online arm (Part D) implements the last point as a reported arm.
