@@ -81,7 +81,7 @@ The capacity-scaling experiment takes the next free number when its contract is 
     from the cue.
   - At M = 500, C2 and C4-spurious already sit at about 0.90.
   - At M = 1,000 the plateau-set store fails at every point of a 72-point readout grid. Its best
-    joint is 0.60 on seed 44 and TBD45 on seed 45.
+    joint is 0.60 on seed 44 and 0.665 on seed 45.
   - No change to the feedback write can affect C1-C4. This is forward-index cross-talk on
     correlated items, a third problem **outside the owner's two named problems**.
 - **Own-cell identity is in the network's activity** (completeness critic, C4; seed 44 at both
@@ -540,11 +540,65 @@ as the gated arm. Novel cues come from P2-E4's own stream and stay independent i
   1, not for near-zero ones. For S1 a dependent model is also given: one seed effect, and C4
   scored on the oldest 100 of C2's cues.
 
-TBD-POWER
+| system | P(PASS S1-S4) | limiting parts |
+|---|---|---|
+| idealised: as item-specific on correlated items as P2-E3 is on independent items (pooled rates) | 0.856 | C1 at M = 1,000 (0.92), C4-recall at 1,000 (0.93) |
+| idealised, P2-E3-only rates | 0.789 | C1 at 1,000 (0.84) |
+| oracle write (plateau-set store at the frozen readout) on the structured index | below 10^-6; M = 500 alone 0.002 (by run, from 10^-8 to 0.035) | M = 500: C2 0.16, C4-spurious 0.06, S2 0.72, S4 0.27 |
+| main arm (exploratory rates) | below 10^-6 | S2 and S4 at both loads; C2 and C4-spurious at both loads |
+
+- **The index caps any write at M = 500.** P(S1 holds on all five seeds at M = 500) is 0.0095 by
+  the independent model and 0.039 by the dependent one, at the mean of the four runs. By run it
+  ranges from 0.0002 to 0.12. The gate therefore tests the index as well as the write at both
+  loads. Part B ranks them, and the Decision sends any index failure to the owner.
+- **P(INVALID)** is below 0.01 under a normal model of mean |dvbar| at M = 1,000 (mean 0.11, SD
+  0.03), and about 0.06 at SD 0.04.
+  - The gated condition's exploratory values are 0.090-0.122.
+  - The largest exploratory value, 0.130, came from the s = 40 arm.
+  - The other validity checks are deterministic and held on seeds 44-45.
+- **The s = 100 replication** holds on all five seeds with probability 0.79 (P2-E3-only rates)
+  to 0.86 (pooled rates). Per seed and load it is 0.9997 at M = 500 and 0.954 at M = 1,000.
+  Exclusions make a load NOT ATTRIBUTABLE with probability about 0.02.
+- **Part B readings.** Simulated in cues, with exclusions. Grid bests are means over seeds 44
+  and 45: J_ub\* 0.9925 and 0.6325, J_own\* 0.62 and 0.0475. L_o on structured items is
+  unmeasured, so it is given as scenarios.
+
+  | load | L_o of 0.07 | L_o of 0.15 | L_o of 0.25 | L_o of 0.35 | L_o of 0.45 | material losses |
+  |---|---|---|---|---|---|---|
+  | M = 500 | CONTAMINATION-DOMINANT, 1.00 | CONTAMINATION-DOMINANT, 0.945 | SPLIT, 0.92 | SPLIT 0.60, OPERATING-POINT-DOMINANT 0.40 | OPERATING-POINT-DOMINANT, 0.99 | contamination 1.0; index 0; operating point when L_o >= 0.15 |
+  | M = 1,000 | CONTAMINATION-DOMINANT, 0.97 | 0.975 | 0.97 | 0.97 | 0.85 (SPLIT 0.13) | contamination 0.98; index 0.98 |
+
+  - **Sensitivity at M = 1,000** (L_o 0.25) to J_ub\*: CONTAMINATION-DOMINANT is 0.92 at 0.59,
+    0.69 at 0.55, 0.48 at 0.53 and 0.18 at 0.50. The rest reads SPLIT.
+  - **For scale,** P2-E4's exploration on independent items had a net online index loss of
+    0.065-0.07 at M = 500 and 0.16-0.26 at M = 1,000.
 
 ## Predictions (from exploration on seeds 44-45; the real driver's are appended later)
 
-TBD-PRED
+| criterion or arm | M = 500 | M = 1,000 |
+|---|---|---|
+| S1 | **fails** (P(all seeds) 0.01-0.04): C2 0.89-0.92, C4-spurious 0.86-0.92; C1 0.94-0.98 | **fails**: C2 0.45-0.55, C4-spurious 0.35-0.47; C1 0.91-0.96 |
+| S2 | **fails**: joint 0.08-0.17 (D1 >= 0.97) | **fails**: about 0.00; median intrusions 1,500-2,100 |
+| S3 | holds (>= 0.98) | holds (>= 0.98) |
+| S4 | **fails**: <= 0.05 | **fails**: 0.00 |
+| validity | holds | holds (P(INVALID) below about 0.01-0.06) |
+| plateau-set store, frozen point | 0.92-0.94 (D4 0.88-0.95) | 0.12-0.18 |
+| plateau-set store, grid best (optimistic) | 0.985-1.000; 24-26 passing points | 0.60-0.665; no passing point |
+| main store, grid best (optimistic) | 0.565-0.675; no passing point | 0.04-0.055; no passing point |
+| Part C | count AUC >= 0.999; R_3 within 10 cues of the plateau-set store or better: **AVAILABLE FROM ACTIVITY** (seed 44 both loads, seed 45 M = 500) | count AUC about 0.996; R_3 0.165 against 0.160 (frozen), 0.61 against 0.60 (grid best) |
+| Part B | CONTAMINATION-DOMINANT if the structured L_o stays at or below about 0.15, as on independent items; SPLIT near 0.25; OPERATING-POINT-DOMINANT above about 0.35 | CONTAMINATION-DOMINANT (0.85-0.97), with the index loss also material (0.98) |
+| Part D | **WORSENS.** Mean intrusions on the same items were about 180 online against about 100 under P2-E3's protocol (the red-team's line; means, not medians). | WORSENS or MIXED (no exploration of the online arm at this load) |
+| s = 100 | REPLICATES (P 0.79-0.86): joint 0.985-1.0, C1 about 0.945 | joint about 0.98, C1 0.95-0.97 |
+| s = 80 | joint 0.99-1.0 | **joint 0.6-0.75**; plateau-set 0.92-0.95; C2 0.94-0.96 |
+| s = 40 | joint 0; C2 0.15-0.17 (the index collapses) | joint 0; C2 about 0.03 |
+| pooled control (seed 45 only) | joint about 0.985: CORRELATION-ATTRIBUTABLE | joint about 0.10, C2 about 0.78: LINE-LOAD-LIMITED |
+| F = 40 (seed 45 only) | joint about 0.77; plateau-set about 0.99 | joint about 0.05; C2 about 0.74; plateau-set about 0.85 |
+| intrusions (main store, means) | prototype lines not in x about 36; later-sibling-only 40-48; earlier-sibling-only about 2.3 | about 1,500-1,900 in total |
+| own-cell share | median about 0.93 under where.py's untimed rule; the timed rule may read lower | about 0.6 (untimed) |
+| spurious memory cells (seed 44) | about 2.9 per half cue, 98 % sibling plateau cells | about 19 per half cue, 98 % sibling plateau cells |
+| label-permuted | item-specific missing fraction about 0.05, against 0.97-0.99 for main; prototype missing fraction about 0.8 | - |
+| new exemplars | median responders about 1; median 0 lines | responders 6-8; 110-250 lines, mostly prototype lines; specific lines at chance |
+| prototype cues | memory responders median 79-86 (mean about 97); about 800 lines | about 250 responders; about 3,500 lines |
 
 **Expected labels:** STRUCTURED INDEX FAIL and STRUCTURED CONTENT FAIL at both loads.
 - **P(PASS):** below 10^-6 at the exploratory rates, as an analytic product of the criteria.

@@ -67,10 +67,10 @@ RUNS = {
 S60 = {M: mean_runs(list(v.values())) for M, v in RUNS.items()}
 
 # Grid bests (maximum joint over the 72 points; contract Part A), cyclic order, seeds 44 and 45 (completeness lens
-# grid.py; seed 45 run by the lead for the verification). Filled from grid_s60_seed4{4,5}_cyclic.json.
+# grid.py; seed 45 run by the lead for the verification), from grid_s60_seed4{4,5}_cyclic.json.
 GRID = {
-    500: dict(ub=[1.0, None], own=[0.565, None], ub_frozen=[0.925, None], own_frozen=[0.13, None]),
-    1000: dict(ub=[0.60, None], own=[0.04, None], ub_frozen=[0.16, None], own_frozen=[0.0, None]),
+    500: dict(ub=[1.0, 0.985], own=[0.565, 0.675], ub_frozen=[0.925, 0.935], own_frozen=[0.13, 0.10]),
+    1000: dict(ub=[0.60, 0.665], own=[0.04, 0.055], ub_frozen=[0.16, 0.12], own_frozen=[0.0, 0.0]),
 }
 
 

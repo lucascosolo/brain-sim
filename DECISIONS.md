@@ -624,3 +624,36 @@ during an experience should not automatically qualify it to write that experienc
 - **A plateau-trace-gated write** would be local too, but in the current model it reproduces the
   assigned-assembly store exactly. It inherits the random, content-blind plateau key.
 - **Neither repairs forward-index cross-talk on correlated items at M = 1,000.**
+
+## 2026-10-11: P2-E5 verification acted on (second revision; not yet frozen)
+
+**The review.** Three verifiers checked the first revision: numbers and power, coverage, and
+implementation ambiguity. Their reports are verbatim in `review/plant2/P2-E5/verify-*.md`, and the
+36 dispositions are rows in `review/ledger.jsonl`.
+
+**Corrections to the previous entry,** appended rather than edited:
+- **"All 31 were accepted, one in part" overstated what was done.** Correction rows now mark:
+  - implementation M1 and completeness C4 as accepted in part;
+  - methodology M2, B1 and n1 as completed only by this revision.
+- **The quoted "P(all five seeds) 0.001"** for S1 at M = 500 rested on one lens and an
+  independence assumption. With all four exploratory runs it is 0.0095 (independent model) to
+  0.039 (dependent model). By run it ranges from 0.0002 to 0.12. The conclusion stands: the index
+  very likely fails S1 at M = 500, whatever the write.
+
+**Chosen in the second revision:**
+- **Part D** reads the median-intrusion ratio, not the joint, which sits at a floor at
+  M = 1,000.
+- **The grid best** is pinned as the maximum joint. Seed 45's grid was run by the lead with the
+  red-team's script; at M = 1,000 the plateau-set store's grid best is 0.60 and 0.665.
+- **Part B** works in cue counts, caps the contamination loss at the bar, requires a material
+  dominant loss, and folds in the NOT ATTRIBUTABLE exclusions. In consequence, M = 500's reading
+  depends on the online operating-point loss, which no one has measured on structured items:
+  - CONTAMINATION-DOMINANT if it is at most about 0.15;
+  - SPLIT near 0.25;
+  - OPERATING-POINT-DOMINANT above about 0.35.
+- **The Decision** sends any STRUCTURED INDEX FAIL, and any non-contamination or disagreeing
+  reading, to the owner before a mechanism contract.
+- **Validity 7** checks that the gated write is still P2-E3's, through a read-only step wrapper
+  in place of a copied `learn_one`.
+- **P2-E3's shuffled leak rule** is quoted unchanged, and P2-E3 addendum item 8 is addressed
+  explicitly. It is not met, for stated reasons, with a specificity check if a PASS occurs.
