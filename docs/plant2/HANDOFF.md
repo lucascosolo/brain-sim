@@ -1,4 +1,4 @@
-# plant2 handoff (2026-10-11, updated about 02:40 UTC)
+# plant2 handoff (2026-10-11, updated about 04:25 UTC)
 
 This is the state of work for whoever continues, human or agent. Branch `plant2-stage1`; nothing is
 merged to `main` without the owner saying "merge".
@@ -21,19 +21,16 @@ merged to `main` without the owner saying "merge".
 
 ## Progress since the first handoff (00:35 UTC)
 
-- **Steps 1-4 are done.**
-  - The exploration reported arms are committed (1a9ed2d, a4b6b41).
-  - The diagnosis on seeds 42-43 is valid (0 mismatches), committed (ba97fcc, 78b9251) and
-    written up in the plan (614246b).
-  - The predictions are committed (`power_predictions`; P(PASS) 0) and appended to the contract
-    (124ecb2).
-- **Step 5 is running.** Seeds 16-19 have their gated records committed: all valid, all
-  failing. Gated seeds:
-  - lane A runs seeds 16, 18 and 20;
-  - lane B runs seeds 17 and 19;
-  - logs are in `~/.cache/brain-sim/plant2/p2_e4/gated_lane{A,B}.log`, with start markers
-    written for 16 and 17;
-  - commit the `kill_test_seed` and `reported_arms` records as they arrive.
+- **P2-E4 is complete.**
+  - All five gated seeds (16-20) are valid. Verdict: ONLINE INDEX FAIL + HABITUATION FAIL +
+    RECOVERY FAIL (e756252), as predicted. Content holds everywhere.
+  - Every gated seed's reported arms and post-verdict diagnosis are committed, with every
+    replay exact.
+  - The independent results review (methodology, code, and constructive and skeptical
+    north-star lenses) is running as workflow wf_e473a6a1-d25. Then: write the Result and
+    addenda into the contract (append-only), the STAGES row, and the report to the owner.
+  - Wording the owner asked for: "no pass in 1,500 joint simulations (95 % upper bound about
+    0.002)", not "P(PASS) = 0".
 
 ## Next steps, in order
 
@@ -83,28 +80,20 @@ offset is 6.9 mV.
 
 ## P2-E5 (structured items)
 
-- **The contract is frozen** at commit bc28cd9 (`docs/plant2/P2-E5-structured-items.md`), with
-  its `power_reference` record. It went through a red-team, a verification, a fix-check and a
-  final diff check. All are in `review/plant2/P2-E5/`, with every finding in the ledger.
-- **What is gated:** S1 (P2-E2's C1-C4), S2 joint, S3 leak check and S4 oldest. The condition is
-  s = 60 and F = 10, at M = 500 and 1,000, on seeds 21-25. Expected labels: STRUCTURED INDEX
-  FAIL and STRUCTURED CONTENT FAIL.
-- **Reported readings:**
-  - Part B ranks the failures (contamination, index, operating point);
-  - Part C measures own-cell identity from activity;
-  - Part D tests contamination under continuous learning, on P2-E4's frozen driver;
-  - Part E covers replication and confounds;
-  - Parts F and G cover where contamination lands and the reported cue kinds.
-- **Next:**
-  1. Write the driver `plant2/experiments/p2_e5_structured.py` and its tests. Develop them in a
-     side worktree or branch, because the main tree's plant2/ must stay clean until P2-E4's
-     gated seeds have written all their records.
-  2. Run an implementation review, then a fix-check.
-  3. Freeze the plant2 tree, run exploration on 44-45, predict, then gated 21-25 once each.
-- **Exploratory finding from the fix-check** (in the contract's Scope and in `DECISIONS.md`): on
-  structured items the online state reads the same contaminated store far better than the
-  settled state, with content 0.525-0.58 against 0.035-0.055, while index access falls. That is
-  the owner's trade-off.
+- **The contract is frozen** at bc28cd9.
+- **The driver** (`plant2/experiments/p2_e5_structured.py`) was written on side branch
+  plant2-p2e5-driver. It had an implementation review (no blocker; the independent
+  recomputation matched exactly) and a fix-check. All findings are acted on and in the ledger.
+  It was merged at bf77a17. The plant2 tree is now dc16f182.
+- **Exploration seeds 44-45** are running on that tree. Logs are in
+  `~/.cache/brain-sim/plant2/p2_e5/explore_{44,45}.log`.
+- **When both seeds are done:**
+  1. commit the records;
+  2. run `python -m plant2.experiments.p2_e5_structured predict`;
+  3. append "Predictions from the real driver" to the contract, append-only;
+  4. commit;
+  5. run gated seeds 21-25, two lanes, once each;
+  6. run the verdict, then a review.
 - **Open questions for the owner** (they do not block anything):
   - whether M = 1,000 should be gated now;
   - whether the activity-gated write may be contracted;
