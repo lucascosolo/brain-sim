@@ -28,3 +28,12 @@ def test_twin_B_check_needs_a_record_and_every_aggregate():
     assert diag.twin_B_matches(pairs, rec) is True
     assert diag.twin_B_matches(pairs, None) is None
     assert diag.twin_B_matches(pairs, {"all": dict(rec["all"], mcnemar_memory=[0, 1])}) is False
+
+
+def test_candidate_classes_are_exhaustive_and_exclusive():
+    regen = [1, 2, 3, 4, 5, 6]
+    out = diag.classify_lines(regen, lines_A=[1, 2], lines_RnA=[3, 5, 2], lines_other=[4, 5, 1])
+    fr = {k: out[k] for k in diag.CANDIDATE_CLASSES}
+    assert abs(sum(fr.values()) - 1.0) < 1e-12
+    assert fr == dict(with_A_candidate=2 / 6, only_R_not_A_candidates=1 / 6, only_other_candidates=1 / 6,
+                      mixed_non_A_candidates=1 / 6, no_earlier_candidate=1 / 6)

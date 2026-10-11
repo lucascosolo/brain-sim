@@ -68,11 +68,7 @@ def diag_score_slot(e, s, fm, fr):
             lines_A = np.unique(post[sel & np.isin(pre, A)])
             lines_RnA = np.unique(post[sel & np.isin(pre, RnA)])
             lines_other = np.unique(post[sel & ~np.isin(pre, A) & ~np.isin(pre, RnA)])
-            no_A = np.setdiff1d(regen, lines_A)
-            cand = dict(n_regen=int(regen.size), with_A_candidate=float(lines_A.size / regen.size),
-                        only_R_not_A_candidates=float(np.setdiff1d(np.intersect1d(no_A, lines_RnA), lines_other).size / regen.size),
-                        only_other_candidates=float(np.setdiff1d(np.intersect1d(no_A, lines_other), lines_RnA).size / regen.size),
-                        no_earlier_candidate=float(np.setdiff1d(no_A, np.union1d(lines_RnA, lines_other)).size / regen.size))
+            cand = classify_lines(regen, lines_A, lines_RnA, lines_other)
         v = e._onset_vbar
         d["diag"] = dict(
             A_recall75=float(sp75[A].mean()) if A.size else 0.0, R_recall50=float(sp50[R].mean()) if R.size else None,
@@ -81,6 +77,20 @@ def diag_score_slot(e, s, fm, fr):
             offset_global=None if v is None else float(v.mean() - float(e.mem.v_rest)),
             offset_assembly=None if v is None or not A.size else float(v[A].mean() - float(e.mem.v_rest)))
     return d
+
+
+CANDIDATE_CLASSES = ("with_A_candidate", "only_R_not_A_candidates", "only_other_candidates", "mixed_non_A_candidates",
+                     "no_earlier_candidate")
+
+
+def classify_lines(regen, lines_A, lines_RnA, lines_other):
+    """Exhaustive, exclusive classes of regenerated lines by their earlier candidate inputs (fractions sum to 1)."""
+    regen = np.asarray(regen)
+    a, r, o = np.isin(regen, lines_A), np.isin(regen, lines_RnA), np.isin(regen, lines_other)
+    cls = dict(with_A_candidate=a, only_R_not_A_candidates=~a & r & ~o, only_other_candidates=~a & ~r & o,
+               mixed_non_A_candidates=~a & r & o, no_earlier_candidate=~a & ~r & ~o)
+    n = max(1, regen.size)
+    return dict(n_regen=int(regen.size), **{k: float(v.sum() / n) for k, v in cls.items()})
 
 
 def twin_B_pairs(B, S, M):
@@ -159,6 +169,8 @@ def summarise(cues, pairs, hab_items, main_log, c):
             regen_with_A_candidate=med([x["regen_candidates"]["with_A_candidate"] for x in D if x["regen_candidates"]]),
             regen_only_R_not_A_candidates=med([x["regen_candidates"]["only_R_not_A_candidates"] for x in D if x["regen_candidates"]]),
             regen_only_other_candidates=med([x["regen_candidates"]["only_other_candidates"] for x in D if x["regen_candidates"]]),
+            regen_mixed_non_A_candidates=med([x["regen_candidates"]["mixed_non_A_candidates"] for x in D if x["regen_candidates"]]),
+            regen_no_earlier_candidate=med([x["regen_candidates"]["no_earlier_candidate"] for x in D if x["regen_candidates"]]),
             age=med([d["age"] for d in sub]),
             offset_global=med([x["offset_global"] for x in D]), offset_assembly=med([x["offset_assembly"] for x in D]))
     n = len(cues)

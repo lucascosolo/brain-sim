@@ -138,3 +138,9 @@ The owner reviewed commit e6c5385. Four corrections were made to `analysis/` onl
 **What reproduction establishes.** Deterministic reproduction shows consistency with the recorded
 simulation, not proof of a causal explanation. D3 can give strong evidence that network state
 matters. D2 and D4 narrow the explanation; they do not establish it.
+
+**Further correction (owner review of 737e8b1, 2026-10-11; before any run of the analysis).** The
+D2 classes were not exhaustive: a line with both an R(x)-not-A(x) candidate and a candidate
+outside both sets, and no A(x) candidate, fell in none of them. A fifth class,
+`mixed_non_A_candidates`, was added. The classes are now exclusive and exhaustive, so their
+fractions sum to 1 (tested in `analysis/tests/test_p2e4_diagnosis.py`).
