@@ -863,3 +863,161 @@ on the gated seeds they need at least four):
 loads, so the result goes to the owner before any mechanism contract. The gated seeds still run,
 exactly as frozen: the record on fresh seeds is the baseline, and Parts B-D decide which
 contract comes next. Nothing is retuned.
+
+## Result (appended 2026-10-11, after the verdict and the results review; nothing above is edited)
+
+**Verdict: STRUCTURED INDEX FAIL + STRUCTURED CONTENT FAIL** on 5 of 5 valid gated seeds (21-25).
+The `kill_test_verdict` record is in commit f25d3ed. Stage 1's structured-input clause is not met.
+P2-E3's PASS stands, scoped to independent items and its protocol.
+
+**Validity and provenance.**
+- Every gated record carries contract digest 8ab1cb47ff6ac06e and plant2 tree dc16f182, with
+  `plant2_dirty` false. Every validity check (1-7) holds on every seed and load, and every
+  reported arm is valid at both loads.
+- Seven gated records show `dirty` true outside `plant2/` (kill_test_seed 21; gated_diagnostics 21, 24
+  and 25; s80, s40 and pooled of seed 23). The cause is the other lane's uncommitted appends to the
+  results file. The plant2 tree is the same on every record.
+- **Timeline.** `predict` wrote the `power_predictions` record at 05:06:53Z. The container then
+  restarted (boot 14:02:22) before that record and the appended predictions were committed
+  (694038c, 14:03:14). The run-once markers for seeds 21 and 24 are dated 14:03:24 and 14:03:26,
+  and no cache file is dated between 05:07 and 14:03. So no gated run preceded the predictions
+  commit, and the guard held.
+- **Validity 5** (the online arm's `slot_checks_ok`, parts `proj_current` and `inh_ok`) holds by
+  construction, as in P2-E4 (code review F1 there).
+- **Drift.** The convergence rule holds (maximum 0.118 mV). The signed drift at M = 1,000 is -0.077
+  to -0.112 mV, beyond the |0.1| rule that was withdrawn before the freeze on 3 of 5 seeds.
+- **Independent recomputation.** The methodology reviewer rebuilt all 80 per-seed criterion counts
+  from the persisted per-cue files (sha256 matched). The code reviewer recomputed the readings
+  and replayed seed 23's persisted raster through rebuilt stores, reproducing the frozen-point and
+  grid-best numbers. Everything matched (`review/plant2/P2-E5/results-*.md`).
+
+**The vector, with margins** (cues passing; bars: C2 180 of 200, C4 spurious 90 of 100, S2 180 of
+200, S4 90 of 100):
+
+| seed | M = 500: C1 / C2 / C4 spurious / S2 / S4 | M = 1,000: C1 / C2 / C4 spurious / S2 / S4 |
+|---|---|---|
+| 21 | 192 / 186 / 90 / 36 / 8 | 184 / 100 / 43 / 1 / 1 |
+| 22 | 190 / 186 / 94 / 32 / 5 | 189 / 96 / 41 / 0 / 0 |
+| 23 | 194 / **174** / **86** / 28 / 4 | 189 / 87 / 36 / 0 / 0 |
+| 24 | 190 / 186 / 91 / 23 / 5 | 183 / 96 / 35 / 0 / 0 |
+| 25 | 196 / 183 / **88** / 19 / 6 | 185 / 103 / 49 / 0 / 0 |
+
+- **The index failure at M = 500 is narrow.** It rests on 2 of 5 seeds: seed 23 (C2 6 cues short,
+  C4 spurious 4 short) and seed 25 (C4 spurious 2 short). Seeds 21, 22 and 24 pass every index
+  part at M = 500. The label stands under the frozen every-seed rule, but it is not robust.
+- **The index failure at M = 1,000 is broad:** C2 0.435-0.515 and C4 spurious 0.35-0.49 on every seed.
+- **Content fails on every seed at both loads:** S2 0.095-0.18 and S4 0.04-0.08 at M = 500; 0.0-0.005 at M = 1,000.
+- **S1 does not depend on the feedback store.** The memory raster is the same whatever content
+  write is used, so no feedback-write correction can change C1-C4 here.
+
+**Readings** (all derived as the contract defines them):
+
+| part | M = 500 | M = 1,000 |
+|---|---|---|
+| B: losses in cues, L_c / L_i / L_o | 54-74 / 0 / 12-30 | 110-126 / 39-54 / 65-79 |
+| B: reading | CONTAMINATION-DOMINANT | CONTAMINATION-DOMINANT (all three losses material) |
+| C | AVAILABLE FROM ACTIVITY on every seed and load | |
+| D: R, online / P2-E3-protocol median intrusions | 1.66-1.95 | 1.69-1.84 |
+| D: reading | WORSENS | WORSENS |
+| E: s = 100 | REPLICATES (joint 0.99-1.0 at M = 500, 0.97-0.99 at M = 1,000) | |
+| E: pooled control | CORRELATION-ATTRIBUTABLE | LINE LOAD SUFFICIENT, CORRELATION WORSENS |
+| loads disagree | no | |
+
+**What the readings do and do not show** (from the results review):
+- **Part B at M = 1,000 depends on the grid-best convention.** The contract fixes grid bests for L_c
+  and L_i, so the reading is correctly derived. At the frozen readout (2.8, 0.3), however, L_c is
+  28-35 cues and L_i 145-152, and the same dominance rule would read **INDEX-DOMINANT** on 5 of 5
+  seeds. At M = 500 the frozen point also reads contamination (L_c 144-161).
+  - At its grid best the plateau-set store reaches only 126-141 cues at M = 1,000, with no
+    passing grid point. The grid best sits on the grid's edge for some seeds (plateau-set at
+    J 6.0; the main store at g 1.0 on 4 of 10 seed-loads), so L_c may be slightly overstated
+    there.
+  - On these rasters no store, neither the plateau-set store nor one written from activity,
+    reaches S2 at M = 1,000, even after optimistic readout recalibration. A write-only correction
+    therefore cannot pass P2-E5 at M = 1,000. This is a same-raster replay, not a gated test.
+  - **At M = 500, L_i = 0 does not mean the index is sound:** S1 still fails there (above).
+- **Part C reads back the experimenter's key.** Positives are defined by A(x), the cells the
+  plateau just wrote. Their high continuation count follows from that write.
+  - Count AUC is 0.9988-0.9995 at M = 500 and 0.9955-0.9971 at M = 1,000. The first-spike AUC is
+    only about 0.78-0.81.
+  - R_3 matches the plateau-set store within 0-7 cues, including at M = 1,000, where both fail.
+  - Better wording: **the plateau key is recoverable from the network's activity.** It is
+    measured, not adopted, and it is not a mechanism.
+  - R_4 and R_6 read higher at M = 1,000, but k = 3 was fixed in advance. Choosing another k now
+    would be parameter rescue.
+- **Part D compares whole regimes.** The schedule, the probes and the threshold offset are not
+  separated.
+  - Seed 25 at M = 500 is AT FLOOR as well: its P2-E3-protocol store reads 19 cues. At M = 1,000
+    every seed is AT FLOOR, and the median intrusions are 1,745-3,043 of 4,000 lines.
+  - Twin B's signed counts: at M = 500 the online regime gains 84-103 content cues and loses
+    12-30 memory cues; at M = 1,000 it loses 65-79 memory cues and gains 8-13 content cues.
+- **Regeneration at M = 1,000 is largely not item-specific.** The label-permuted store regenerates
+  item-specific missing lines at 0.535-0.583, against about 0.98-0.99 for the main store. D1 near
+  1 is therefore uninformative there.
+- **Part F per-line rates for the earlier-only and both classes are biased about 5 % low**, because
+  items with no earlier sibling count as 0 (code review CC-1). These rates are reported only.
+
+**The online arm** (P2-E4's frozen driver, structured items; gated seeds):
+
+| measure | M = 500 | M = 1,000 |
+|---|---|---|
+| online block C1 / C2 / joint | 0.81-0.89 / 0.995-1.0 / 0.475-0.575 | 0.54-0.585 / 0.975-0.99 / 0.04-0.065 |
+| settled twin A memory C1 / C2 (different cues) | 0.95-0.98 / 0.87-0.93 | 0.915-0.945 / 0.435-0.515 |
+| twin B memory, online / settled (same cues) | 0.81-0.89 / 0.95-0.96 | 0.54-0.585 / 0.91-0.94 |
+| twin A joint: online-written / P2-E3 protocol / plateau-set / R_3 | 0.05-0.10 / 0.095-0.18 / 0.93-0.97 / 0.93-0.97 | 0 / 0-0.005 / 0.14-0.175 / 0.15-0.18 |
+| threshold offset, online block | 3.65-3.81 mV | 8.11-8.34 mV |
+| responders at items 751-1,000 | - | 261-277 |
+
+**Correction to the appended predictions section.** It said "Online, the index is specific but
+slow". That is withdrawn (skeptic review, NS4):
+- The online C2 and the settled C2 come from different cue sets, so the comparison is unpaired.
+- No 75 ms memory rate is recorded for the online arm, so "slow" was not measured in P2-E5.
+- What the data show: online, the memory layer fires less, giving both fewer spurious cells and
+  fewer own cells. That is consistent with a shift along one sensitivity-specificity curve.
+- Better discrimination would need a paired per-cue C1 x C2 analysis on the same cues.
+
+The appended section also said "no pass was observed in simulation". P(PASS) was an analytic
+binomial product evaluated on 400 posterior draws, and it was numerically zero. No passes were
+simulated. It is not proof that a pass is impossible.
+
+**Reported arms** (gated seeds, frozen readout):
+
+| arm | M = 500: joint (plateau-set) | M = 1,000: joint (plateau-set); C2 |
+|---|---|---|
+| s = 100 | 0.99-1.0 (0.99-1.0) | 0.97-0.99 (0.985-0.995); 0.975-0.995 |
+| s = 80 | 0.99-0.995 (0.99-0.995) | 0.62-0.74 (0.91-0.985); 0.945-0.97 |
+| s = 60 (gated arm) | 0.095-0.18 | 0-0.005 |
+| s = 40 | 0.0 (0.03-0.05); C2 0.095-0.155 | 0.0 (0-0.005); 0.015-0.035 |
+| pooled control | 0.975-1.0 (0.975-1.0) | 0.105-0.18 (0.49-0.63); 0.82-0.835 |
+| F = 40 (no reading) | 0.67-0.72 (0.98-1.0) | 0.055-0.065 (0.83-0.91); 0.785-0.83 |
+
+- At M = 500 the content failure is attributable to sibling correlation: the pooled arm passes S2.
+- At M = 1,000 line load alone already fails S2. The pooled arm and F = 40 show that per-line load
+  on shared prototype lines sinks even the plateau-set store at F = 10. The clause does not fix F.
+
+**Predictions scored** (before implementation, and the real driver's):
+
+| held | failed |
+|---|---|
+| both labels; S1, S2 and S4 fail; S3 holds at the bar | S3 at M = 1,000 ">= 0.98": 0.965-0.995 |
+| C1, C3 and C4 recall hold | S4 at M = 500 "<= 0.05": up to 0.08 |
+| validity holds on every seed | S2 at M = 500 "0.08-0.17": up to 0.18 |
+| Part B CONTAMINATION-DOMINANT at both loads | C2 at M = 1,000 "0.45-0.55": down to 0.435 |
+| Part C AVAILABLE FROM ACTIVITY | main-store grid best at M = 1,000 "0.04-0.055": 0.065-0.10 |
+| Part D WORSENS at both loads | count AUC at M = 500 ">= 0.999": down to 0.9988 |
+| s = 100 REPLICATES | online C1 at M = 500 "0.77-0.82": 0.81-0.89 |
+| both pooled readings; no load disagreement | L_o at M = 500 "29-37 cues": 12-30 |
+| C1 at M = 1,000 (P 0.49 of holding on all seeds): held | C2 at M = 500 (P 0.38): failed |
+
+**Decision, as predeclared.**
+- The FAIL is recorded with its labels. Nothing is retuned, and no Stage 2 work starts.
+- **What goes to the owner before any mechanism contract:**
+  - the STRUCTURED INDEX FAIL at both loads, with Part B beside it;
+  - the convention disagreement at M = 1,000 (contamination under grid bests, index at the frozen
+    readout);
+  - the finding that no write-only correction reaches S2 at M = 1,000 on these rasters;
+  - the choice of F (line load) for the clause;
+  - the questions pending from `docs/plant2/EVAL-after-P2-E4.md`.
+- Familiarity-gated allocation stays deferred.
+- **What P2-E5 removes from the experimenter's supply: nothing.** It changes one supply, the item
+  distribution, from independent to correlated items.
