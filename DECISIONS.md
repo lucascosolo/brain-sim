@@ -563,3 +563,64 @@ The owner said P2-E4 is exposing a critical weakness in the current architecture
   second mechanism.
 
 P2-E5's online arm (Part D) implements the last point as a reported arm.
+
+## 2026-10-11: owner's reading of P2-E4's results; a hypothesis for after P2-E4 and P2-E5
+
+**Provenance.** The owner sent this after reviewing the P2-E4 contract's appended predictions, the
+duty-arm implementation and the first gated readings. It is recorded in substance.
+
+**The finding the owner judges most important so far: an encoding-retrieval trade-off.** The
+conditions that improve access to stored memories appear to make those memories less reliable to
+write.
+- **The main timeline** has a higher threshold offset, weaker assigned-assembly recall, and
+  relatively clean reconstruction.
+- **The duty arm** has a lower offset, stronger recall, and a much more contaminated store.
+- **The caveat.** The duty arm changes the whole stimulation schedule, not only the offset, so it
+  does not prove that the offset alone causes the difference.
+- **So a threshold adjustment alone** (for example changing the accommodation time constant)
+  might trade one failure for another. The owner advises against trying it as the fix.
+
+**What the settled twins establish:**
+- **Twin A** (same memory raster, store swaps) establishes a feedback-store quality problem,
+  independent of whether the memory-layer state is optimal.
+- **Twin B** shows the recallable population changing with the activity regime. Settling
+  recovers online failures but also loses some earlier successes; at M = 500 on seed 42, seven
+  cues went that way. Settling does not simply improve everything.
+
+**The hypothesis for the next mechanism** (for after P2-E4 and the structured-input
+investigation; **not permission to modify current experiments**): a memory cell being active
+during an experience should not automatically qualify it to write that experience's content.
+- **One candidate:** a local eligibility signal tied to a genuine plateau event. A cell joins
+  the feedback write only when its own recent activity and eligibility support the
+  association.
+- **Recall stays responsive while unrelated active cells are kept out of the write.**
+- **The assigned-assembly store is an upper bound.** The eventual mechanism must derive
+  eligibility locally, not receive the assembly from the experimenter.
+
+**Wording.**
+- "P(PASS) is 0" in the predictions record means **zero passes observed in 1,500 joint
+  simulations**, not that a pass is impossible. The 95 % upper bound is about 0.002.
+- The P2-E4 Result uses that wording. The contract's appended predictions section is not edited.
+
+**The interpretation to preserve.**
+- The high-load failure is not necessarily a failure to store: some information is recoverable
+  after a state change.
+- The deeper problem may be that the architecture has no reliable way to keep access to its
+  memories while writing new ones accurately.
+- That is the sharper research question: **the coordination of learning and recall,** ahead of
+  more storage capacity.
+
+**Process.** Complete P2-E4's predeclared five-seed evaluation unchanged.
+
+**How it maps onto existing work** (agent's note):
+- **P2-E4's exploration diagnosis** (`docs/plant2/P2-E4-diagnosis-plan.md`, results of seeds
+  42-43). At M = 1,000, about 95 % of online index failures recover after the settle, while
+  content moves the other way: 22 and 27 cues pass online but fail settled, against 8 and 4 the
+  reverse. Most online index failures are retrievals slowed by about 8 ms.
+- **P2-E5's Part C** measures, without adopting, an activity-based local eligibility: the
+  continuation spike count. In exploration it separates the item's assembly from unrelated
+  responders with AUC >= 0.996. A store written from cells with 3 or more spikes matches the
+  assigned-assembly store.
+- **A plateau-trace-gated write** would be local too, but in the current model it reproduces the
+  assigned-assembly store exactly. It inherits the random, content-blind plateau key.
+- **Neither repairs forward-index cross-talk on correlated items at M = 1,000.**

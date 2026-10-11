@@ -53,6 +53,11 @@ merged to `main` without the owner saying "merge".
 7. Run the diagnosis on the gated seeds (`--gated`). It runs only after the verdict.
 8. Write the Result and the addenda into the contract (append-only), add the STAGES row, and
    report to the owner.
+   - The Result words the prediction as "no pass in 1,500 joint simulations (95 % upper bound
+     about 0.002)", not "P(PASS) = 0".
+   - The interpretation keeps the owner's distinction: high-load failure is not necessarily a
+     failure to store; the open question is keeping access while writing accurately
+     (`DECISIONS.md`, 2026-10-11).
 
 ## Exploration readings so far (exploratory, not results)
 
