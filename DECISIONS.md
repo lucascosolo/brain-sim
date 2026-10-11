@@ -657,3 +657,32 @@ implementation ambiguity. Their reports are verbatim in `review/plant2/P2-E5/ver
   in place of a copied `learn_one`.
 - **P2-E3's shuffled leak rule** is quoted unchanged, and P2-E3 addendum item 8 is addressed
   explicitly. It is not met, for stated reasons, with a specificity check if a PASS occurs.
+
+## 2026-10-11: P2-E5 contract frozen (after verification, a fix-check and a final diff check)
+
+The fix-check (`review/plant2/P2-E5/fixcheck-*.md`) and final diff check (`finalcheck.md`) were
+acted on, with every finding in the ledger.
+
+**What the fix-check measured** (exploratory). It ran P2-E4's frozen online driver with P2-E5's
+structured items (seeds 44-45, M = 500), and found the owner's encoding-retrieval trade-off on
+correlated items:
+- **The same online-written store,** on the same 200 cues, reads content 0.525-0.58 online
+  against 0.035-0.055 after the settle.
+- **Index access falls online:** C1 0.77-0.82 against 0.955-0.965.
+- **The online state** has a higher threshold offset (3.7 against 1.9 mV), among other
+  differences. Which state variable is responsible is not isolated.
+- **So the settled protocol gives the cleaner write, not the cleaner retrieval.**
+- **The measured net online index loss** is 0.145-0.185. At that value, Part B at M = 500 reads
+  CONTAMINATION-DOMINANT with probability about 0.7-0.96, or else SPLIT.
+
+**Corrections to the 2026-10-11 verification entry,** appended rather than edited:
+- **Methodology B1 is accepted in part.** Probabilities are given only for S1, validity, Part B,
+  s = 100 and P(PASS).
+- **The per-run range 0.0002-0.12** is the dependent model's. The independent model gives
+  6e-6-0.06.
+- **The structured L_o is no longer unmeasured** at M = 500: it is 0.145-0.185, from the
+  fix-check.
+
+**The freeze.** The contract is frozen with its `power_reference` record (`analysis/p2e5_power.py
+--append`). The P2-E5 driver is written only after P2-E4's gated seeds finish, because the plant2
+tree stays frozen until then.

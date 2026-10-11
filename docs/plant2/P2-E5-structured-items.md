@@ -1,7 +1,8 @@
 # P2-E5: item-specific recall on correlated inputs (structured-input diagnostic)
 
-**Revised after the red-team and after verification. Not yet frozen.** No P2-E5 code exists.
-Gated seeds 21-25 have not been touched.
+**Contract (2026-10-11). Frozen by the commit that adds this text together with its
+`power_reference` record.** No P2-E5 driver code existed before that commit. Gated seeds 21-25
+are untouched. After freezing, only appended lines are allowed.
 
 - **The red-team.** The draft (commit e736e81) was reviewed by three critics, each with a
   refuter, plus a completeness critic. Their findings are verbatim in
@@ -9,10 +10,11 @@ Gated seeds 21-25 have not been touched.
 - **Verification.** The first revision (4846de0) was checked by three verifiers (numbers and
   power, coverage, implementation ambiguity), recorded verbatim in
   `review/plant2/P2-E5/verify-*.md`.
+- **The fix-check.** The second revision (3c78f03) was fix-checked (`fixcheck-*.md`).
+- **The final check.** The third revision (93c4c35) had a final diff check (`finalcheck.md`).
 - **Dispositions.** Every finding's disposition is a row in `review/ledger.jsonl`.
 - **Exploratory numbers** below come from the red-team's and verifiers' scripts on seeds 44-45,
   and are labelled as such. Where a number rests on one seed or one lens, the text says so.
-- **Before freezing:** the power reference record (`analysis/p2e5_power.py --append`).
 - **After implementation:** predictions from the real driver on seeds 44-45 are appended, and
   committed before any gated seed.
 - **Timing.** Implementation waits until P2-E4's gated seeds 16-20 have finished, because the
@@ -86,7 +88,8 @@ The capacity-scaling experiment takes the next free number when its contract is 
     forward-index cross-talk on correlated items, a third problem outside the owner's two named
     problems.
   - **At M = 500 it is entangled with the operating point** (fix-check R1). On P2-E4's frozen
-    online driver with these items, C2 was 1.0 online. At M = 1,000 that is unexplored.
+    online driver with these items, C2 was 1.0 on the online block's cues, against 0.90-0.945 on
+    twin A's settled test cues (not paired). At M = 1,000 that is unexplored.
 - **Own-cell identity is in the network's activity** (completeness critic, C4; seed 44 at both
   loads, seed 45 at M = 500).
   - During the continuation, A(x)'s cells fire about 5 spikes in 50 ms at M = 500 and about 3.9
@@ -114,13 +117,15 @@ few intrusions from the prototype or from siblings. Its memory index stays speci
 criteria S1-S4 hold on every gated seed at both loads.
 
 **Scope.**
-- **Two learning rhythms have been examined for the responder write on structured items:**
+- **Three learning lines have been examined for the responder write on structured items:**
   - P2-E3's back-to-back protocol (`quiet()` between items);
-  - the P2-E4 red-team's exploratory online line (250 ms interval with probes; not P2-E4's
-    frozen driver).
+  - the P2-E4 red-team's exploratory online line (250 ms interval with probes);
+  - P2-E4's frozen driver (fix-check R1; seeds 44-45, M = 500).
 - **The settled protocol gives the cleaner write, not the cleaner retrieval.**
-  - **The write.** The online line left more continuation responders (|R| 105-111 against 72-75
-    at M = 500) and a lower settled joint (0.055-0.065 against 0.105-0.145 on the same items).
+  - **The write.** The red-team's online line left more continuation responders (|R| 105-111
+    against 72-75 at M = 500) and a lower settled joint (0.055-0.065 against 0.105-0.145 on the
+    same items). On the frozen driver's twin A the online-written store read 0.035-0.10,
+    against 0.09-0.165 for the P2-E3-protocol store.
   - **The retrieval.** On P2-E4's frozen driver with these items (fix-check R1; exploratory,
     seeds 44-45, M = 500), the online operating point read the same online-written store
     differently from the settled state:
@@ -128,13 +133,13 @@ criteria S1-S4 hold on every gated seed at both loads.
     | measure | online | after the 50 s settle |
     |---|---|---|
     | content (same 200 block half cues) | 0.525-0.58 | 0.035-0.055 |
-    | C2 | 1.0 | about 0.90-0.95 |
+    | C2 (not paired: online on the block's cues; settled on twin A's P2-E3 test set) | 1.0 | about 0.90-0.95 |
     | C1 | 0.77-0.82 | 0.955-0.965 |
     | threshold offset | 3.70-3.80 mV | 1.86-1.92 mV |
 
   - **This is the owner's encoding-retrieval trade-off on correlated items.** The online
-    state's higher offset suppresses intrusions and spurious index cells, at the cost of index
-    access.
+    state (a higher offset, among other differences) shows fewer intrusions and fewer spurious
+    index cells, and less index access. Which state variable is responsible is not isolated.
 - **A PASS** is scoped to the settled protocol.
 - **A FAIL holds at both operating points explored,** but which criteria fail depends on the
   operating point.
@@ -220,8 +225,8 @@ records a digest of its A lists.
 | (seed, 24, M) | pi for the label-permuted store: for f = 0..F-1, `p = r.permutation(idx_f)` over the stored items of family f, redrawn until it has no fixed point |
 
 **Pins.**
-- **E3's `learn_one` body is neither copied nor changed** (the P2-E3-protocol arms, and the
-  online arm through P2-E4's `Online.learn_one`).
+- **The inherited `learn_one` is neither copied nor changed.** That is E3's for the
+  P2-E3-protocol arms, and P2-E4's `Online.learn_one` for the online arm.
   - The subclass's `learn_one` installs a read-only wrapper on `self.net.step`. The wrapper
     calls the original and appends the returned memory spikes; it makes no draws and changes no
     state.
@@ -395,8 +400,8 @@ depend on the feedback store, so the comparison is exact.
   readings are stated in those terms.
 
 **Attributable seeds, per load.** A seed is NOT ATTRIBUTABLE at a load in either case:
-- the s = 100 arm fails P2-E3's gate there (D1/2, D3, D4, C1-C4), or fails its validity checks
-  1-4 there;
+- the s = 100 arm is void there (validity 1-4 or 7 fails, or the arm crashes), or fails P2-E3's
+  gate there (D1/2, D3, D4, C1-C4);
 - the online arm is void or invalid there.
 
 **A seed's dominant failure** at a load is X if L_X >= 20 cues (material) and L_X exceeds both
@@ -477,19 +482,22 @@ as the gated arm. Novel cues come from P2-E4's own stream and stay independent i
 ### E. Replication and the confounds of the item design
 
 - **s = 100 (positive control).** Validity checks 1-4 and 7 apply to it.
-  - **REPLICATES** if P2-E3's gate holds at both loads on every non-void seed, with at least 4
-    non-void: D1/2, D3, D4, and D5 = C1-C4.
-  - **REPLICATION FAIL** if the gate fails at either load on any non-void seed.
-  - **NOT ESTIMABLE** with fewer than 4 non-void seeds.
+  - **The rule is ordered, per (seed, load).** P2-E3's gate is D1/2, D3, D4, and D5 = C1-C4. A
+    seed is non-void for s = 100 when the arm is non-void at both loads.
+    1. **REPLICATION FAIL** if the gate fails at any non-void (seed, load);
+    2. otherwise **NOT ESTIMABLE** if fewer than 4 seeds are non-void;
+    3. otherwise **REPLICATES.**
   - A REPLICATION FAIL is recorded as a replication failure and put to the owner. It does not
     change P2-E5's verdict, and it can come out either way.
 - **Pooled control, per load and per seed,** in cues, on the non-void seeds where main fails S2.
   The load's reading needs at least 4 such seeds, and is otherwise NOT ESTIMABLE.
   - **CORRELATION-ATTRIBUTABLE:** the pooled arm passes S2 on at least 4 of them.
   - **LINE LOAD SUFFICIENT, CORRELATION WORSENS:** the pooled arm fails S2, and beats main by at
-    least 20 cues on the plateau-set joint or on the C2 count, on at least 4 of them.
+    least 20 cues on the plateau-set joint at the frozen readout (2.8, 0.3), for both arms, or
+    on the C2 count, on at least 4 of them.
   - **LINE-LOAD-LIMITED:** the pooled arm fails S2, and is within 10 cues of main on both
-    measures, on at least 4 of them.
+    measures (the plateau-set joint at the frozen readout, and the C2 count), on at least 4 of
+    them.
   - **MIXED:** otherwise.
 
   The overlap dose-response is read only beside this control.
@@ -614,7 +622,7 @@ as the gated arm. Novel cues come from P2-E4's own stream and stay independent i
   | load | L_o of 0.07 | L_o of 0.15 | L_o of 0.25 | L_o of 0.35 | L_o of 0.45 | material losses |
   |---|---|---|---|---|---|---|
   | M = 500 | CONTAMINATION-DOMINANT, 1.00 | CONTAMINATION-DOMINANT, 0.945 | SPLIT, 0.92 | SPLIT 0.60, OPERATING-POINT-DOMINANT 0.40 | OPERATING-POINT-DOMINANT, 0.99 | contamination 1.0; index 0; operating point when L_o >= 0.15 |
-  | M = 1,000 | CONTAMINATION-DOMINANT, 0.97 | 0.975 | 0.97 | 0.97 | 0.85 (SPLIT 0.13) | contamination 0.98; index 0.98; operating point when L_o >= 0.15 (0.97-0.98) |
+  | M = 1,000 | CONTAMINATION-DOMINANT, 0.97 | 0.97 | 0.97 | 0.97 | 0.85 (SPLIT 0.13) | contamination 0.98; index 0.98; operating point when L_o >= 0.15 (0.97-0.98) |
 
   NOT ATTRIBUTABLE is about 0.02 at M = 1,000 in every column.
 
@@ -625,6 +633,9 @@ as the gated arm. Novel cues come from P2-E4's own stream and stay independent i
     0.065-0.07 at M = 500 and 0.16-0.26 at M = 1,000.
 
 ## Predictions (from exploration on seeds 44-45; the real driver's are appended later)
+
+Probabilities are computed only for S1, validity, Part B, s = 100 and P(PASS). Every other row is a
+qualitative prediction from exploratory values.
 
 | criterion or arm | M = 500 | M = 1,000 |
 |---|---|---|
@@ -637,7 +648,7 @@ as the gated arm. Novel cues come from P2-E4's own stream and stay independent i
 | plateau-set store, grid best (optimistic) | 0.985-1.000; 24-26 passing points | 0.60-0.665; no passing point |
 | main store, grid best (optimistic) | 0.565-0.675; no passing point | 0.04-0.055; no passing point |
 | Part C | count AUC >= 0.999; R_3 equal to the plateau-set store at the frozen point (0.925 and 0.935). The grid best is not explored at this load. Overall: **AVAILABLE FROM ACTIVITY**, likely (no probability computed) | count AUC about 0.996; R_3 0.165 against 0.160 (frozen) and 0.61 against 0.60 (grid best), seed 44 only |
-| Part B | CONTAMINATION-DOMINANT (about 0.7-0.95) or SPLIT. The measured L_o is 0.145-0.185, and one exploration seed already reads no dominance. | CONTAMINATION-DOMINANT (0.85-0.97); index and operating-point losses also material (0.97-0.98) |
+| Part B | CONTAMINATION-DOMINANT (about 0.7-0.96) or SPLIT. The measured L_o is 0.145-0.185, and one exploration seed already reads no dominance. | CONTAMINATION-DOMINANT (0.85-0.97); index loss also material (0.98), and the operating-point loss if L_o >= 0.15 (0.97-0.98; unmeasured at this load) |
 | Part D | **WORSENS** (likely; no probability computed). On P2-E4's frozen driver R was 1.86 and 1.82 (median intrusions 123 and 112 online against 65.5 and 61). | WORSENS or MIXED (not explored at this load) |
 | online arm: block (P2-E4's frozen driver, exploratory) | C1 0.77-0.82, C2 1.0, joint 0.525-0.58; cohort content 0.34 (seed 44) | not explored |
 | online arm: twin A joints, online-written / P2-E3-protocol / plateau-set | 0.035-0.10 / 0.09-0.165 / 0.95-0.965 | not explored |
@@ -685,8 +696,9 @@ as the gated arm. Novel cues come from P2-E4's own stream and stay independent i
     - Part C's activity-gated write, if the owner rules it in;
     - the owner's plateau-eligibility hypothesis of 2026-10-11, if the owner rules it in. In the
       current model a plateau-event eligibility equals A(x) x E(x), because plateaus are the
-      experimenter's random, content-blind key. It is admissible only together with a plateau
-      key the experimenter does not supply, which is a separate mechanism under ruling 4.
+      experimenter's random, content-blind key. It is admissible only after a separately
+      contracted mechanism supplies a plateau key the experimenter does not (ruling 4). Until
+      then it is not a candidate on its own.
   - **Where Part B reads OPERATING-POINT-DOMINANT** at both loads, the operating-point problem is
     the candidate.
     It is read with twin B's signed counts beside it, and the candidate is not a threshold or
