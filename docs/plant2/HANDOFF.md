@@ -77,16 +77,29 @@ offset is 6.9 mV.
 
 ## P2-E5 (structured items)
 
-- **The draft.** `docs/plant2/P2-E5-structured-items.draft.md`.
-- **The red-team workflow** (run id wf_7b8a1dd3-6aa) was running at handoff. Its output is in the
-  session's task output for w75o8iu23.
-- **Then:**
-  1. render the findings verbatim into `review/plant2/P2-E5/`;
-  2. record the ledger decisions;
-  3. revise the draft, including the owner's request for an online arm (reported, with no new
-     mechanism);
-  4. verify the revision, then freeze it as a contract.
-- **Seeds.** Gated 21-25; exploration 44-45.
+- **The red-team is done and acted on.**
+  - Findings are in `review/plant2/P2-E5/`, and the ledger rows and `DECISIONS.md` entry are
+    written.
+  - The revised contract is `docs/plant2/P2-E5-structured-items.md` (commit 4846de0), not yet
+    frozen.
+  - The power reference script is `analysis/p2e5_power.py`. Append its record with `--append`
+    once the contract text is final.
+- **Verification** is running (workflow wf_6a157ebe-b58, task w0p7or3lw). It has three checkers:
+  numbers and power, coverage, and ambiguity.
+- **When it finishes:**
+  1. render the output into `review/plant2/P2-E5/verify-*.md`, adapting the render script
+     (`~/.cache/brain-sim/plant2/diag/render_redteam_e5.py`; verify outputs have
+     `{role, verdict, findings[{id, severity, title, where, evidence, fix}], computed}`);
+  2. record the ledger rows and act on the findings;
+  3. append the `power_reference` record;
+  4. freeze the contract (commit), and set CONTRACT_FROZEN_AT in the driver.
+- **Implementation** starts only after P2-E4's gated seeds finish, because the plant2 tree is
+  frozen until then. Exploration then runs on 44-45, followed by predictions, then gated seeds
+  21-25.
+- **Open questions for the owner** (they do not block freezing):
+  - whether M = 1,000 should be gated now;
+  - whether the activity-gated write may be contracted beside the error-correcting write;
+  - how to treat forward-index cross-talk, a third problem outside the two named ones.
 
 ## Owner guidance in force (`DECISIONS.md`, entries of 2026-10-10 and 2026-10-11)
 
