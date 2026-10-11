@@ -128,16 +128,17 @@ def p_replication_per_seed_load(rates):
     return out
 
 
-def ranking(grid=GRID, sims=20000, rng_seed=7, lo_levels=(0.07, 0.15, 0.25, 0.35, 0.45), ub_override=None,
+def ranking(grid=GRID, sims=20000, rng_seed=7, lo_levels=(0.07, 0.145, 0.15, 0.185, 0.25, 0.35, 0.45), ub_override=None,
             excl=None):
     """Probability of each Part B reading per load, simulated in integer cues of 200.
 
     Per seed: Jub, Jown ~ Binomial(200, grid-best rate with a logit seed effect); L_c = max(0, min(Jub, 180) -
     min(Jown, 180)); L_i = max(0, 180 - Jub); L_o ~ Binomial(200, lo) (net online loss, clipped at 0). A seed's
     dominant failure is X if L_X >= 20 and L_X exceeds both others by >= 10; a seed is excluded (NOT ATTRIBUTABLE) with
-    probability excl[M]. A load reads X-DOMINANT if X dominates on >= 4 seeds and on every attributable seed beyond
-    the fifth's allowance (>= 4 of the attributable seeds, with >= 4 attributable); NO MATERIAL LOSS if every loss is
-    < 20 on >= 4 attributable seeds; NOT ATTRIBUTABLE if < 4 seeds are attributable; else SPLIT."""
+    probability excl[M]. A load reads NOT ATTRIBUTABLE if < 4 seeds are attributable; X-DOMINANT if X dominates on at
+    least 4 of the attributable seeds; NO MATERIAL LOSS if every loss is < 20 on >= 4 attributable seeds; else SPLIT.
+    L_o levels 0.145 and 0.185 are the net online memory losses measured on P2-E4's frozen driver with these items
+    (fix-check R1/R3, seeds 44-45, M = 500; exploratory)."""
     rng = np.random.default_rng(rng_seed)
     out = {}
     for M, g in grid.items():
