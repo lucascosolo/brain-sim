@@ -1,4 +1,4 @@
-# plant2 handoff (2026-10-11, about 00:35 UTC)
+# plant2 handoff (2026-10-11, updated about 00:58 UTC)
 
 This is the state of work for whoever continues, human or agent. Branch `plant2-stage1`; nothing is
 merged to `main` without the owner saying "merge".
@@ -18,6 +18,21 @@ merged to `main` without the owner saying "merge".
     done", commit `bench/results/plant2.jsonl`.
 - **The diagnosis.** Plan in `docs/plant2/P2-E4-diagnosis-plan.md`, predeclared and corrected
   three times after owner review. Code in `analysis/p2e4_diagnosis.py`, outside plant2/.
+
+## Progress since the first handoff (00:35 UTC)
+
+- **Steps 1-4 are done.**
+  - The exploration reported arms are committed (1a9ed2d, a4b6b41).
+  - The diagnosis on seeds 42-43 is valid (0 mismatches), committed (ba97fcc, 78b9251) and
+    written up in the plan (614246b).
+  - The predictions are committed (`power_predictions`; P(PASS) 0) and appended to the contract
+    (124ecb2).
+- **Step 5 is running.** Gated seeds:
+  - lane A runs seeds 16, 18 and 20;
+  - lane B runs seeds 17 and 19;
+  - logs are in `~/.cache/brain-sim/plant2/p2_e4/gated_lane{A,B}.log`, with start markers
+    written for 16 and 17;
+  - commit the `kill_test_seed` and `reported_arms` records as they arrive.
 
 ## Next steps, in order
 
