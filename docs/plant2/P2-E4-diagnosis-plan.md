@@ -276,3 +276,172 @@ contamination. That is a reason to settle the contamination question first, unde
 input (P2-E5), as the owner ordered.
 
 This is a reading of exploratory, correlational data on two seeds. It is not a result.
+
+## Correction (appended 2026-10-11, after the P2-E4 results review; nothing above is edited)
+
+The methodology reviewer of the P2-E4 results (`review/plant2/P2-E4/results-methodology.md`, F3 and
+F9) found three places where the exploration write-up above says more than the data allow.
+
+1. **The causal offset sentences are withdrawn.** They were written at 614246b, after the owner had
+   narrowed the reading of D3 (21245c1), and they contradict that narrowing:
+   - "the online state's high offset suppresses the intrusions" (D3);
+   - "coupled through the threshold offset" (last section);
+   - "fixing the operating point alone would be expected to expose the contamination" (last section).
+
+   They should read as follows. The online state shows fewer intrusions than the settled state. The
+   online state differs by a higher threshold offset **among other differences** (schedule, input
+   stream, rhythm, learning episodes between cues). **Which variable is responsible is not
+   isolated.** A regime that restores online index access (the duty arm) also exposes the
+   contaminated store, but that arm changes the schedule as well as the offset (owner, 2026-10-11).
+   Whether the offset alone would do so is untested. The gated D2 below does not replicate the
+   offset correlate.
+
+2. **Exploration D1 was not an independent test.** The header of this plan computed "at least 26 %
+   and 19 %" from the same exploration numbers before predicting 15-30 %. "Prediction held" for D1
+   on seeds 42-43 is withdrawn as a test. D1 is scored on the gated seeds only (below).
+
+3. **D4 overstated the offset rise, and "rules out" was too strong.**
+   - The habituation control copy's assembly offset also rises over the same 100 steps, by 1.1-1.2 mV.
+   - Net of the control copy, the repetition-specific rise is **2.0-2.1 mV**: 2.08-2.09 at M = 500
+     and 2.01 at M = 1,000 on seeds 42-43, the same on gated seeds 16-20.
+   - These are medians over 50 items, computed from `info_rep` and `info_ctl` in the records.
+   - "What this rules out, at the item level" should read **"what this does not support, at the
+     item level"**. Equal rises in habituated and non-habituated items do not support "habituated
+     items accommodate more". They do not exclude it.
+
+## Gated results (seeds 16-20; reported, post hoc but predeclared above)
+
+Run 2026-10-11 with `analysis/p2e4_diagnosis.py`, after the P2-E4 verdict (e756252). The records
+are the `diagnosis` records with `gated: true` in `bench/results/plant2.jsonl`.
+
+**Validity.** All five re-simulations are valid:
+- 1,000 logged main-line steps were compared per seed, with 0 mismatches;
+- twin B reproduced every recorded aggregate at both loads (`D3_verified` true).
+
+### D1 (200 half cues per seed and load)
+
+| seed | M = 500: both / content without index / index without content / neither | M = 1,000: both / content without index / index without content / neither |
+|---|---|---|
+| 16 | 176 / 21 (10.5 %) / 2 / 1 | 132 / 58 (29.0 %) / 5 (2.5 %) / 5 |
+| 17 | 172 / 23 (11.5 %) / 2 / 3 | 140 / 52 (26.0 %) / 2 (1.0 %) / 6 |
+| 18 | 185 / 14 (7.0 %) / 1 / 0 | 134 / 59 (29.5 %) / 2 (1.0 %) / 5 |
+| 19 | 179 / 17 (8.5 %) / 3 / 1 | 147 / 45 (22.5 %) / 1 (0.5 %) / 7 |
+| 20 | 183 / 12 (6.0 %) / 1 / 4 | 130 / 56 (28.0 %) / 6 (3.0 %) / 8 |
+
+- **Content without index at M = 1,000: 22.5-29.5 %. Held** (predicted 15-30 %) on all five seeds.
+- **Index without content: under 3 % on four seeds, exactly 3.0 % (6 of 200) on seed 20.** Held on
+  four seeds and failed on one, by the boundary.
+
+### D2: "content without index" against "both" (medians over cues)
+
+| measure | M = 1,000, seeds 16-20 | M = 500, seeds 16-20 | prediction | outcome |
+|---|---|---|---|---|
+| A(x) recall at 50 ms, content without index | 0.70-0.73 (both: 0.92-0.94) | 0.71-0.75 (both: 0.95-0.96) | 0.5-0.8 | held |
+| share rescued by a 75 ms window | 0.89-0.93 | 0.71-1.0 | a minority | **failed**: the large majority |
+| R(x) recall at 50 ms | 0.59-0.68 | 0.68-0.74 | at least A's | **failed**: below A's |
+| A(x) first spike, later than "both" by | 6.0-8.5 ms | 6.5-11 ms | >= 5 ms | held |
+| assembly offset, minus "both" | +0.57, +0.27, -0.15, +0.08, +0.40 mV | +0.53, +0.29, +0.07, +0.70, -0.22 mV | higher | **not held consistently**: small and of either sign |
+| global offset, minus "both" | +0.25, -0.09, +0.12, +0.07, +0.14 mV | +0.02, +0.06, +0.15, +0.14, -0.17 mV | not predicted | small, of either sign |
+| median item age, content without index / both | older on 3 seeds, younger on 1, equal on 1 | older on 4 seeds, younger on 1 | older | **not held consistently** |
+| regenerated missing lines with an A(x) candidate | 1.0 on every seed | 1.0 where defined | most | held |
+| ... with only R(x)-not-A(x) candidates | 0 | 0 | under a quarter | held |
+
+**Reading.** As in exploration, the online index failures are mostly slowed retrievals. The
+assembly's first spikes come 6-8.5 ms later at M = 1,000, and about 90 % of those cues reach the
+recall bar within 75 ms. The same late assembly carries the content. The exploration's offset
+correlate (+0.2-0.4 mV) **does not replicate**: the gated differences are small and of either sign.
+D2 gives no evidence that the threshold offset at slot onset distinguishes slowed cues from the
+others. That is consistent with the constructive reviewer's exploratory seed-90 check (onset
+offset AUC 0.49-0.60). What does distinguish them is not identified.
+
+### D3: settled twin B, the same stored synapses
+
+| seed | M | index failures online | pass after settle | McNemar index (online pass & settled fail / the reverse) | content failures online | pass after settle | McNemar content |
+|---|---|---|---|---|---|---|---|
+| 16 | 500 | 22 | 95 % | 4 / 21 | 3 | 100 % | 0 / 3 |
+| 17 | 500 | 26 | 100 % | 4 / 26 | 5 | 80 % | 1 / 4 |
+| 18 | 500 | 14 | 100 % | 4 / 14 | 1 | 100 % | 1 / 1 |
+| 19 | 500 | 18 | 89 % | 5 / 16 | 4 | 75 % | 1 / 3 |
+| 20 | 500 | 16 | 94 % | 4 / 15 | 5 | 80 % | 1 / 4 |
+| 16 | 1,000 | 63 | 90 % | 5 / 57 | 10 | 80 % | **27 / 8** |
+| 17 | 1,000 | 58 | 86 % | 8 / 50 | 8 | 62 % | **21 / 5** |
+| 18 | 1,000 | 64 | 91 % | 3 / 58 | 7 | 71 % | **15 / 5** |
+| 19 | 1,000 | 52 | 100 % | 7 / 52 | 8 | 75 % | **25 / 6** |
+| 20 | 1,000 | 64 | 95 % | 2 / 61 | 14 | 64 % | **28 / 9** |
+
+- **Index: held.** 86-100 % of online index failures pass after the settle (predicted >= 70 %).
+  This is state- or protocol-dependent recovery with the synapses unchanged, per the narrowed
+  reading. It does not isolate the offset.
+- **Content failures mostly recover: held** (62-100 %).
+- **Not predicted, and replicated from exploration:** at M = 1,000, more cues pass content online
+  and fail it after the settle than the reverse, on all five seeds (15-28 against 5-9). The
+  online-written store is contaminated (twin A: 0.82-0.905 against 0.985-1.0 for the plateau-set
+  store on the same raster). The online regime shows fewer of those intrusions than the settled
+  regime. Which difference between the two regimes is responsible is not isolated.
+
+### D4: habituation (copies; all eligible items)
+
+| seed | M | eligible | habituated | raw offset rise, habituated / not | corr(drop, rise) | recovery among habituated | matched online items (habituated / not) |
+|---|---|---|---|---|---|---|---|
+| 16 | 500 | 21 | 12 | 3.17 / 3.27 mV | -0.33 | 1.00 | 5 / 3 |
+| 17 | 500 | 28 | 14 | 3.26 / 3.25 mV | -0.09 | 1.00 | 6 / 5 |
+| 18 | 500 | 33 | 21 | 3.27 / 3.29 mV | 0.21 | 0.90 | 8 / 6 |
+| 19 | 500 | 27 | 14 | 3.33 / 3.34 mV | 0.29 | 0.93 | 6 / 5 |
+| 20 | 500 | 20 | 10 | 3.33 / 3.30 mV | -0.01 | 0.80 | 5 / 4 |
+| 16 | 1,000 | 13 | 10 | 3.18 / 3.02 mV | 0.59 | 0.80 | 3 / 0 |
+| 17 | 1,000 | 6 | 5 | 3.06 / 3.25 mV | -0.64 | 0.80 | 1 / 0 |
+| 18 | 1,000 | 12 | 8 | 3.22 / 3.13 mV | 0.14 | 0.88 | 0 / 0 |
+| 19 | 1,000 | 9 | 5 | 3.07 / 3.27 mV | -0.53 | 0.80 | 2 / 2 |
+| 20 | 1,000 | 6 | 4 | 3.27 / 3.37 mV | -0.04 | 0.75 | 1 / 1 |
+
+The raw rise includes 1.1-1.2 mV that the control copy also shows. Net of it, the
+repetition-specific rise is 2.01-2.09 mV, with item ranges 1.92-2.19 mV on every seed and load.
+
+- **The offset rises with repetition: held.**
+- **Habituated items rise more: failed.** Both groups rise equally on every seed (within 0.2 mV,
+  in either direction). Correlations are small at M = 500 (|r| <= 0.33). At M = 1,000 they rest on
+  6-13 items and go either way. So this does not support "habituated items accommodate more".
+- **Association with online index failure: not estimable.** The median habituation item had 0
+  online probes, and the matched groups have 0-8 items.
+
+**A graded reading** (post hoc, from the constructive reviewer, NS6; recomputed here from the
+habituation logs, whose sha256 matched the records):
+- On every gated seed and load, **all 50 items** recall less in the repeated copy's last 10
+  repetitions than in the control copy's.
+- The mean drop in A(x) recall is 0.107-0.119 at M = 500 and 0.124-0.134 at M = 1,000 (SD about
+  0.03; the smallest per item is 0.018-0.070).
+- So every repeatedly driven assembly accommodates. O4's binary label counts the items whose
+  margin was thin enough for the drop to cross the bar.
+- This is a reading, not a gate. Later contracts should report the continuous drop beside O4.
+
+### Predictions scored on the gated seeds
+
+| prediction | outcome |
+|---|---|
+| D1: content without index 15-30 % at M = 1,000 | held (22.5-29.5 %) |
+| D1: index without content under 3 % | held on 4 seeds; 3.0 % on seed 20 |
+| D2: A(x) recall 0.5-0.8 | held |
+| D2: a 75 ms window rescues a minority | failed (0.89-0.93 rescued) |
+| D2: R(x) recall at least A(x)'s | failed |
+| D2: A(x) first spikes later by >= 5 ms | held (6.0-8.5 ms) |
+| D2: higher assembly offset | not held consistently (-0.15 to +0.57 mV) |
+| D2: older items | not held consistently |
+| D2: most regenerated lines driven by spiking A(x) cells | held (all) |
+| D3: >= 70 % of index failures pass after the settle | held (86-100 %) |
+| D3: content failures mostly recover | held (62-100 %); content worse after the settle on balance at M = 1,000 (not predicted) |
+| D4: the offset rises with repetition | held (2.0-2.1 mV net of control) |
+| D4: habituated items show the larger rise | failed |
+| D4: index failure only weakly associated with habituation | not estimable |
+
+### What the gated diagnosis says (reading, not a result)
+
+- **Access.** The online index failure is mostly slowed retrieval of an intact assembly. It is not
+  erasure. Its cue-level cause is not identified. The onset threshold offset does not distinguish
+  slowed cues in the gated data.
+- **Content.** At M = 1,000 the online-written store is contaminated. The settled regime exposes
+  that contamination more than the online regime does. P2-E4's content pass therefore depends on
+  the online regime.
+- **Habituation.** It is accommodation of every repeatedly driven assembly, about 2 mV beyond the
+  control copy, and graded across items. The O4 label reflects where items sit relative to the bar.
+- **The two problems.** P2-E4 gives no evidence that one variable couples them. Their separation
+  is now P2-E5's question (Part D, under continuous learning), as the owner ordered.

@@ -798,3 +798,25 @@ M = 500 and below 10^-38 at M = 1,000.
 **A process disclosure.** The owner's reading of 2026-10-11 (DECISIONS.md, 09962a4) cited the first
 gated readings from the lane logs, before the records for seeds 16 and 17 existed. Nothing changed
 afterwards.
+
+### Readings added to the Result after the results review (appended 2026-10-11; reported, post hoc)
+
+- **Habituation is universal and graded** (constructive reviewer, NS6; recomputed from the
+  habituation logs, whose sha256 matched the records).
+  - On every gated seed and load, all 50 items recall less in the repeated copy's last 10
+    repetitions than in the control copy's.
+  - The mean drop in A(x) recall is 0.107-0.119 at M = 500 and 0.124-0.134 at M = 1,000.
+  - Net of the control copy, the assembly offset rises 2.0-2.1 mV.
+  - So every repeatedly driven assembly accommodates, as per-cell accommodation is built to do. O4
+    counts the items near the bar.
+  - Later contracts should report the continuous drop beside O4, so that a margin-widening
+    mechanism cannot pass O4 while the drop persists.
+  - Changing the accommodation time constant is not the fix (owner, 2026-10-11).
+- **Slowed index retrieval and habituation both point to a per-item drive margin** (skeptic
+  reviewer, NS-6). That margin was not measured. It needs its own predeclared measure.
+- **Validity 4 relies on an assumption** (code reviewer, F3). Its check `store.keys is
+  onset_keys` is sound only because `BinarySynapses.add()` and `toggle()` always assign a new
+  array. An in-place write would pass silently. A future change to `plant2/btsp.py` must be
+  checked against this.
+- **The gated diagnosis** (D1-D4, scored against its predictions) is appended to
+  `docs/plant2/P2-E4-diagnosis-plan.md`, with a correction to the exploration write-up there.
