@@ -614,3 +614,187 @@ control "both" rate at 0.96 and 0.90. This is not a near-miss.
 
 **Consequence under the Decision above.** A FAIL is expected. The gated seeds still run, exactly as
 frozen, because the contract requires the independent gated evaluation. Nothing is retuned.
+
+## Result (appended 2026-10-11, after the verdict and the post-verdict diagnosis; nothing above is edited)
+
+**Verdict: ONLINE INDEX FAIL + HABITUATION FAIL + RECOVERY FAIL.** The kill_test_verdict record is
+in commit e756252.
+
+**Validity and provenance.**
+- All five gated seeds (16-20) are valid. Each ran once, on plant2 tree 9152f1e4 under contract
+  digest f8f8838b.
+- The real-driver predictions were committed (124ecb2, 00:38:40) before the first run-once marker
+  (00:38:56).
+- The guard checks that plant2/ is clean, not the whole working tree. Seed 19's record shows
+  dirty=true outside plant2/ (a results-file append).
+- Two independent reviewers re-derived the verdict vector and labels from the per-slot logs, with
+  every sha256 matching, and got exactly the recorded result (`review/plant2/P2-E4/results-*.md`).
+- **Validity 5 holds by construction, not by test.** Its `proj_current` and `inh_ok` checks cannot
+  fail as written. The evidence that the live projection was current is twin A's replay: zero
+  differing spikes at both loads on all five seeds, over 463k-665k spikes.
+
+**Per seed and load** (online rates; O4 counts eligible and habituated items; O5 counts
+control-copy passers and recovered items, with p0 the zero-effect pass probability):
+
+| seed | M | C1 | C2 | C3 | joint | D3 | O3 memory | O3 content | O4 eligible / habituated (McNemar b/c) | O5 recovery passers / recovered (p0) | O5 collateral |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 16 | 500 | 0.89 | 1.0 | 1.0 | 0.985 | 1.0 | 0.88 | 0.97 | 21 / 12 (16/0) | 48 / 47 (0.75) | pass |
+| 17 | 500 | 0.87 | 1.0 | 1.0 | 0.975 | 1.0 | 0.83 | 0.98 | 28 / 14 (23/0) | 45 / 42 (0.62) | pass |
+| 18 | 500 | 0.93 | 1.0 | 1.0 | 0.995 | 1.0 | 0.93 | 1.0 | 33 / 21 (25/0) | **47 / 42 (0.83)** | pass |
+| 19 | 500 | 0.91 | 1.0 | 1.0 | 0.98 | 1.0 | 0.91 | 0.99 | 27 / 14 (18/0) | 45 / 44 (0.69) | pass |
+| 20 | 500 | 0.92 | 1.0 | 1.0 | 0.975 | 1.0 | 0.94 | 0.98 | 20 / 10 (12/0) | 47 / 41 (0.64) | pass |
+| 16 | 1,000 | 0.685 | 1.0 | 1.0 | 0.95 | 1.0 | 0.67 | 0.92 | 13 / 10 | 34 / 26 (0.016) | pass |
+| 17 | 1,000 | 0.71 | 1.0 | 1.0 | 0.96 | 1.0 | 0.75 | 0.97 | 6 / 5 | 33 / 25 (0.010) | pass |
+| 18 | 1,000 | 0.68 | 1.0 | 1.0 | 0.965 | 1.0 | 0.63 | 0.96 | 12 / 8 | 35 / 27 (0.014) | pass |
+| 19 | 1,000 | 0.74 | 1.0 | 1.0 | 0.96 | 1.0 | 0.73 | 0.94 | 9 / 5 | 36 / 29 (0.025) | pass |
+| 20 | 1,000 | 0.68 | 1.0 | 1.0 | 0.93 | 1.0 | 0.61 | 0.90 | 6 / 4 | 37 / 27 (0.024) | pass |
+
+**The vector in the contract's three states:**
+- O1 C1 and O3 memory fail at both loads.
+- O2 and O3 content pass on every seed and load.
+- O4 fails, not estimable where fewer than 25 items were eligible: every seed at M = 1,000, and
+  seeds 16 and 20 at M = 500.
+- O5 recovery fails at M = 1,000 on every seed, though not estimable by the power rule there (p0
+  0.010-0.025).
+- O5 collateral passes everywhere.
+- The NOT ESTIMABLE conditions held at M = 1,000 for both habituation and recovery, but are
+  absorbed into the FAIL labels by the labelling rule.
+
+**Per-kind index recall (C1) at M = 1,000:**
+
+| kind | C1 |
+|---|---|
+| recent (age 0-20) | 0.72-0.82 |
+| uniform | 0.62-0.72 |
+| never-probed cohort | 0.61-0.75 |
+
+The online index failure reaches the newest items. It is not forgetting of old items, nor
+interference alone.
+
+**Disclosures on the labels:**
+- **RECOVERY FAIL rests on one seed and load.** On seed 18 at M = 500, 42 of 47 control passers
+  recovered and 43 were needed; one item short.
+  - Its zero-effect pass probability is 0.83, against the 0.8 bar (exact value 0.831). At 203 of
+    250 control passes instead of 205, it would have been 0.794, which reads RECOVERY NOT ESTIMABLE.
+  - The driver reads the power rule per seed and load. Read over all seeds and loads, the label
+    would have been RECOVERY NOT ESTIMABLE.
+  - The label follows the frozen rule and stands. A post-hoc paired check by a reviewer suggests
+    recovery really is incomplete (next bullet), so it is not sampling noise.
+- **Recovery of the repeated item's own cues is incomplete** (post hoc, a reviewer's computation;
+  not a gate):
+  - Pooled over the gated seeds, items where the control copy passes and the repeated copy fails
+    outnumber the reverse 57 to 2. At M = 1,000 the per-seed counts are 7-10 against 0-1.
+  - Collateral cues are spared: 4 against 1.
+  - Recovery among habituated items is 0.75-1.0.
+  - So the recovery hypothesis is not supported.
+- **HABITUATION FAIL.** On the three seeds where it was estimable at M = 500 (17, 18 and 19), 50-64 %
+  of eligible items habituated: 14 of 28, 21 of 33, 14 of 27. The predeclared McNemar on
+  "L >= 8" gives 23/0, 25/0 and 18/0.
+  - O4 had little power at the realised control rates (0.81-0.85, not the 0.963 assumed). A
+    reviewer's null model gives a no-effect pass chance of 0.45-0.79 per seed and load.
+  - That does not weaken a failure of this size.
+  - Habituation is measured on copies with sham encodings (verification SHAM-1).
+- **Content passes on all five seeds, but at M = 1,000 the pass depends on the online state.**
+  - The online-written store is contaminated: twin A, on the same raster, reads 0.82-0.905, against
+    0.96-1.0 for the P2-E3-protocol store and 0.985-1.0 for the plateau-set store.
+  - The same cues read worse after the settle (twin B content: 0.835-0.915 settled, against
+    0.93-0.965 online).
+  - On seed 20 at M = 1,000, O3 content sits exactly at the bar (90/100). One more failure would
+    have added ONLINE CONTENT FAIL.
+
+**Reported arms** (gated seeds 16-20, all valid):
+
+| arm | M = 500 | M = 1,000 |
+|---|---|---|
+| twin A, online-written store | 0.99-1.0 | 0.82-0.905 |
+| twin A, P2-E3-protocol store (same raster) | 0.99-1.0 | 0.96-1.0 |
+| twin A, plateau-set store (same raster) | 0.99-1.0 | 0.985-1.0 |
+| twin B, index online / settled | 0.87-0.93 / 0.965-0.98 | 0.68-0.74 / 0.92-0.975 |
+| twin B, content online / settled | 0.975-0.995 / 0.99-1.0 | 0.93-0.965 / 0.835-0.915 |
+| duty arm (I = 2,000 ms), online C1 / joint | 0.95-0.99 / 0.99-1.0 | 0.945-0.985 / 0.485-0.565 |
+| duty arm, twin A (settled store) | 0.99-0.995 | 0.175-0.245 |
+| novel-duty twin, twin A | - | 0.815-0.91 (the main line's 0.82-0.905) |
+| P2-E3-protocol reference line, settled joint | - | 0.96-1.0 |
+
+| stress continuation (recent items) | C1 | joint |
+|---|---|---|
+| M = 1,500 | 0.46-0.57 | 0.72-0.79 |
+| M = 2,000 | 0.32-0.41 | 0.18-0.30 |
+| M = 3,000 | 0.17-0.27 | 0.00 |
+
+| other reported arms | value |
+|---|---|
+| writes during probes: fraction of about 170 written probes later recallable | 0.165-0.20 |
+| out-of-distribution: 30 % cues, C1 | 0.00 (all seeds) |
+| out-of-distribution: half cues with 10 of 50 lines replaced by noise, C1 | 0.075-0.175 |
+| out-of-distribution: lures sharing 50 lines, recalled as the stored item | 0.90-0.95 |
+
+**What the arms say:**
+- **The novel-duty twin** never retrieves a stored item, yet writes the same store quality as the
+  main line. Input duty, not recall, drives the contamination.
+- **The settled state passes both index and content at M = 500.** At M = 1,000 no single state
+  passes both on the same synapses: online gives index 0.68-0.74 with content 0.93-0.965; settled
+  gives index 0.92-0.975 with content 0.835-0.915.
+
+**Predictions scored** (the predictions before implementation, and the real driver's):
+
+| held | failed |
+|---|---|
+| ONLINE INDEX FAIL (P 1.0) | O5 at M = 500 "likely holds": failed on seeds 18 and 20 |
+| HABITUATION FAIL (P 1.0, real driver) | C1 at M = 1,000 predicted 0.70-0.85: 0.68-0.685 on 3 seeds |
+| no ONLINE CONTENT FAIL (P 0.37 of the label) | O3 memory predicted 0.70-0.80: 0.61-0.67 on 3 seeds |
+| responder \|R\| about 45 against 28.6 for the reference: 41-44.5 against 28-29 | stress joint at M = 1,500 predicted < 0.3: 0.72-0.79; at M = 2,000 predicted about 0: 0.18-0.30 |
+| Jaccard(R, A) about 0.5 against 0.73: 0.48-0.53 against 0.71-0.75 | writes during probes "nearly all stored": 0.165-0.20 |
+| online offset 6.8-7.0 mV | 30 % cues predicted C1 0.2-0.5: 0.00 |
+| duty arm: online memory passes, store collapses | |
+
+The writes-during-probes figure is confounded by online index failure: it is a stress test.
+
+**Index latency, post hoc.** The online index failures are mostly slowed retrievals (diagnosis
+D2, all five gated seeds):
+- the assembly's first spikes come 6-8.5 ms later at M = 1,000;
+- 0.89-0.93 of those cues reach the recall bar within 75 ms.
+
+Combining D1 with that rescue gives C1 at 75 ms of about 0.955-0.97 at M = 1,000. This covers
+recall only: spurious cells and ignition at 75 ms were not measured. It is labelled post hoc and
+changes nothing. C1's 50 ms window is frozen and the O1 failure stands. Content within 50 ms
+(joint_50ms) is only 0.73-0.855, so both readouts slow by about the same amount.
+
+**Observation, post hoc and hypothesis-generating only.** Content failures on the main line are
+almost always total `rec` silence: 79 of 2,762 cues regenerated 0 lines, and 3 regenerated 1-39.
+Silence concentrates in items with small plateau sets: 64 % of cues for assemblies of 0-10 cells,
+under 0.5 % for 19 or more.
+
+**What the experimenter supplies** (wording per reviews). P2-E4 removes the rest before testing
+and the frozen-copy test regime. It removes nothing at learning time. "Online" here means
+**recall while scheduled learning continues**, not online learning.
+- The write oracle, the key and the value remain.
+- **A newly named supply: separate encoding and retrieval states, set by the schedule.** P2-E3's
+  PASS relied on writing at a high continuation offset (8.35-8.56 mV at items 751-1,000) and
+  reading after a 50 s settle (3.65-3.74 mV). With one state, at M = 1,000 the system gives fast
+  access or clean content, not both.
+- **That trade-off is shown for the responder write,** which recruits every cell above one shared
+  threshold. It is not shown for the architecture.
+
+**How the offset should be read.** The owner's narrowed reading applies throughout: the online
+state differs by a higher offset among other differences, and which variable is responsible is
+not isolated. Gated D2 does not replicate the exploration's offset correlate. At M = 1,000, the
+assembly offset of content-only cues minus cues passing both is +0.57, +0.27, -0.15, +0.08 and
++0.40 mV.
+
+**Decision, as predeclared:**
+- The claim that accommodation provides a usable online operating point is withdrawn at M = 500
+  and M = 1,000.
+- Stage 1's clause "holds ... after 60 s of ongoing activity" is not met online by the P2-E3 system.
+- Nothing is retuned.
+- Work proceeds to P2-E5, as the owner ordered.
+- Where a separately contracted operating-point mechanism sits, relative to the contamination fix,
+  is the owner's decision.
+
+**The prediction wording** follows the owner: no pass in 1,500 joint simulations (95 % upper bound
+about 0.002, Monte Carlo error only). The analytic index-only pass probabilities were 4 × 10^-4 at
+M = 500 and below 10^-38 at M = 1,000.
+
+**A process disclosure.** The owner's reading of 2026-10-11 (DECISIONS.md, 09962a4) cited the first
+gated readings from the lane logs, before the records for seeds 16 and 17 existed. Nothing changed
+afterwards.
