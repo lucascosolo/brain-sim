@@ -1,4 +1,4 @@
-# plant2 handoff (2026-10-11, updated about 05:12 UTC)
+# plant2 handoff (2026-10-11, updated about 14:20 UTC)
 
 This is the state of work for whoever continues, human or agent. Branch `plant2-stage1`; nothing is
 merged to `main` without the owner saying "merge".
@@ -30,10 +30,10 @@ merged to `main` without the owner saying "merge".
   - **Exploration seeds 44-45** are running the reported arms (s100, s80, s40, pooled, F40,
     online). Logs are in `~/.cache/brain-sim/plant2/p2_e5/explore_{44,45}.log`. Commit
     `bench/results/plant2.jsonl` as records arrive.
-- **Done (05:07-05:10 UTC):** exploration seeds 44-45 finished every arm, valid; `predict`
+- **Done (05:07 UTC and 14:03 UTC):** exploration seeds 44-45 finished every arm, valid; `predict`
   wrote the `power_predictions` record (P(PASS) 0; both STRUCTURED FAIL labels expected); the
   predictions were appended to the contract (694038c); the guard passes.
-- **Running:** gated seeds 21-25, each once, in two lanes started about 05:10 UTC
+- **Running:** gated seeds 21-25, each once, in two lanes started at 14:03 UTC (after a container restart)
   (`~/.cache/brain-sim/plant2/p2_e5/gated_lane1.log`: seeds 21, 22, 23;
   `gated_lane2.log`: seeds 24, 25). Run-once markers are `gated_seed*.started` in the same
   directory. Commit `bench/results/plant2.jsonl` as records arrive; never restart a seed whose
