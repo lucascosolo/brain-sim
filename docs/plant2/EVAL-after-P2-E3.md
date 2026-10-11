@@ -201,3 +201,22 @@ order relative to Stage 2 is the owner's decision (question 4 below).
 5. **The Stage 3 gate.** Should the gate require the prototype effect jointly with exemplar
    specificity, and set the label-efficiency test at high distortion (about 0.8), where raw
    input fails, so that blending at retrieval cannot pass it?
+
+## Erratum (2026-10-11, from the P2-E5 red-team; the text above is not edited)
+
+The sentence in "Toward abstraction" says that sibling assemblies "write their own lines" into an
+item's feedback. That is backwards.
+
+**What the code writes.** `w_fb(i -> j) = 1` for responders i in R(x) and eligible lines j in E(x).
+So cells of earlier siblings that fire in x's continuation **receive x's lines**. Later, when a
+sibling y's half cue drives those cells, they regenerate x's lines into y's readout.
+
+**So an item is damaged after it is stored,** by later siblings writing onto its cells. In
+exploration at s = 60 and M = 500, lines that only later siblings have average 40-48 intrusions
+per cue, against about 2.3 for lines that only earlier siblings have. The oldest items are hit
+hardest.
+
+**At M = 1,000 the forward index also fails:** C2 is about 0.47-0.50, upstream of any feedback
+write.
+
+See `docs/plant2/P2-E5-structured-items.md` and `review/plant2/P2-E5/`.

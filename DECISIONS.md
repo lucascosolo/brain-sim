@@ -501,3 +501,49 @@ code (unchanged) and the diagnosis code. It is recorded in substance.
   target, not a further gain in recall on independent random items.
 - **The order after P2-E4.** Finish the diagnosis and the gated evaluation. Then put first
   whichever failure remains most consequential under the structured-input tests (P2-E5).
+
+## 2026-10-11: P2-E5 red-team acted on (contract revised, not yet frozen)
+
+**The review.** The draft (e736e81) was red-teamed by three critics with refuters, plus a
+completeness critic (workflow wf_7b8a1dd3-6aa). The findings are verbatim in
+`review/plant2/P2-E5/`. All 31 were accepted, one in part; each disposition is a row in
+`review/ledger.jsonl`. The revised contract is `docs/plant2/P2-E5-structured-items.md`.
+
+**What exploration changed** (seeds 44-45; exploratory):
+- **At M = 1,000 the forward BTSP index fails on correlated items.** C2 is 0.47-0.50, and the
+  spurious cells are siblings' plateau cells. No feedback-write change can repair this, and the
+  plateau-set store fails at every readout point. This is a third problem, outside the two the
+  owner named.
+- **At M = 500 the failure is the responder write.** Index C2 (about 0.90) and C4-spurious
+  (about 0.89) still make S1 near-certain to fail: P(all five seeds) is 0.001.
+- **The network's own continuation spike count identifies the item's assembly** among the
+  responders (AUC >= 0.996). A store written only from cells firing 3 or more spikes matches the
+  plateau-set store. This is measured as a reported reading. Adopting it would be a new
+  mechanism, and needs the owner's ruling.
+
+**Chosen:**
+- **Validity.** P2-E3's convergence rule is kept unchanged. The draft's signed-drift bar is
+  withdrawn: it would have made the run INVALID with probability about 0.8.
+- **The gate.** C4 is restored to S1. There is a verdict vector, with STRUCTURED INDEX FAIL and
+  STRUCTURED CONTENT FAIL labels.
+- **Ranking the failures.** A predeclared ranking of failures (Part B: contamination, index and
+  operating-point losses) implements the owner's guidance of 2026-10-11. It is built on a
+  readout-grid upper bound, not the frozen readout point.
+- **The online arm.** It runs on P2-E4's frozen driver (reported) and answers the owner's
+  request to test contamination under continuous learning.
+- **Controls and the family count.** The s = 100 positive control, a pooled line-frequency
+  control and an F = 40 arm are added. F = 10 is fixed by argument.
+- **M = 1,000 stays gated,** as the owner's "ultimately 1,000" and the draft read it.
+
+**Rejected:**
+- **A write-time regeneration replay** (owner-intent FID5-2, item 3). Ruling 4 assigns it to the
+  mechanism's own contract, and the persisted rasters make it recomputable.
+- **An F = 20 arm.** F = 40 separates family size from load with a roughly uniform line load.
+
+**Open for the owner:**
+- whether M = 1,000 should be gated now;
+- whether the activity-gated write may be contracted beside the error-correcting write;
+- how to treat forward-index cross-talk, which ruling 4 does not cover.
+
+None of these blocks freezing. The contract gates what the owner ordered and routes these
+questions to the owner through its Decision section.
