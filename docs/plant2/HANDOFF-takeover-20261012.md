@@ -121,3 +121,35 @@ E6 tests also passed after report-only field additions. Independent code review 
 coin/control rule. Three evidence/execution findings were fixed before full-size simulation.
 No full-size outcome exists at this checkpoint. The mechanism and decision thresholds remain
 exactly those frozen at6733109.
+
+## Pass 2: complete feasibility failure, preserved without tuning
+
+E6 implementation is c4cc27b; the F10 backup checkpoint is57bec0d; full results and the
+next contract are2454f06. All16 checkpoints and both sanity controls finished in608.64s,
+without interruption. The exact screen fails canonical F10/1000 specificity179/200 and
+oldest specificity89/100. Every other mandatory comparison, independent regression, protocol
+and sanity requirement passes. Source/evidence hashes and all70 decision-vector components
+were independently checked; see RESULTS-P2-E6.md and findings-results.md.
+
+At1000, specificity baseline/candidate/count-matched-random=.500/.895/.460; joint index
+=.440/.865/.410. Candidate recall=.970 versus baseline=.935. The candidate increases own
+responses and store density while reducing spurious responses, so this is more than simple
+silencing or global sparsification. Adaptive threshold states also differ; no fixed-state
+mediator isolation is claimed. Canonical inherited content remains.065 (assigned-A reference
+.425). Independent content regression passes; F40 candidate index bars pass, but F40 is
+transfer only and cannot rescue canonical failure. No R3 or new inhibition was deployed.
+
+Held-out102 and gated111–115 are deliberately untouched. The driver refuses their use
+without complete committed passing prerequisite evidence. Do not weaken the bars, tune
+the failed candidate, or relabel this as a five-seed gated FAIL/PASS. A source repair does
+not authorize scientific retuning. The useful observed effect remains one development seed.
+
+## Pass 3 selection
+
+P2-R2 final contract is docs/plant2/P2-R2-degree-null.md at2454f06. The separate DRAFT file
+is retained only as preparation provenance. This is the third and final pass: a two-seed
+exact-degree input null under unchanged E3 learning. It preserves row sizes and per-input
+counts within every100-episode block while randomizing co-occurrence. Seeds103/104 are fixed.
+It cannot prove a unique frequency/correlation causal decomposition because fine timing,
+actual eligibility, coin alignment and operating state can change. It is not a new memory
+capability or permission to start sequences. Full results will be appended after execution.

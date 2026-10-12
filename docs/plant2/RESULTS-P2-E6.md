@@ -116,3 +116,19 @@ Additional measured conditions:
 F40 is reported transfer only. Its results neither rescue nor change the canonical F10 failure.
 The final outcome supports retaining the failed mechanism and investigating a distinct
 explanation with a separately frozen input-degree-preserving control, rather than tuning it.
+
+## Independent full-size audit closure
+
+The independent methodology reviewer verified96,108 scalar/structural checks across all16
+loads,18 portable/raw pairs,9,600 index rows and13,200 content rows. Reconstructed forward
+stores, matched-control streams and mandatory feedback stores agree exactly. All70 prospective
+vector parts were rebuilt:68 true and precisely the two frozen specificity requirements false.
+No scoring or implementation blocker was found. Full neural dynamics were not rerun by this
+reviewer; encoding spike/threshold-state equality checks were inspected rather than regenerated.
+See review/plant2/P2-E6/findings-results.md for scope and tradeoffs.
+
+The learning.probability_min/max fields describe the computed candidate probabilities in
+all arms; baseline actually deploys p=.5. Do not interpret these diagnostics as variable
+baseline plasticity. F40 candidate passes its absolute index bars but still has inherited
+content joint=.200 and oldest D4=.070 at1000; assigned-A feedback gives.935/.930. No content
+repair was deployed. All unrun held-out/gated seeds remain unverified.

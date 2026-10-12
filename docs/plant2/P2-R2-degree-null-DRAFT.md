@@ -263,3 +263,9 @@ The lead chooses whether to freeze this proposal only after E6 evidence. A repli
 contrast would justify investigating co-occurrence-sensitive encoding in a future mechanism
 contract; persistent null failure would motivate a narrower load/operating-state investigation.
 Neither outcome authorizes Stage 2, another mechanism, parameter rescue, or main-branch merge.
+
+## Preparation closure
+
+This preparation draft is superseded by docs/plant2/P2-R2-degree-null.md, frozen at2454f06
+after the complete E6 feasibility failure. It is retained for provenance and is not an
+additional experiment contract.
