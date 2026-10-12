@@ -766,3 +766,45 @@ retuned.
 **Not done:**
 - No mechanism contract is drafted before the owner rules.
 - Familiarity-gated allocation stays deferred.
+
+## 2026-10-12: owner-authorized research takeover (session begun Oct 11, America/Chicago)
+
+Source: the owner's explicit Work-session takeover request, followed by the instruction to
+push regular checkpoints. Base fetched and verified: `plant2-stage1` at
+`55e16ebff62a90d6402745f44fb860010741eba5`. Work branch:
+`codex/plant2-takeover-20261012`. Up to three evidence-driven passes are authorized; a clean
+partial experimental checkpoint is required if compute prevents complete gating.
+
+Owner rulings, recorded before any new mechanism experiment:
+1. R_3 (at least three continuation spikes) is first a reported replay/diagnostic, not a gated
+   eligibility mechanism. Compare inherited, assigned-assembly, size-matched random and
+   anti-selected writers, including P2-E4's longer-gap duty schedule and P2-E5's correlations.
+   Recovering the supplied plateau key is not self-selected representation.
+2. Fixed activity-proportional memory inhibition is authorized as a Stage 1 recurrent-memory
+   stabilizer if justified, with no-inhibition, inhibition-only and shuffled/degree-matched
+   controls, frozen parameters, and checks against silence or imposed answers. It is not learning.
+3. Forward-index interference is the next primary mechanism target. Investigate local error and
+   presynaptic-load signals, select one mechanism per contract, and score index independently
+   from content. Do not stack unproven mechanisms.
+4. Keep the existing 50 ms index and 75 ms content requirements. Any future end-to-end latency
+   proposal is separate; no retrospective relaxation.
+5. Ten families remains the canonical hard condition; forty families is an additional transfer
+   diagnostic, never its replacement.
+6. Frozen deployed readout is primary. Best-over-grid is only an explicitly optimistic diagnostic.
+
+Standing: contracts precede implementation; exploratory/calibration/gated seeds stay separate;
+all failures and invalid runs remain; decisions/results append only; independent adversarial
+review; no main merge, history rewrite, destructive cleanup, or external spending. The recovered
+plant and historical experiment code/contracts remain untouched. No Stage 2 advancement without
+the required substrate. The absolute no-deletion rule overrides older sandbox exceptions.
+
+Environment: approximately eight CPU cores and 8 GiB cgroup memory; NumPy 2.3.5. Historical
+raw cache artifacts are not present here. Shell clone/fetch works, shell push lacks credentials;
+checkpoints will use the connected GitHub Git-data API with non-forced, expected-head updates.
+The inherited global ~/.agents/AGENTS.md is absent. Both accessible reflex-layer AGENTS variants
+were read; brain-sim and the owner's stricter rules apply. Pytest is an existing test dependency,
+fetched as verified wheels into a new cache directory without package-manager cleanup. No new
+production dependency is introduced. Upstream safety lint is fetched at blob
+`443d3c26ef8bdda42ef507eb1382d5c0fc9d915b`; its direct scan reports only the twelve documented legacy
+findings. The required pytest wrapper needs the absent reflex package; this limitation is reported
+rather than hidden by a stub.
