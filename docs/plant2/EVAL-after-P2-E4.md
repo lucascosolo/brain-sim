@@ -218,3 +218,19 @@ These are candidates, in the reviewers' order. Each is one contract, and some ne
    downstream need, for example a Stage 2 chaining period.
 5. **Optional.** Should seed 18's M = 500 habituation copies be replayed as a reported-only check?
    RECOVERY FAIL rests on that seed and load alone. The diagnosis replayed only the main line.
+
+
+## P2-R1 independent audit errata (2026-10-12; append-only)
+
+The original verdicts stand. See review/plant2/P2-R1/findings-baseline-methodology.md and
+analysis/p2r1_baseline_audit.py for independently reproducible checks.
+- “Never both” overstates the evidence: seed18's settled twin B has index recall0.955 and
+  content joint0.915. No tested regime meets the complete frozen all-seed contract.
+- Feedback swaps preserve pure memory activity, not necessarily the O4/O5 composite labels.
+  Their eligibility and late/recovery counts use index AND content. The existing committed
+  summaries contain1009/50000 repeated presentations passing index but not the composite.
+  Those criteria must be rescored if feedback changes; underlying memory habituation is unchanged.
+- Failure of one burst threshold would not prove an architectural impossibility or uniquely
+  require internally generated encode/retrieve states.
+- Duty-arm continuation counts were not persisted by the old driver. A burst-write comparison
+  requires an instrumented reproduction, not just recovery of the old slot logs.

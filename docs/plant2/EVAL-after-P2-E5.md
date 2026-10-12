@@ -117,3 +117,29 @@ Optional, from `EVAL-after-P2-E4.md`: a reported replay of P2-E4 seed 18's habit
 - **The risk the skeptic names is real:** two experiments in a row have carried no mechanism by design.
   The next contract should be a mechanism with a predeclared capability gain and a named supply
   that it removes.
+
+
+## P2-R1 independent audit errata (2026-10-12; append-only)
+
+The frozen FAIL and predeclared operational labels stand. The independent baseline reviewer
+matched80 criterion bits,20 content/oldest counts,10 histogram AUCs and30 grid-loss values.
+The following causal/interpretive claims are withdrawn before new mechanism work:
+- The pooled control approximately matches hot/cold groups, not each line's frequency. It
+  flattens prototype multiplicity hotspots: at M1000 main maximum line loads are137–148,
+  pooled81–89. Thus the main-versus-pooled improvement does not isolate sibling organization
+  from the marginal load distribution. “Correlation-attributable” remains the frozen label,
+  not a clean causal attribution.
+- Quoted R3 joint0.93–0.97 against inherited0.05–0.10 is settled readout of online-written
+  stores, not measured online retrieval. The inherited online block reads0.475–0.575 at500.
+- Approximately100 is family size. Prototype-union lines average57.64–58.66 appearances at1000,
+  with substantial variation and multi-prototype hotspots. Prototypes contain100 lines; each
+  exemplar retains40 and replaces60.
+- “No store” means none of the tested stores/readout points. Assigned-A feedback is a diagnostic
+  comparator, not a mathematical upper bound. It remains true that feedback-only changes cannot
+  repair the upstream index.
+- Not every recommended replay input was persisted. E4 duty and E5 online need new capture in
+  faithful inherited-driver reproductions. All28 referenced old cache paths are absent here.
+
+Report and executable checks: review/plant2/P2-R1/findings-baseline-methodology.md and
+analysis/p2r1_baseline_audit.py. The owner has now ruled: frozen readout primary; F10 canonical;
+R3 reported replay first; forward-index mechanism next.

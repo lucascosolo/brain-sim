@@ -808,3 +808,18 @@ production dependency is introduced. Upstream safety lint is fetched at blob
 `443d3c26ef8bdda42ef507eb1382d5c0fc9d915b`; its direct scan reports only the twelve documented legacy
 findings. The required pytest wrapper needs the absent reflex package; this limitation is reported
 rather than hidden by a stub.
+
+
+## 2026-10-12: independent baseline audit before new mechanism work
+
+The P2-E4/E5 frozen failures survive independent aggregate recomputation. P2-R1 found material
+interpretive errors, now appended to both evaluation documents: the pooled control did not
+match per-line marginals; a settled readout was called online retrieval; feedback-only changes
+need not inherit composite O4/O5 labels; some claimed replay inputs were never persisted.
+The audit also corrects prototype size/line load and overbroad impossibility statements.
+These corrections precede the new index mechanism's freeze and do not relabel old gates.
+
+The baseline fast suite passed63 tests,7 slow deselected,57.07s. Safety wrapper collection is
+blocked by absent reflex; the exact upstream stricter lint and both wrapper-equivalent
+assertions show only the12 grandfathered findings. Pytest runs with sys capture and tmpdir/cache
+plugins disabled, preventing its usual automatic temporary-file cleanup.

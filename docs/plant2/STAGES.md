@@ -99,3 +99,11 @@ P2-E3 (content completion), then an evaluation against the north star, then onli
 capacity. The evaluation after P2-E3 is `docs/plant2/EVAL-after-P2-E3.md`; the owner's rulings on it
 (2026-10-10) set the order: P2-E4 (online memory), then the structured-input diagnostic and,
 if it fails, a correction mechanism before any Stage 2 work; capacity scaling continues.
+
+
+## P2-R1 correction (2026-10-12)
+
+The P2-E5 row's “60-line prototype” is incorrect: the generator uses100-line prototypes,
+retains40 prototype lines per exemplar and replaces60. Stage1 remains incomplete. The new
+independent audit also limits the pooled-control causal attribution; see the appended errata
+in EVAL-after-P2-E5.md. No historical gate or verdict is changed.
