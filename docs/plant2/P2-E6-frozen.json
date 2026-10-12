@@ -1,0 +1,20 @@
+{
+  "experiment": "P2-E6",
+  "contract_commit": "6733109",
+  "contract_path": "docs/plant2/P2-E6-load-gated-encoding.md",
+  "source_baseline": "55e16ebff62a90d6402745f44fb860010741eba5",
+  "mechanism": {"history": "prior actual eligibility episodes", "pseudocount": 1, "budget_per_eligible": 0.5, "bisection_iterations": 80, "budget_atol": 1e-9},
+  "streams": {"random_flip_control": 31, "wrong_label_permutation": 32, "item_index": "1-based"},
+  "loads": [500, 1000],
+  "conditions": {"F10": {"F": 10, "s": 60}, "independent": null, "F40": {"F": 40, "s": 60}},
+  "arms": ["baseline", "candidate", "random"],
+  "transfer_arms": ["baseline", "candidate"],
+  "seeds": {"development": 101, "feasibility": 102, "gated": [111, 112, 113, 114, 115]},
+  "frozen": {"J_mem": 1.525, "acc_tau": 10000, "J_fb": 2.8, "g": 0.3, "window_mem": 50, "window_rec": 75, "settle": 50000},
+  "bars": {"C1": 0.9, "C2": 0.9, "C3": 0.9, "C4_recall": 0.9, "C4_spurious": 0.9, "joint_index": 0.85},
+  "margins": {"F10_C2_vs_baseline": 0.2, "F10_C2_vs_random": 0.1, "F10_joint_vs_each": 0.1, "C1_nonregression": 0.03, "independent_C2_nonregression": 0.03, "independent_content_joint_nonregression": 0.05, "independent_content_D4_nonregression": 0.05},
+  "protocol": {"eligibility_min": 0.95, "mean_A_1000": [18.5, 21.5], "drift_max_mv": 0.2},
+  "sanity": {"wrong_label_C1_strict_upper": 0.1, "empty_store_responders": 0},
+  "resource": {"wall_seconds": 3600, "grace_seconds": 600, "max_simulation_processes": 4},
+  "predictions": {"F10_M1000_C2": [0.7, 0.95], "F10_M1000_C1": [0.85, 0.98], "independent_C1_delta": [-0.05, 0.05], "most_likely_failure": "oldest-item bar"}
+}

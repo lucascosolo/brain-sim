@@ -112,3 +112,12 @@ different mechanism needs its own committed contract. The ten-family stress test
 
 Append the remaining pass outcomes, final source hashes, reviewer dispositions, exact unrun
 conditions and the next recommendation before treating this handoff as final.
+
+## P2-E6 implementation checkpoint
+
+The complete non-slow plant2 suite passes:76 tests,7 deselected,57.77s. The final seven
+E6 tests also passed after report-only field additions. Independent code review reconstructed
+16 small learned stores from saved eligible inputs/plateaus and independent replay of the
+coin/control rule. Three evidence/execution findings were fixed before full-size simulation.
+No full-size outcome exists at this checkpoint. The mechanism and decision thresholds remain
+exactly those frozen at6733109.
