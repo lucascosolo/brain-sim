@@ -107,3 +107,18 @@ The P2-E5 row's “60-line prototype” is incorrect: the generator uses100-line
 retains40 prototype lines per exemplar and replaces60. Stage1 remains incomplete. The new
 independent audit also limits the pooled-control causal attribution; see the appended errata
 in EVAL-after-P2-E5.md. No historical gate or verdict is changed.
+
+
+## Takeover outcomes (2026-10-12; append-only supplement)
+
+| Pass | Experiment | Disposition and scope |
+|---|---|---|
+| 1 | P2-R1 reported burst-write replay | Complete on mandatory reused seeds44/90. R3 improves settled duty1000 content .205→.995 and beats count-matched random, but correlated1000 content remains .160 with index specificity .500. Supplied plateau keys remain; no live R3 or new gated capability. |
+| 2 | P2-E6 presynaptic-history encoding | Complete, valid FEASIBILITY FAIL on seed101. Canonical1000 specificity .500→.895 and joint index .440→.865; exact flip-count-matched random specificity .460. Overall .895 and oldest .890 specificity miss frozen .90 bars. Independent regression passes; F40 transfer cannot rescue. Held-out102/gated111–115 untouched. |
+| 3 | P2-R2 exact-degree input null | One complete valid contrast (103), one INVALID attempt (104); formal two-seed result INVALID. Valid103 specificity .470→.755 and joint index .410→.675 at1000, but high-load specificity/content remain below bars.104's evidence was reconstructed exactly after an empty artifact caused final paired-read failure; INVALID is preserved and no formal replication claimed. |
+
+Contracts precede implementations; source, per-cue records, controls, independent reviews and
+failure dispositions are retained. See RESULTS-P2-R1.md, RESULTS-P2-E6.md, RESULTS-P2-R2.md and
+HANDOFF-takeover-20261012.md. No new mechanism has passed its full acceptance screen. No Stage2
+work began. First establish evidence durability, then fresh explanatory replication; a later
+activity-driven representation mechanism requires a separately frozen hypothesis and controls.

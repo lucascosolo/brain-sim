@@ -855,3 +855,26 @@ fresh seeds103/104 and no E6 mechanism, R3 deployment, readout sweep or new inhi
 The final reviewed contract will be committed before its driver. It is a reported causal
 intervention screen, not a capability gate; timing/eligibility/state differences remain
 explicit. No fourth pass or Stage2 work is authorized by this selection.
+
+
+## 2026-10-12 — P2-R2 closure and takeover stop
+
+Third and final pass: the exact-degree input null completed all eight neural checkpoints.
+Seed 103 is COMPLETE and meets the declared material structure-sensitivity contrast at1000:
+C2 .470→.755, joint index .410→.675, C1 .930→.920. Absolute specificity and content still fail.
+At500, its oldest recall drops .980→.910 despite improved content; do not hide that cost.
+
+Seed 104 and the formal two-seed outcome are INVALID. Its original1000 combined evidence file
+is empty, and two earlier progress events are absent; the final paired read fails after all
+neural/readout stages complete. Retained components independently reconstruct the exact
+recorded1,883,558-byte SHA-matching artifact, saved at a separate recovery path. Original
+failure evidence remains untouched. Recovered104 C2 .460→.715 and joint .400→.640 are post hoc
+numerical evidence, not a valid replication. No replacement, rerun, threshold change or fourth
+pass is performed. The cause of the persistence discrepancy is unresolved; no source path
+explaining a truncation was identified. Preserve this open integrity limitation.
+
+Next work should first establish durable per-worker evidence and verified checkpoints, then
+predeclare fresh explanatory replication before selecting another learning mechanism. Do not
+retune E6, combine R3 with it without a new contract, or begin Stage2. The takeover demonstrates
+partial selectivity effects and sharper diagnostics, not accepted robust memory, autonomous
+keys, capacity growth, abstraction or independent cognition. Stage1 remains incomplete.
