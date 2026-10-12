@@ -70,3 +70,12 @@ on a small network; the results methodology review is retained separately under 
 
 The next primary experiment is the separately frozen P2-E6 presynaptic-load encoding rule.
 It targets forward-index selectivity without deploying R3 or changing readout thresholds.
+
+## Independent results review closure
+
+The independent reviewer recomputed 718 aggregate comparisons and all 15,000 saved writer
+selections, and verified four compact plus four raw artifact hashes. No correctness blocker
+was found. Six scope findings were accepted in the ledger. These reused seeds provide no new
+across-seed generalization evidence; R3 is not an itemwise monotonic repair (at correlated
+1000 it wins 32 cues and loses two against R1). The supplementary out-of-window spike count
+requires raw dynamics replay; portable evidence covers the required criterion aggregates.

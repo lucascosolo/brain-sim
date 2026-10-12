@@ -823,3 +823,16 @@ The baseline fast suite passed63 tests,7 slow deselected,57.07s. Safety wrapper 
 blocked by absent reflex; the exact upstream stricter lint and both wrapper-equivalent
 assertions show only the12 grandfathered findings. Pytest runs with sys capture and tmpdir/cache
 plugins disabled, preventing its usual automatic temporary-file cleanup.
+
+
+## 2026-10-12 — P2-R1 completed; index-first direction retained
+
+The predeclared burst replay completed correlated seed44 and duty seed90 at500/1000.
+At correlated1000, fixed-readout R3 content is.160 and index specificity.500; cleaning the
+tested writer does not solve the canonical stress case. Duty1000 settled R3 content is.995
+versus inherited.205, count-matched random.710 and anti.655. This supports writer identity
+beyond writer count on those rasters, while R3 nearly reproduces externally assigned keys.
+No live R3 result or new gated capability is claimed. Six independent results-review scope
+findings accepted; see RESULTS-P2-R1.md and review ledger. P2-E6 contract6733109 selects one
+causal presynaptic-history encoding rule; no R3 deployment, readout retuning, inhibition or
+recurrence is stacked with it. Historical verdicts and Stage1-incomplete status remain.
