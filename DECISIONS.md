@@ -836,3 +836,22 @@ No live R3 result or new gated capability is claimed. Six independent results-re
 findings accepted; see RESULTS-P2-R1.md and review ledger. P2-E6 contract6733109 selects one
 causal presynaptic-history encoding rule; no R3 deployment, readout retuning, inhibition or
 recurrence is stacked with it. Historical verdicts and Stage1-incomplete status remain.
+
+
+## 2026-10-12 — P2-E6 feasibility rejection; exact-degree explanation test selected
+
+P2-E6 seed101 completed all16 loads and both sanity controls in608.64s. The frozen screen
+is complete and integrity-valid but fails F10/1000 C2=179/200 and oldest specificity=89/100.
+Baseline C2=.500, candidate=.895, exact flip-count-matched random=.460; candidate recall=.970
+versus baseline=.935. Independent regression and all other mandatory bars pass. This is a
+substantial measured selectivity gain on one development seed, not an overall PASS. Preserve
+the failure without retuning: held-out102 and gated111–115 remain untouched. F40 transfer
+passes its index bars but cannot rescue the ten-family failure. No Stage1 completion.
+
+Select P2-R2 as the third and final takeover pass: a predeclared input-degree-preserving
+control investigates a distinct explanation, separating family grouping from exact line-count
+marginals more rigorously than the old pooled control. It uses unchanged E3 learning, two
+fresh seeds103/104 and no E6 mechanism, R3 deployment, readout sweep or new inhibition.
+The final reviewed contract will be committed before its driver. It is a reported causal
+intervention screen, not a capability gate; timing/eligibility/state differences remain
+explicit. No fourth pass or Stage2 work is authorized by this selection.
