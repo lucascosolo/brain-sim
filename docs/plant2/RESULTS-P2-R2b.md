@@ -85,3 +85,35 @@ Evidence handling worked as contracted: every artifact was created exclusively, 
 read back and hashed at the write, and re-verified before `paired_evidence` and again after
 `run()` returned; the P2-R2 empty-artifact failure mode would have been caught at the first
 verification with the recorded size and hash.
+
+## Errata from the independent results review (appended 2026-10-22)
+
+The review (`review/plant2/P2-R2b/findings-results.md`) recomputed every index and content
+value from the per-cue rows, every M = 1,000 decision and bar-deficit fraction, P6, both
+journals' chains and all 64 artifact descriptors, and matched the records and the tables
+above exactly. It asked for these wording corrections, which supersede the sentences they name:
+
+1. "What this establishes", second sentence. Replace "co-occurrence structure is a material
+   part of it; line load alone does not explain the residual failure" with: **the C2 deficit
+   at M = 1,000 is materially sensitive to co-occurrence structure under block-constrained
+   randomisation; this design does not apportion the failure between line load and
+   co-occurrence.** The null keeps line load and the failure remains, and the design cannot
+   attribute the residual either way.
+2. "Evidence handling". Replace "re-verified before `paired_evidence`" with: **the two combined
+   load artifacts were re-verified immediately before each `paired_evidence` read, and every
+   artifact was re-verified after `run()` returned.**
+3. Paragraph after the predictions table. Replace the seed-106 explanation with: **P6 failed on
+   seed 106 (mean Delta spurious50 -6.97; original 15.47 → null 8.50, a 45 % reduction, against
+   17.57 → 7.11, 59 %, on seed 105); own50 was unchanged on both seeds (-0.025, +0.265). The
+   no-global-silencing reading is descriptive and not a prediction outcome.**
+4. M = 1,000 assigned-A content changes carry the frozen labels: **.175→.315 and .110→.295 are
+   MATERIAL GAIN (+0.140 and +0.185)**; at 500 they are INTERMEDIATE/SMALL CHANGE (+0.035 and
+   +0.075).
+5. "The condition the independent capability review set ... is now met" refers to
+   `review/plant2/takeover-capability-review.md`; **this informs, and does not by itself
+   authorise, the next mechanism contract.**
+6. "No `git` command ran between the workers' start and their exit" is the operator's account
+   (this session's command log), not a recorded field.
+7. P6's values were not persisted by the driver; two `p6_prediction` records computed by
+   `analysis.p2r2b_replication p6` at commit `72a1ca5` are now appended to
+   `bench/results/p2r2b.jsonl` so P6 has a recorded source like P1-P5.
