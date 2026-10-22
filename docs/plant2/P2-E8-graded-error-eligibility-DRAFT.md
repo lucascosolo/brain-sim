@@ -1,11 +1,16 @@
-# P2-E8: graded prediction-error weighting of the conserved flip budget — DRAFT v2
+# P2-E8: graded prediction-error weighting of the conserved flip budget
 
-Draft contract, 2026-10-22, revision 2 after an independent adversarial read of revision 1
-(twelve findings; the six blocking ones and the notes are addressed below). Not frozen. The
-frozen text will be `docs/plant2/P2-E8-graded-error-eligibility.md` with
-`docs/plant2/P2-E8-frozen.json`; the commit that adds them freezes them, appends the
-`EXPERIMENTS.md` entry (`contracted`) and adds **H-086** to `HYPOTHESES.md` as `under_test`.
-The frozen text carries full commit SHAs wherever this draft shows short ones.
+Contract, 2026-10-22. The commit that adds `docs/plant2/P2-E8-graded-error-eligibility.md`
+freezes it; append only thereafter. `docs/plant2/P2-E8-frozen.json` carries that commit's SHA
+and the constants below. Drafts v1 (commit c01f431) and v2/v3 (commit 2c5b8d0) are
+preparation provenance; two independent adversarial reads preceded this text (twelve findings
+on v1, then a narrow re-review with verdict FREEZE WITH THE LISTED FIXES, all applied). The
+freezing commit's follow-up appends the `EXPERIMENTS.md` entry (`contracted`) and adds
+**H-086** to `HYPOTHESES.md` as `under_test`. Full SHAs: P2-E7 driver and riders
+9bc6cf309a5472b19c889cd16444833e0d3acedb; P2-E7 contract and the contract group
+fede3c249dad7ba6237bcedcbfe498e253c3de39; P2-E7 frozen JSON
+e38a6b07c6825757cd9c3d72515b76709e1fe171; offline screens module
+9cf822d4c535a1f85f1e6323b8cd5c66bc038587.
 
 Selected conditionally at roadmap checkpoint 2 (`docs/research/ROADMAP.md`, checkpoint 2,
 sections 5 and 7; `DECISIONS.md` entry of 2026-10-22, decision 3) and authorised for drafting
@@ -340,7 +345,7 @@ failures kept without rescue.
  "source_baseline": "55e16ebff62a90d6402745f44fb860010741eba5",
  "pins": {"e3_era": "55e16ebff62a90d6402745f44fb860010741eba5", "contract_group": "fede3c249dad7ba6237bcedcbfe498e253c3de39",
           "p2_e7_driver_and_riders": "9bc6cf309a5472b19c889cd16444833e0d3acedb", "p2_e7_contract_append_only": "fede3c249dad7ba6237bcedcbfe498e253c3de39",
-          "p2_e7_frozen_json": "<full SHA of e38a6b0>", "offline_screens": "<full SHA of 9cf822d>", "p2_e8_frozen_json": "<the commit that adds it>", "self": "<the commit that adds the driver, tests and riders>"},
+          "p2_e7_frozen_json": "e38a6b07c6825757cd9c3d72515b76709e1fe171", "offline_screens": "9cf822d4c535a1f85f1e6323b8cd5c66bc038587", "p2_e8_frozen_json": "<the commit that adds it>", "self": "<the commit that adds the driver, tests and riders>"},
  "mechanism": {"prediction_window_ticks": 75, "drive": "max(0, peak (v - v_rest) over ticks 0-74 after integration before reset)", "normaliser_mv": 20.0,
                "weight": "0 if spiked else 1 - clip(d/20, 0, 1)", "budget_per_eligible": 0.5, "p_cap": 1.0, "water_filling": "exact sorted search",
                "p_capped": "lines with w > 0 at most 0.5*|E|", "p_when_all_w_zero": 0.0},
