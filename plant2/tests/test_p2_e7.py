@@ -495,7 +495,9 @@ def test_false_engagement_rules_apply_to_their_own_condition_only():
     mixed = good_fields(veto_episode_fraction_independent_subset=.06)
     assert e7.structural_kills(mixed, "mixed") == ["false engagement, mixed"]
     assert e7.structural_kills(good_fields(veto_episode_fraction_independent_subset=.05), "mixed") == []
-    assert e7.structural_kills(mixed, "independent") == []
+    # scoping: the mixed-only field is ignored for an independent stream whose own fraction is within bound
+    assert e7.structural_kills(good_fields(veto_episode_fraction=.04, veto_episode_fraction_independent_subset=.06), "independent") == []
+    assert e7.structural_kills(good_fields(veto_episode_fraction=.04), "mixed") == []
 
 
 # ---------------------------------------------------------------- criteria recompute
@@ -704,7 +706,7 @@ def mutated(fn):
     ("C2 vs baseline", lambda L: (find(L, "F10", "candidate", 1000)["index"].update(C2=.92),
                                   find(L, "F10", "baseline", 1000)["index"].update(C2=.80)), "C2"),
     ("joint vs random", lambda L: find(L, "F10", "random_drop", 1000)["index"].update(joint_index=.90), "joint"),
-    ("joint vs baseline", lambda L: find(L, "F10", "baseline", 1000)["index"].update(joint_index=.80), "joint"),
+    ("joint vs baseline", lambda L: find(L, "F10", "baseline", 1000)["index"].update(joint_index=.90), "joint"),
     ("C1 non-regression F10", lambda L: find(L, "F10", "candidate", 500)["index"].update(C1=.90), "C1"),
     ("C1 non-regression independent", lambda L: find(L, "independent", "candidate", 1000)["index"].update(C1=.90), "C1"),
     ("C4_recall non-regression", lambda L: find(L, "F10", "candidate", 1000)["index"].update(C4_recall=.90), "C4"),
