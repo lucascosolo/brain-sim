@@ -68,3 +68,33 @@ responders' synapses came from, not what would remove them. The prototype lines 
 spurious cell actually carries, and the probability with which they were written (p rises
 above 0.5 whenever the veto removes lines, and reaches 1 on capped episodes), are not
 persisted per episode and are not computed here.
+
+## Results (appended 2026-10-22, 22:35 UTC; module aa70fa6, tests 33 green)
+
+Eight `offline_screen` records (screen E, seed 121, M = 1,000), all COMPLETE, one
+`evidence_verification` record passed (8 artifacts); every raster and state descriptor
+verified before reading; the identity check against `own50 + spurious50` held on every cue
+of every arm. Mean per half cue (200 cues), **offline, descriptive, development seed 121**:
+
+| arm | spurious | same-family early | same-family late | other family only | items before engagement | early chance |
+|---|---|---|---|---|---|---|
+| baseline (never engages: all items "early" by definition) | 20.95 | 20.59 | 0.00 | 0.37 | 1,000 | 1.00 |
+| gate_off (own gate computed, never applied; classes against its own engagement times) | 20.95 | 2.81 | 17.77 | 0.37 | 80 | 0.08 |
+| **candidate** | **8.62** | **1.97** | **6.19** | **0.47** | 80 | 0.08 |
+| random_drop | 19.15 | 2.84 | 15.96 | 0.35 | 80 | 0.08 |
+| history_drop | 12.11 | 2.31 | 9.54 | 0.26 | 80 | 0.08 |
+| no_conservation | 5.47 | 1.41 | 3.96 | 0.10 | 80 | 0.08 |
+| assigned_A_teacher | 11.36 | 2.33 | 8.49 | 0.54 | 89 | 0.09 |
+| label_oracle (engages never or after episode 945; classes not interpreted) | 1.68 | 0.81 | 0.01 | 0.85 | 986 | 0.99 |
+
+**Reading.** Under the candidate, 72 % of the residual spurious responders (6.19 of 8.62 per
+cue) are cells whose same-family plateau items were all written after the veto had engaged
+for that family; 23 % (1.97) hold a member written in full before engagement, against a
+chance level of 8 % for early membership (80 of 1,000 items); 5 % hold other-family items
+only. The legacy of the fully written early members is real but minor; the residual is an
+ongoing leak on later episodes. The same ordering holds for every gated arm (late > early
+> other), and the oracle, which vetoes the true prototype lines from the first episode,
+leaves 1.68 spurious responders per cue. What the late cells carry is not persisted: the
+contract's arithmetic (prototype predicted 0.835, so about one prototype line in six escapes
+the veto on each late episode; p about 0.84 on unvetoed lines and 1 on the 144 capped
+episodes) is the candidate explanation and is a hypothesis until a contract measures it.
