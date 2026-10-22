@@ -56,6 +56,12 @@ answer the question; redesign), an `unresolved_result` (ran cleanly, did not dec
 `integrity_incident` (evidence lost or unverifiable; the attempt is invalid regardless of its
 numbers), or an `interpretive_error_corrected` (a claim later withdrawn in errata).
 
+Ruling 2026-10-22 (ledger discipline, not an owner ruling): an `integrity_incident` invalidates
+an attempt only when evidence was lost or cannot be verified. An incident that a guard caught,
+with every affected artifact subsequently verified against its recorded size and digest, is
+recorded as `integrity_incident (contained)` in the experiment's failure table and leaves the
+experiment's status unchanged. P2-E5's run-once guard event is the case that prompted this.
+
 ## Rules of the ledger
 
 1. A number without a source path is not in the ledger. Precision is the source's precision.
