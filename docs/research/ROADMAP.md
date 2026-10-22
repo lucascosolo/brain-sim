@@ -317,12 +317,26 @@ storage under ruling 3 and the capacity rule; (b) whether R_3 may move from repl
 contract; (c) whether memory inhibition may be used standalone; (d) the familiarity-gating
 deferral; (e) confirmation of the F = 10 reading of "ten canonical neuron families".
 
+### 7. Outcome of P2-E7 on development seed 121 (2026-10-22, 20:09-20:19 UTC)
+
+Informative FEASIBILITY FAIL (`docs/plant2/RESULTS-P2-E7.md`): F10/1,000 candidate C2 .745
+(bar .90), C1 .895, C4_spurious .720, joint .645; every comparative margin held (+0.265 C2
+over the count-matched random drop, +0.110 over the history-weighted drop, non-regression on
+independent and mixed inputs); no structural kill fired; integrity true. The veto engaged
+late (a family's first four to fourteen members written in full; mean |V| 13.0 over episodes
+1-500) and the label oracle, vetoing the true prototype lines from the first episode, reached
+C2 .970 with C1 .920. The budget is load-bearing (without it C2 .840 but C1 .680). The
+responder-written teacher beat the clean plateau-set teacher. Content stayed at .005.
+Classification: failed hypothesis in its stated form; the comparative hypotheses supported on
+one development seed. Not retuned; held-out seed 122 does not open. Pre-mortem item 2 ("the
+veto engaged too late ... an informative fail like E6's .895") is what happened, at .745.
+The next checkpoint (section 8, pending) starts from the oracle gap: the mechanism family's
+ceiling is high and the loss is onset and coverage.
+
 ## Priority order (current)
 
-1. P2-E7 error-gated forward eligibility: contract, adversarial read, freeze, tests,
-   implementation, development seed 121 with the structural kill before any test phase; held-out
-   122 only if every E6-frozen absolute bar holds; gated 131-135 under a separately frozen
-   gate.
+1. P2-E7 error-gated forward eligibility: done on development seed 121, informative
+   FEASIBILITY FAIL (section 7). Independent results review, then checkpoint 2.
 2. Done 2026-10-22 (`docs/plant2/OFFLINE-SCREENS-20261022.md`, Results): the gate pre-screen
    warns that on the baseline trajectory the teacher saturates late (non-prototype predicted
    fraction crosses 0.25 in block 8 of 10; precision falls below 0.70 in block 9), so P2-E7's

@@ -476,3 +476,16 @@ Append-only clarifications; no bar, margin, threshold or prediction changes.
    `no_conservation` logs p = 0 on an episode with E' empty; the screen tags an F10/1,000
    candidate C2 in [0.70, 0.90) with no kill as `informative`.
 5. **First start attempt (20:07 UTC).** The driver refused to start because its manifest compared this file byte-for-byte with its freezing blob, which this file's append-only rule contradicts; no record was written. The driver's contract pin now verifies append-only (the frozen blob must be a prefix of the committed current file) at commit 9bc6cf3 (9bc6cf309a5472b19c889cd16444833e0d3acedb); the driver and riders are therefore pinned to that commit, superseding note 2's commit for the driver.
+
+
+## Result (appended 2026-10-22, after the development run on seed 121)
+
+COMPLETE with verified evidence; verdict **FEASIBILITY FAIL, informative**: F10/1,000
+candidate C1 .895, C2 .745, C4_spurious .720, joint index .645 against the absolute bars,
+while every comparative margin held (C2 +0.245 over the baseline, +0.265 over the
+count-matched random drop, +0.110 over the history-weighted drop; C1 within 0.03; independent
+and mixed non-regression held; no structural kill fired; integrity true). Predictions P5, P7,
+P9, P10 and P12 held; P1 (non-prototype predicted 0.123 against 0.10), P2, P3 (C1), P4, P6,
+P8 (content at 500), P10b (independent-subset content rose by 14 cues) and P11 (spurious50
+8.63; prototype out-degree 618) failed. Held-out seed 122 does not open. Full record:
+`docs/plant2/RESULTS-P2-E7.md`; data `bench/results/p2e7.jsonl` and `bench/results/p2e7/`.
