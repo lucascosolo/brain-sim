@@ -593,16 +593,18 @@ def _window_summary(rows, lo, hi):
     w = rows[lo:hi]
     pos = np.concatenate([r["pos"] for r in w]) if w else np.empty(0)
     neg = np.concatenate([r["neg"] for r in w]) if w else np.empty(0)
-    out = dict(episodes=len(w), auc=auc(pos, neg), n_missed_proto=int(pos.size), n_unpredicted_nonproto=int(neg.size),
-               missed_proto_ge10=_fraction(int((pos >= 10).sum()), pos.size), rules={})
+    na = bool(w) and w[0]["binary"]["proto"] is None
+    out = dict(episodes=len(w), auc=None if na else auc(pos, neg), n_missed_proto=None if na else int(pos.size),
+               n_unpredicted_nonproto=None if na else int(neg.size),
+               missed_proto_ge10=None if na else _fraction(int((pos >= 10).sum()), pos.size), rules={})
     for rule in RULES:
-        out["rules"][rule] = dict(proto=float(np.mean([r[rule]["proto"] for r in w])),
-                                  nonproto=float(np.mean([r[rule]["nonproto"] for r in w])),
+        out["rules"][rule] = dict(proto=None if na else float(np.mean([r[rule]["proto"] for r in w])),
+                                  nonproto=None if na else float(np.mean([r[rule]["nonproto"] for r in w])),
                                   tv_mean_abs_dev_from_half=float(np.mean([r[rule]["tv"] for r in w])),
                                   any_p_below_049=float(np.mean([r[rule]["any_below"] for r in w])))
     base = out["rules"]["binary"]["proto"]
-    out["graded_over_binary"] = _fraction(out["rules"]["graded"]["proto"], base)
-    out["surplus_over_binary"] = _fraction(out["rules"]["surplus_only"]["proto"], base)
+    out["graded_over_binary"] = None if na else _fraction(out["rules"]["graded"]["proto"], base)
+    out["surplus_over_binary"] = None if na else _fraction(out["rules"]["surplus_only"]["proto"], base)
     out["graded_capped_episodes"] = int(sum(r["graded_capped"] for r in w))
     out["surplus_unspent_episodes"] = int(sum(r["surplus_unspent"] > 0 for r in w))
     return out
@@ -620,15 +622,19 @@ def screen_f(items, E, R, A, enc_tick, enc_cell, feedback_keys, gate_log, protos
         if len(spikes) != G_size[k] or len(V) != V_size[k]:
             raise ValueError(f"lockstep gate fails at episode {k}: |G| {len(spikes)} vs {G_size[k]}, "
                              f"|G and E| {len(V)} vs {V_size[k]}")
-        P = np.intersect1d(items[k], protos[family(k)])
-        if P.size != 40:
-            raise ValueError(f"P_k has {P.size} lines at episode {k}")
         d = dmax[Ek]
-        in_G, in_P = np.isin(Ek, V), np.isin(Ek, P)
+        in_G = np.isin(Ek, V)
+        if protos is None:
+            P, in_P = None, np.zeros(Ek.size, bool)
+        else:
+            P = np.intersect1d(items[k], protos[family(k)])
+            if P.size != 40:
+                raise ValueError(f"P_k has {P.size} lines at episode {k}")
+            in_P = np.isin(Ek, P)
         row = dict(pos=d[in_P & ~in_G], neg=d[~in_P & ~in_G])
         for rule in RULES:
             p = counterfactual_p(Ek, V, d, rule)
-            proto, nonproto = expected_flips(Ek, P, p)
+            proto, nonproto = (None, None) if P is None else expected_flips(Ek, P, p)
             row[rule] = dict(proto=proto, nonproto=nonproto, tv=float(np.mean(np.abs(p - 0.5))) if p.size else 0.0,
                              any_below=bool((p < 0.49).any()))
         row["graded_capped"] = bool(water_fill(np.where(in_G, 0.0, 1.0 - np.clip(d / 20.0, 0, 1)), 0.5 * Ek.size)[1])
@@ -642,8 +648,12 @@ def screen_f(items, E, R, A, enc_tick, enc_cell, feedback_keys, gate_log, protos
                w501_1000=_window_summary(rows, 500, n_ep), w1_300=_window_summary(rows, 0, 300),
                all=_window_summary(rows, 0, n_ep),
                tv_definition="mean over eligible lines of |p - 0.5|, then mean over episodes")
-    proto_pred = _gate_col(gate_log, "proto_predicted")
-    out["b017_gate_log_proto_predicted_101_500"] = dict(mean=float(np.mean(proto_pred[100:500])), reference=0.595)
+    if protos is None:
+        out["b017_gate_log_proto_predicted_101_500"] = None
+        out["prototype_fields"] = "not applicable (independent inputs)"
+    else:
+        proto_pred = _gate_col(gate_log, "proto_predicted")
+        out["b017_gate_log_proto_predicted_101_500"] = dict(mean=float(np.mean(proto_pred[100:500])), reference=0.595)
     per_episode = [dict(episode=k, n_missed_proto=int(r["pos"].size), n_unpredicted_nonproto=int(r["neg"].size),
                         **{f"proto_{rule}": r[rule]["proto"] for rule in RULES}) for k, r in enumerate(rows)]
     return out, per_episode
@@ -706,12 +716,15 @@ def _screen_f(arm, stem):
     d, z, meta, inputs = _state_inputs(stem)
     cfg = meta.get("cfg", {})
     m, n = cfg.get("m", 4000), cfg.get("n", 4000)
-    protos = e5.FamilyGen(121, 4000, 100, 60, 10).protos
+    independent = stem.startswith("independent")
+    protos = None if independent else e5.FamilyGen(121, 4000, 100, 60, 10).protos
     items, E, R, A = (_unpack(z, k) for k in ("items", "E", "R", "A"))
     obj, per_episode = screen_f(items, E, R, A, _unpack(z, "enc_tick"), _unpack(z, "enc_cell"), z["feedback_keys"],
                                 meta["gate_log"], protos, lambda k: (k + 1) % 10, m, n)
     summary = dict(w501_1000=obj["w501_1000"], w1_300=obj["w1_300"], all=obj["all"],
                    b017=obj["b017_gate_log_proto_predicted_101_500"], blocks=obj["blocks"])
+    if independent:
+        summary["prototype_fields"] = obj["prototype_fields"]
     return summary, dict(obj, per_episode=per_episode), inputs
 
 
@@ -749,25 +762,26 @@ def _run_jobs(screen, label, jobs, log):
     return ver["passed"]
 
 
-def run_f(log=print):
+def run_f(log=print, arms=None):
     results = {}
 
     def job(arm, stem):
         def go():
             summary, obj, inputs = _screen_f(arm, stem)
             results[arm] = summary
-            if arm == "candidate" and "gate_off" in results:
+            ramp = results.get("gate_off") or _latest_summary("F", "gate_off")
+            if arm == "candidate" and ramp:
                 eprime = _latest_summary("Eprime", "candidate")
                 share = eprime["shares"]["<0.25"] if eprime else None
                 summary["p2e8_kill_reading"] = p2e8_kill_reading(
                     summary["w501_1000"]["auc"], summary["w501_1000"]["graded_over_binary"],
-                    results["gate_off"]["w1_300"]["graded_over_binary"], share)
+                    ramp["w1_300"]["graded_over_binary"], share)
             return summary, obj, inputs
         return go
 
     jobs = [("gate_off", job("gate_off", "F10-gate_off")), ("candidate", job("candidate", "F10-candidate")),
             ("independent", job("independent", "independent-candidate"))]
-    return _run_jobs("F", F_LABEL, jobs, log)
+    return _run_jobs("F", F_LABEL, [j for j in jobs if arms is None or j[0] in arms], log)
 
 
 def _screen_eprime():
@@ -832,14 +846,14 @@ def _screen_e(arm):
     return summary, dict(summary=summary, per_cue=out["per_cue"]), e["inputs"]
 
 
-def run_e(log=print):
+def run_e(log=print, arms=None):
     EVIDENCE.mkdir(parents=True, exist_ok=True)
     journal_path = EVIDENCE / "E-seed121.journal.jsonl"
     journal = evidence.Journal(journal_path, "E121")
     journal.append(dict(kind="run_started", screen="E", seed=121, runtime=record.runtime(),
                         script_sha256=_script_sha256()))
     manifest = evidence.Manifest()
-    for arm in E7_ARMS:
+    for arm in (a for a in E7_ARMS if arms is None or a in arms):
         try:
             summary, obj, inputs = _screen_e(arm)
         except (evidence.EvidenceError, OSError, KeyError, ValueError) as e:
@@ -922,6 +936,7 @@ def main(argv=None):
     runner = commands.add_parser("run")
     runner.add_argument("--screen", required=True, choices=("A", "B", "C", "D", "E", "F", "Eprime"))
     runner.add_argument("--seed", type=int, action="append", choices=SEEDS)
+    runner.add_argument("--arm", action="append", help="rerun only this arm (screens E and F)")
     commands.add_parser("summary")
     args = parser.parse_args(argv)
     if args.command == "summary":
@@ -929,7 +944,8 @@ def main(argv=None):
         return 0
     log = lambda x: print(f"[{record.now()}] {x}", flush=True)
     if args.screen in ("E", "F", "Eprime"):
-        return 0 if {"E": run_e, "F": run_f, "Eprime": run_eprime}[args.screen](log=log) else 1
+        extra = {"arms": args.arm} if args.arm and args.screen in ("E", "F") else {}
+        return 0 if {"E": run_e, "F": run_f, "Eprime": run_eprime}[args.screen](log=log, **extra) else 1
     ok = run(args.screen, args.seed or list(SEEDS), log=log)
     if args.screen == "D" and not args.seed:
         ok = run_e6(log=log) and ok
