@@ -1,11 +1,12 @@
-# P2-E7: prediction-gated (error-gated) forward eligibility with a conserved flip budget — DRAFT v2
+# P2-E7: prediction-gated (error-gated) forward eligibility with a conserved flip budget
 
-Draft contract, 2026-10-22, revision 2 after an independent adversarial read of revision 1
-(fifteen findings; the restructure and every fix are addressed below, and the notes that
-were accepted are marked). Not frozen. The frozen text will be
-`docs/plant2/P2-E7-error-gated-eligibility.md` with `docs/plant2/P2-E7-frozen.json`; the
-commit that adds them freezes them and appends the `EXPERIMENTS.md` entry (`contracted`) and
-moves H-060 to `under_test`. This draft is preparation provenance.
+Contract, 2026-10-22. The commit that adds `docs/plant2/P2-E7-error-gated-eligibility.md`
+freezes it; append only thereafter. `docs/plant2/P2-E7-frozen.json` carries that commit's
+SHA and the constants below. Drafts v1 (commit af04c89) and v2 (commit 64ff692) are
+preparation provenance; two independent adversarial reads preceded this text (fifteen
+findings on v1 including one restructure, then nine on v2, all addressed). The freezing
+commit's follow-up appends the `EXPERIMENTS.md` entry (`contracted`) and moves H-060 to
+`under_test`.
 
 Selected at the 2026-10-22 roadmap checkpoint (`docs/research/ROADMAP.md`; `DECISIONS.md`
 entry of the same day) from a ten-proposal judge panel, as the merged form of its two
@@ -118,7 +119,7 @@ a claim about CA1 physiology.
 |---|---|---|---|
 | `F10` | `FamilyGen(seed, 4000, 100, 60, 10)` | baseline, candidate, random_drop, history_drop, gate_off, no_conservation, label_oracle, assigned_A_teacher | the canonical hard condition (ruling 5); decides the screen |
 | `independent` | the E1 independent generator | baseline, candidate | false engagement on uncorrelated input (the veto must stay near-silent) |
-| `mixed` | episode k (1-based) is an F10 exemplar when k is odd (exemplar index (k + 1)/2, family cycling as in `FamilyGen`) and an independent item from stream (seed, 36) when k is even; each episode's subset label is persisted | baseline, candidate | ruling 4 test (ii): do corrections on family items damage unrelated items in the same store; scored on the independent subset |
+| `mixed` | a `MixedGen(seed, m, a, s, F)` generator with the same `choice(m, a, replace=False)` entry as `FamilyGen`: episode k (1-based) is the F10 exemplar `FamilyGen.exemplar((k + 1)/2)` when k is odd (family cycling as in `FamilyGen`) and, when k is even, the sorted draw `stream(seed, 36, k).choice(m, a, replace=False)` (one stream per episode, k 1-based); `subset(k)` returns the label and every episode's label is persisted | baseline, candidate | ruling 4 test (ii): do corrections on family items damage unrelated items in the same store; scored on the independent subset |
 | `F40` | `FamilyGen(seed, 4000, 100, 60, 40)` | baseline, candidate | transfer diagnostic, reported only, never a rescue (ruling 5) |
 
 Family labels and prototype membership are read by `label_oracle` and the scoring
@@ -128,7 +129,7 @@ diagnostics only; the candidate never reads them.
 
 | arm | rule | role |
 |---|---|---|
-| `baseline` | a literal `e3.E3` learner with the condition's generator and no gate code | comparator; its F10 raster carries the riders |
+| `baseline` | a literal `e3.E3` learner with the condition's generator and no gate code; it records items, A, E, R and its learned state only, and persists no gate fields, encoding rasters or continuation counts; its `matching` digest is formed from items, A and E plus H recomputed from E; its deep copies are tested through a test-time wrapper that adds only the onset-offset capture and the learning statistics E6's `evaluate_load` reads, changing no learning code (a unit test proves the wrapper's learning path gives the literal E3's forward store SHA at small M) | comparator; once the `gate_off` SHA check passes, `gate_off`'s persisted gate fields, encoding rasters and continuation counts stand for the baseline trajectory's, and the riders read them |
 | `candidate` | the mechanism above | the deployed rule |
 | `gate_off` | the candidate code path with G(x) computed every episode and ignored (p = 0.5 on E(x)); persists the gate fields | integrity: its forward-store SHA-256 must equal the baseline's at 500 and 1,000 (else INVALID); its persisted gate fields are the baseline trajectory's prediction time course |
 | `random_drop` | drop exactly \|V_cand(k)\| lines from E(x), where V_cand(k) is the candidate's persisted, digest-verified per-episode veto count for episode k; chosen by `Generator.choice(len(E), count, replace=False)` on stream (seed, 33, k), k 1-based; p conserved on the reduced set as in the candidate | count-matched to the candidate (ruling 4 test (i)); fails if the error signal carries no information |
@@ -150,8 +151,14 @@ matched.
 2. **Stage 2.** Every other trajectory learns (up to four workers; the drop controls read the
    candidate's persisted veto counts after verifying their descriptor). The `mixed` and
    `independent` candidates emit their `structural_check`; the independent-veto kill rule is
-   applied to both before stage 3. Every arm persists its gate fields and encoding rasters.
-3. **Stage 3.** Test phases on every arm and load; `load` records; sanity loads on the F10
+   applied to both before stage 3. Every gated arm persists its gate fields, encoding
+   rasters and continuation counts; the baseline persists items, A, E, R and its learned
+   state. Learned states and the 500 snapshots are persisted as NPZ through
+   `plant2/evidence.py` and reloaded, never kept only in worker memory.
+3. **Stage 3.** A coordinator process starts the test phases only after it has read every
+   stage-2 `structural_check` and found no kill; it also runs the cross-arm checks (the
+   `matching` digests and the `gate_off`-equals-`baseline` `forward_sha256`) that E6 ran
+   in-process. Test phases on every arm and load; `load` records; sanity loads on the F10
    candidate at 1,000; evidence verification; the screen.
 4. **After the run**, from persisted evidence only: the riders (`analysis/p2e7_riders.py`,
    pinned at the freezing commit) and the independent results review.
@@ -205,9 +212,12 @@ retuning; no held-out seed) if any of:
   more than 0.03.
 - Independent candidate at 500 or 1,000: `index.C2` below the baseline's by more than 0.03;
   `content.inherited.joint` or `content.inherited.D4` below the baseline's by more than 0.05.
-- Mixed candidate at 500 or 1,000: `index_by_subset.independent.C1` or `.C2` below the
-  baseline's independent-subset value by more than 0.03; `content_by_subset.independent.joint`
-  below by more than 0.05.
+- Mixed candidate at 500 or 1,000, on the independent subset of the half cues (the same
+  cues in both arms: exactly 50 of the 100 oldest cues and a binomial share, about 50, of
+  the 100 random cues, so about 100 cues for C1, C2 and the joint index and 50 for the C4
+  halves): `index_by_subset.independent.C1_count` or `.C2_count` below the baseline's by 4
+  or more cues; `content_by_subset.independent.joint_count` below the baseline's by 5 or more
+  cues. Expressed in cues because 0.03 of about 100 cues is three cues on one seed.
 - Candidate `index.C3` < 0.90 at F10 or independent, either load (F40 is reported only).
 - Any protocol validity check false on any arm of F10, independent or mixed; any sanity
   check failed.
@@ -224,7 +234,7 @@ any `require` trips.
 
 | record kind | key | definition |
 |---|---|---|
-| `structural_check` (one per condition and arm, after its learning) | `gate.mean_V_1_500`, `gate.mean_V_501_1000` | mean \|V(x)\| over the episode range |
+| `structural_check` (one per gated arm and condition, after its learning; the literal baseline has none) | `gate.mean_V_1_500`, `gate.mean_V_501_1000` | mean \|V(x)\| over the episode range |
 | | `gate.max_V` | maximum \|V(x)\| |
 | | `gate.veto_precision_501_1000` | as above |
 | | `gate.proto_predicted_501_1000`, `gate.nonproto_predicted_501_1000` | as above (F10 and the F10 subset of mixed; None for independent) |
@@ -235,7 +245,7 @@ any `require` trips.
 | | `gate.first_engagement_by_family` | per family, the first episode with non-empty V (None if never) |
 | | `gate.V_sequence` | descriptor of the persisted per-episode \|V\| array (read by the drop controls) |
 | `load` (one per condition, arm, M) | `index.C1`, `index.C2`, `index.C3`, `index.C4_recall`, `index.C4_spurious`, `index.joint_index` | as E6 |
-| | `index_by_subset.{F10,independent}.{C1,C2,C4_recall,C4_spurious,joint_index}` | mixed condition only, over the half cues whose item belongs to the subset |
+| | `index_by_subset.{F10,independent}.{C1,C2,C4_recall,C4_spurious,joint_index}` and the matching `*_count` and `n_cues`, `n_oldest_cues` | mixed condition only, recomputed from the per-cue rows over the half cues whose item belongs to the subset; C3 is not subset-scored (novel cues have no subset); a unit test proves the same recompute over the full cue set equals `out["criteria"]` and `e3.score` |
 | | `content.inherited.{joint,D3,D4}`, `content.assigned_A.{joint,D3,D4}` | the responder store and the diagnostic A × E content store read at test (not the `assigned_A_teacher` arm) |
 | | `content_by_subset.independent.joint` | mixed condition only |
 | | `diagnostics.own50_mean`, `diagnostics.spurious50_mean`, `diagnostics.total50_mean` | means over half cues of the per-cue own50, spurious50, total50 |
@@ -243,7 +253,7 @@ any `require` trips.
 | | `learning.forward_density`, `learning.max_prototype_out_degree` | forward keys over m·n; the maximum over the union of the condition's prototype lines of the number of forward keys with pre = j (None for independent) |
 | | `learning.potentiated`, `learning.depressed` | sums over episodes |
 | | `forward_sha256`, `feedback_sha256` | SHA-256 of the sorted key arrays |
-| | `matching` | digests of items, A, E, H, sensory and coins only (identical across arms by construction; `candidate_counts` is not included because it differs by arm) |
+| | `matching` | gated arms: digests of items, A, E, H, sensory and coins (identical across gated arms by construction; `candidate_counts` is not included because it differs by arm); the literal baseline: digests of items, A and E plus H recomputed from E, compared on those keys |
 | | `protocol.{eligibility,mean_A_1000,settled}` | as E6 |
 | `sanity_load` | `wrong_label.C1`, `empty_store.responders` | as E6 (stream 35 for the permutation) |
 | `uniform_integrity` | `baseline_equals_e3` | the small-configuration check |
@@ -282,15 +292,16 @@ arm, seeds 105/106, reported-only (`RESULTS-P2-R2b.md:26-31`); P2-E5 gated seeds
   baseline's; if `gate.veto_episode_fraction` = 0, candidate `forward_sha256` equals the
   baseline's.
 - **P10b (unrelated memories, mixed).** Mixed candidate at 500 and 1,000:
-  `index_by_subset.independent.{C1,C2,C4_recall,C4_spurious}` and
-  `content_by_subset.independent.joint` within ±0.02 of the baseline's; reported, not
-  predicted as a bar: `index_by_subset.F10.C2` at 1,000 ≥ baseline's F10-subset C2 + 0.10.
+  `index_by_subset.independent.{C1_count,C2_count,joint_index_count}` and
+  `content_by_subset.independent.joint_count` within ±2 cues of the baseline's, and the
+  C4 halves (`C4_recall_count`, `C4_spurious_count`, 50 cues) within ±1 cue; reported, not
+  predicted as a bar: `index_by_subset.F10.C2` at 1,000 ≥ the baseline's F10-subset C2 + 0.10.
 - **P11 (matched state, F10/1,000 candidate `load`).** `diagnostics.spurious50_mean` ≤ 6;
   `diagnostics.own50_mean` within ±1.0 of the baseline's; `learning.max_prototype_out_degree`
   ≤ 0.5 × the baseline's.
 - **P12 (integrity).** `gate_off` `forward_sha256` equals `baseline` at 500 and 1,000;
-  `uniform_integrity.baseline_equals_e3` true; `matching` digests identical across all F10
-  arms.
+  `uniform_integrity.baseline_equals_e3` true; `matching` digests identical across all gated
+  F10 arms, and the baseline's items, A, E and recomputed-H digests equal theirs.
 
 No prediction is revised after the run.
 
@@ -304,12 +315,14 @@ No prediction is revised after the run.
 - H-042 matched-state diagnostics per arm and load: own50, spurious50, forward density,
   assigned-cell threshold offset at cue onset.
 - The own-versus-spurious first-spike latency split on every arm's half cues (B-008).
-- Riders on the baseline arm's F10 rasters, computed after the run from persisted evidence by
+- Riders on the baseline trajectory, computed after the run from persisted evidence by
   `analysis/p2e7_riders.py`: the R_3, R_1, size-matched-random and anti-selected feedback
-  stores written from the persisted continuation spike counts and read through the frozen
-  readout (a fresh-seed replication of P2-R1's contrasts at no simulation cost; stream 30 as
-  in P2-R1; ruling 1 keeps R_3 reported). They never run on the candidate arm and are never
-  stacked.
+  stores written from `gate_off`'s persisted per-episode continuation spike counts and read
+  through the frozen readout on `gate_off`'s persisted test rasters (identical to the
+  baseline's, because memory dynamics depend only on the forward store, which the SHA check
+  proves equal; if that check fails the riders are void). A fresh-seed replication of
+  P2-R1's contrasts at no simulation cost; stream 30 as in P2-R1; ruling 1 keeps R_3
+  reported. They never run on the candidate arm and are never stacked.
 - Familiarity log: `gate.empty_Eprime_episodes` with family and index.
 
 ## Evidence and records
@@ -356,8 +369,12 @@ lint must show no new finding:
   from the named streams with 1-based keys, `history_drop` with weights H + 1 and H updated
   only after the write; a tampered count artifact is refused by the digest check;
 - `label_oracle` vetoes exactly the retained prototype lines in E;
-- the mixed generator alternates subsets as specified and persists the labels; subset scoring
-  partitions the half cues;
+- the mixed generator alternates subsets as specified, keys stream 36 per episode, and
+  persists the labels; subset scoring partitions the half cues, and the same recompute over
+  the full cue set equals `out["criteria"]` and `e3.score`;
+- the baseline test-time wrapper's learning path gives the literal E3's forward store SHA at
+  small M, and the baseline's `matching` (items, A, E, recomputed H) equals a gated arm's on
+  those keys;
 - no rec → mem path and no change to any memory-cell state from the gate;
 - the seed guard refuses every seed outside the registry, a repeat full-size attempt on any
   registry seed, and 122/131-135 without the committed prerequisites;
@@ -374,7 +391,10 @@ half of the correlated-items clause only. The mechanism keeps the random plateau
 episode boundaries, the write oracle and its timing, the verbatim feedback value, the input
 code and the settled test regime; it removes only the selection half of eligibility. It adds
 one declared protocol supply: the reconstruction readout is now computed during learning,
-which the P2-E3 protocol did not do. **Scope of any pass: streams without exact repeats.** On
+which the P2-E3 protocol did not do. The mixed condition's F10 subset holds 50 exemplars per
+family at M = 1,000, so its correction pressure is that of F10 at M = 500: ruling 4's test
+(ii) is real but milder than the canonical load. **Scope of any pass: streams without exact
+repeats.** On
 an exact repeat the rule would suppress the whole forward write of the repeated item, which
 is the familiarity-dependent allocation the owner deferred (ruling 4, 2026-10-10:
 familiarity must not erase distinct episode identities); the F10, independent and mixed
@@ -404,7 +424,7 @@ deploying the rule on streams with repeats requires an owner ruling on that defe
  "source_baseline": "55e16ebff62a90d6402745f44fb860010741eba5",
  "mechanism": {"prediction_window_ticks": 75, "replay_call": {"n_ticks": 75, "window": 75, "short": 50, "span": 75, "J": [2.8], "g": [0.3]},
                "regeneration_rule": ">=1 rec spike at tick <= 74", "budget_per_eligible": 0.5, "p_cap": 1.0, "p_when_Eprime_empty": 0.0},
- "streams": {"random_drop": 33, "history_drop": 34, "wrong_label_permutation": 35, "mixed_independent": 36, "episode_key": "1-based", "coin": 3, "plateau": 2, "rider_control": 30},
+ "streams": {"random_drop": 33, "history_drop": 34, "wrong_label_permutation": 35, "mixed_independent": 36, "episode_key": "1-based (streams 33, 34 and 36 are keyed (seed, id, k))", "coin": 3, "plateau": 2, "rider_control": 30},
  "loads": [500, 1000],
  "conditions": {"F10": {"F": 10, "s": 60}, "independent": null, "mixed": {"F": 10, "s": 60, "interleave": "odd F10, even independent"}, "F40": {"F": 40, "s": 60}},
  "arms": {"F10": ["baseline", "candidate", "random_drop", "history_drop", "gate_off", "no_conservation", "label_oracle", "assigned_A_teacher"],
@@ -416,7 +436,7 @@ deploying the rule on streams with repeats requires an owner ruling on that defe
  "margins": {"F10_C2_vs_baseline": 0.2, "F10_C2_vs_random": 0.1, "F10_C2_vs_history": 0.05, "F10_joint_vs_each": 0.1,
              "C1_nonregression": 0.03, "F10_M1000_C4_recall_nonregression": 0.03, "independent_C2_nonregression": 0.03,
              "independent_content_joint_nonregression": 0.05, "independent_content_D4_nonregression": 0.05,
-             "mixed_independent_subset_index_nonregression": 0.03, "mixed_independent_subset_content_nonregression": 0.05},
+             "mixed_independent_subset_index_nonregression_cues": 4, "mixed_independent_subset_content_nonregression_cues": 5},
  "structural_kill": {"episodes": [501, 1000], "min_mean_V": 5, "min_veto_precision": 0.7, "max_nonproto_predicted": 0.25,
                      "min_proto_predicted": 0.25, "max_veto_episode_fraction_uncorrelated": 0.05},
  "protocol": {"eligibility_min": 0.95, "mean_A_1000": [18.5, 21.5], "drift_max_mv": 0.2},
@@ -428,6 +448,7 @@ deploying the rule on streams with repeats requires an owner ruling on that defe
                  "mean_V_501_1000_min": 20, "veto_precision_min": 0.8, "proto_predicted_min": 0.5, "nonproto_predicted_max": 0.1,
                  "random_drop_C2_max": 0.55, "candidate_minus_history_min": 0.10,
                  "uncorrelated_delta_max": 0.02, "uncorrelated_veto_episode_fraction_max": 0.05, "uncorrelated_max_V": 2,
+                 "mixed_independent_subset_delta_cues_max": 2, "mixed_independent_subset_C4_delta_cues_max": 1,
                  "spurious50_mean_max": 6, "own50_mean_tolerance": 1.0, "max_prototype_out_degree_ratio_max": 0.5,
                  "most_likely_failure": "oldest-item specificity bar or late veto onset"}}
 ```
