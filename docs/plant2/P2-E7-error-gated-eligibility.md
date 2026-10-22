@@ -475,3 +475,4 @@ Append-only clarifications; no bar, margin, threshold or prediction changes.
    table names them; every gated arm's `structural_check` carries `gate.V_sequence`;
    `no_conservation` logs p = 0 on an episode with E' empty; the screen tags an F10/1,000
    candidate C2 in [0.70, 0.90) with no kill as `informative`.
+5. **First start attempt (20:07 UTC).** The driver refused to start because its manifest compared this file byte-for-byte with its freezing blob, which this file's append-only rule contradicts; no record was written. The driver's contract pin now verifies append-only (the frozen blob must be a prefix of the committed current file) at commit 9bc6cf3 (9bc6cf309a5472b19c889cd16444833e0d3acedb); the driver and riders are therefore pinned to that commit, superseding note 2's commit for the driver.
