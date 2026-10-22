@@ -147,6 +147,20 @@ nothing else. **Screen F (gate_off, the baseline trajectory's own gate).** Block
 and ratio 0.884; B-017's line: mean prototype coverage over episodes 101-500 is **0.513**
 against the twin-store proposal's own kill of 0.595, so B-017 closes.
 
+**Screen F (independent candidate, rerun 23:21 UTC after the fix at 9cf822d; COMPLETE, both
+integrity gates passed).** No prototypes exist on independent inputs, so only the
+perturbation fields apply: the graded rule's mean TV distance from the uniform 0.5 is
+0.0167 over all episodes (0.0016 over 1-300, 0.0291 over 501-1,000; the binary rule's is
+0 everywhere because no line is ever predicted), and 49.5 % of episodes have some p below
+0.49 (7.7 % over 1-300, 80.2 % over 501-1,000). Against the F10 candidate's graded TV of 0.161
+over 1-300, the independent perturbation is an order of magnitude smaller; the P2-E8
+independent-perturbation kill would not fire on this trajectory.
+
+Counts in this document for the graded and binary rules are expected flips per plateau cell
+from the recorded windows (candidate trajectory): binary 16.6 / 3.45 prototype flips over
+episodes 1-300 / 501-1,000, graded 12.4 / 1.52, surplus-only 16.4 / 3.29; the "about 5.5"
+quoted at checkpoint 2 from the contract's arithmetic is superseded by the measured 3.45.
+
 Reading for the next contract (arithmetic on recorded values, exploratory): the graded rule's
 counterfactual reach is largest where the residual is smallest. It removes 56 % of the
 expected missed-prototype flips in the steady state, which holds about 4 % of the late
