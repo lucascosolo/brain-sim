@@ -1,0 +1,293 @@
+# P2-E8: graded prediction-error weighting of the conserved flip budget — DRAFT v1
+
+Draft contract, 2026-10-22, under adversarial review; not frozen. The frozen text will be
+`docs/plant2/P2-E8-graded-error-eligibility.md` with `docs/plant2/P2-E8-frozen.json`; the
+commit that adds them freezes them, appends the `EXPERIMENTS.md` entry (`contracted`) and
+moves H-085's sibling, the graded form of H-060, to `under_test` as **H-086**.
+
+Selected conditionally at roadmap checkpoint 2 (`docs/research/ROADMAP.md`, checkpoint 2,
+sections 5 and 7; `DECISIONS.md` entry of 2026-10-22, decision 3) and authorised for drafting
+by offline screen F (`docs/plant2/OFFLINE-SCREENS-20261022c.md`, Results: AUC 0.858 over
+episodes 501-1,000; counterfactual graded/binary prototype-flip ratio 0.441 over 501-1,000
+and 0.750 over 1-300; no kill fired). Owner authority: the error-correcting write family
+(ruling 4, 2026-10-10) and the local-error signal for the forward index (ruling 3,
+2026-10-12). **Rescue question (owner question (f), `DECISIONS.md`):** this contract treats a
+graded prediction-error weight with the binary veto nested as its w = 0 case, no new constant,
+and the P2-E7 binary rule as a same-seed comparator as a different rule with a reason, not a
+rescue of P2-E7, as both judges of the checkpoint-2 panel allowed on those conditions; the
+owner can veto before seed 123 is spent. P2-E7's verdict stands and seed 122 stays closed.
+
+## Question and hypotheses
+
+Does the subthreshold drive of the reconstruction units, read during encoding, carry the
+prototype membership that the spike criterion of P2-E7 misses, and does weighting the
+conserved flip budget by that residual error raise index specificity on correlated items at
+the canonical load beyond the binary rule on the same seed, without costing recall of
+unrelated or old items?
+
+Hypotheses (`docs/research/HYPOTHESES.md`): **H-086** (new, primary: "graded reconstruction
+error carries the prototype membership the spike criterion misses, and a budget weighted by
+it reduces the forward-index leak beyond the binary veto"); H-060 (`mixed`) as its binary
+form; H-055 through ruling 4's two tests (useful error information: graded_shuffled and
+history_rank; unrelated memories preserved: independent and mixed arms); H-041, H-043, H-044
+(co-occurrence against load: history_rank), H-042 (matched state), H-046 (content at 1,000).
+
+## What is inherited unchanged
+
+Everything the P2-E7 contract inherited (`docs/plant2/P2-E7-error-gated-eligibility.md`,
+"What is inherited unchanged"), plus P2-E7's own driver as a frozen import:
+`plant2/experiments/p2_e7_error_gated.py` and `analysis/p2e7_riders.py` pinned to their blob
+at commit 9bc6cf3, the P2-E7 contract pinned append-only at fede3c2, and P2-E7's frozen JSON at
+e38a6b0; the E3-era files at 55e16eb; `p2_e6.py`, `evidence.py`, `p2r1_replay.py` at fede3c2.
+The P2-E7 binary rule, its `MixedGen` (stream 36), its `Baseline` and test-time wrapper, its
+structural fields and kill rules, its record kinds and evidence discipline, E6's bars and
+margins with P2-E7's two additions, the mixed cue-count margins, the resource window, the
+seed guard logic and the riders are reused as they are. No bar, margin, window, constant or
+protocol changes.
+
+## The mechanism (one mechanism: the graded weight with its conserved budget)
+
+It changes one thing in the P2-E7 candidate's `learn_one`: the per-line flip probability.
+Everything else is P2-E7 verbatim.
+
+1. **Prediction with drive.** The 75-tick encoding raster is played through a lockstep
+   reconstruction LIF population bit-identical to `plant2.readout.replay` under the frozen
+   constants (tau_m 20, v_rest −70, v_th −50, v_reset −65, t_ref 2, float32; J_fb 2.80 at
+   delay 1 from the feedback store as it stands before this episode's write; global
+   inhibition g·J_fb = 0.84 mV per memory spike at delay 2; rec at rest at tick 0). Its spike
+   set G(x) must equal P2-E7's `predict_set` output on every episode (asserted; INVALID
+   otherwise). For every eligible line j it also yields d_j, the peak of (v_j − v_rest) over
+   ticks 0-74 read after input integration and before any threshold reset (the quantity
+   screen F measured; `lockstep_rec` in `analysis/offline_screens_20261022.py` is the
+   reference implementation and its test against `replay`'s trace is reused).
+2. **Residual error weight.** w_j = 0 if j ∈ G(x) (the binary veto, nested); otherwise
+   w_j = 1 − clip(d_j / 20 mV, 0, 1), with 20 mV = v_th − v_rest of the frozen rec layer.
+3. **Conserved budget, graded.** p_j = min(1, λ·w_j) for j ∈ E(x), with λ the exact
+   water-filling solution of Σ_{j∈E} p_j = 0.5·|E(x)| (sorted search, no tolerance, no
+   randomness); when fewer than 0.5·|E| lines have w > 0, every positive-w line gets p = 1
+   and the episode is logged `p_capped` (P2-E7's convention); when every w is 0 (E ⊆ G),
+   nothing toggles and the episode is logged `Eprime_empty`. The reference implementation is
+   `water_fill` / `counterfactual_p("graded")` in `analysis/offline_screens_20261022.py`.
+4. **Coins.** Drawn exactly as `btsp_update` draws them: one flat |E|·|A| array from stream 3,
+   E-major, A-minor, none when either set is empty; synapse (j, i) toggles iff u_ji < p_j.
+5. **Identity.** With an empty feedback store every d_j = 0, so w = 1, λ = 0.5 exactly and
+   the episode is bit-identical to E3. With w ∈ {0, 1} only (no subthreshold drive), the rule
+   equals P2-E7's binary rule exactly.
+6. **No new constant.** The 75-tick window, J_fb, g, the rec LIF constants, the 0.5 budget
+   and the cap at 1 are inherited and frozen; the normaliser 20 mV is the frozen rec threshold
+   gap; peak drive (not time-averaged) is predeclared and not selectable. The water-filling is
+   the same labelled non-local aggregate proxy as E6's and E7's budget.
+
+Labelled proxy: graded mismatch- or prediction-error-scaled plasticity in the comparator view
+of the hippocampal circuit (Lisman & Grace 2005; Hasselmo 2006): plasticity on a direct input
+line scaled by how far the recall-driven reconstruction of that line falls short of firing.
+A circuit-level proxy, not a claim about CA1 physiology.
+
+What differs from frozen P2-E7, and why this is a new hypothesis rather than a rescue: P2-E7
+redistributes the vetoed budget uniformly over E′; this rule redistributes it in proportion to
+the residual error 1 − d_j/20 and vetoes exactly the lines P2-E7 vetoes. No P2-E7 constant is
+changed, loosened or re-chosen; the binary rule is nested (w ∈ {0, 1}) and runs on the same
+seed as the comparator the screen must beat. The hypothesis was falsifiable without a seed
+and survived (screen F); the screen could only kill.
+
+## Conditions and arms
+
+Conditions as P2-E7 (`F10`, `independent`, `mixed` with `MixedGen` on stream 36, `F40`
+reported only). Arms:
+
+| arm | condition(s) | rule | role |
+|---|---|---|---|
+| `baseline` | all | literal E3 (P2-E7's `Baseline` and test-time wrapper) | comparator; anchors gate_off |
+| `binary` | F10, independent, mixed | the P2-E7 candidate class imported unchanged | the decisive same-seed comparator |
+| `graded` | all | the mechanism above | the deployed rule |
+| `gate_off` | F10 | the graded code path with p = 0.5 uniform on E (lockstep run, G and d computed and ignored); persists the gate fields | integrity: forward SHA-256 must equal the baseline's at 500 and 1,000, else INVALID |
+| `graded_shuffled` | F10 | per episode, the graded rule's w values over the unpredicted eligible lines permuted by stream (seed, 37, k), k 1-based, then the same water-filling (the exact multiset of p preserved) | fails if line-specific drive carries no information beyond the shape of the distribution |
+| `history_rank` | F10 | the same multiset of w assigned to the unpredicted eligible lines in order of E6 usage history H (the most-used line gets the smallest w; ties by line id), then the same water-filling; H updated after the write | fails if the graded weights are a hot-line or load marginal in disguise (the question P2-R2b erratum 1 left open) |
+| `label_oracle` | F10 | P2-E7's oracle (true prototype lines vetoed from episode 1, p conserved) | diagnostic ceiling, never deployed |
+| `surplus_only` | F10 | p = 0.5 on E′ plus the vetoed surplus 0.5·\|G ∩ E\| distributed over E′ in proportion to w, capped at 1 (`surplus_only_p`) | reported only; decides nothing (screen F: nearly inert, 8.45 against 8.72 expected prototype flips per cell on the candidate trajectory) |
+
+Fourteen trajectories again (F10 eight, independent two, mixed two, F40 two), as P2-E7.
+Every arm's gate_log carries P2-E7's per-episode fields plus `expected_proto_flips` (Σ p over
+P ∩ E, P read at log time only), `expected_nonproto_flips`, `w_mean_proto_unpredicted`,
+`w_mean_nonproto_unpredicted`, `tv_mean_abs_dev_from_half` (mean over E of |p − 0.5|),
+`lambda`, `p_capped`, `Eprime_empty`; per-episode d over E is persisted once per checkpoint
+through `plant2/evidence.py`.
+
+## Execution order, seeds, streams, seed guard
+
+As P2-E7: stage 1 the F10 `graded` arm learns first and is kill-checked before any test
+phase; stage 2 the other trajectories (up to four workers; the F10 `binary` arm needs no
+candidate counts, so no control reads another arm's artifact); stage 3 the coordinator
+(cross-arm `matching` and gate_off-equals-baseline checks, tests from persisted states,
+sanity loads, verification, screen). Riders on gate_off's persisted counts as P2-E7
+(`analysis/p2e7_riders.py`, with its own provenance recorded: P2-E7 erratum 12 fixed).
+
+Seeds from the registry (`DECISIONS.md` 2026-10-22, checkpoint 2, decision 4): development
+**123**; held-out **124** (opens only on a committed FEASIBILITY PASS on 123 with the exact
+source digest); gated **151-155** (committed passes on 123 and 124 plus a `gate_ready`
+record, under a separately frozen gate contract). One full-size attempt per seed; an INVALID
+screen locks the rest. New stream id: 37 (graded_shuffled); 38 (this driver's wrong-label
+permutation). In use before: 0-6, 8-18, 20-24, 30-36, 40. The graded weight uses no randomness.
+
+## Structural kill rules (before any test phase)
+
+P2-E7's four rules on the F10 `graded` arm over episodes 501-1,000 (no engagement: mean
+|V| < 5; contamination-driven veto: precision < 0.70; saturated teacher: non-prototype
+predicted > 0.25; no structure: prototype predicted < 0.25; the veto here is G ∩ E, as in
+P2-E7), plus:
+
+| rule | arm | field | kill if |
+|---|---|---|---|
+| no graded reduction | F10 graded | `gate.expected_proto_flips_501_1000` (mean over the window) | > 0.6 × the binary arm's same field on the same seed (the binary arm is learned in stage 2 before tests; the rule is evaluated by the coordinator before any test phase) |
+| independent perturbation | independent graded | `gate.tv_mean_501_1000` | > the F10 graded arm's `gate.tv_mean_1_300` |
+| false engagement | independent graded; mixed graded | `gate.veto_episode_fraction_501_1000`; `..._independent_subset_501_1000` | > 0.05 (as P2-E7) |
+
+## Screen rules (development seed, after the test phases)
+
+E6's bars and margins with P2-E7's additions, on the `graded` arm, plus the graded
+comparisons. KILL (FEASIBILITY FAIL; no retuning; no held-out seed) if any of:
+
+- F10/1,000 graded `index.C2` < baseline + 0.20, or < binary + 0.05, or < graded_shuffled
+  + 0.05, or < history_rank + 0.05.
+- F10/1,000 graded `index.joint_index` < baseline + 0.10 or < binary + 0.03.
+- Graded `index.C1` below the same-condition baseline's by more than 0.03 at F10 and
+  independent, both loads; F10/1,000 graded `index.C4_recall` below the baseline's by more
+  than 0.03.
+- Independent graded at 500 or 1,000: `index.C2` below the baseline's by more than 0.03;
+  `content.inherited.joint` or `.D4` below the baseline's by more than 0.05.
+- Mixed graded at 500 or 1,000: independent-subset `C1_count` or `C2_count` below the
+  baseline's by 4 or more cues; `content_by_subset.independent.joint_count` below by 5 or
+  more cues.
+- Graded `index.C3` < 0.90 at F10 or independent, either load.
+- Any protocol validity check false on any F10, independent or mixed arm; any sanity check
+  failed.
+
+FEASIBILITY PASS only if, in addition, every absolute bar holds on the graded arm at F10 and
+independent, both loads (C1, C2, C3, C4_recall, C4_spurious ≥ 0.90; joint index ≥ 0.85). A
+graded F10/1,000 C2 in [0.70, 0.90) with no kill fired is an informative FEASIBILITY FAIL,
+tagged `informative`. INVALID as P2-E7 (gate_off store differs from the baseline's; the
+lockstep spike set differs from `predict_set` on any episode; `uniform_integrity` false; an
+evidence verification fails; the window overrun without a clean PARTIAL; a `require` trips).
+
+## Predictions (to be frozen before implementation; from screens F and E′, not from the panel)
+
+Baselines: the P2-E7 seed-121 values (exploratory, `docs/plant2/RESULTS-P2-E7.md`); the
+same-seed `binary` arm on seed 123 is the comparator for every delta.
+
+- **P1 (structural, F10 graded `structural_check`).** `gate.expected_proto_flips_501_1000`
+  ≤ 0.6 × binary's (screen F counterfactual 0.441); P2-E7's four fields inside their kill
+  envelope; `gate.mean_V_501_1000` within ±10 of binary's (the veto itself is unchanged).
+- **P2.** F10/1,000 graded `index.C2` in [0.76, 0.88], point 0.81; ΔC2 against binary in
+  [+0.02, +0.10], point +0.06. The ramp floor (E′: about 90 % of the residual written during
+  the onset ramp, where the graded rule removes a quarter of the expected missed-prototype
+  flips) is the reason the point sits below the bar; the most likely outcome is a second
+  informative FEASIBILITY FAIL that establishes the ramp as the family's limit.
+- **P3.** F10/1,000 graded `index.C1` ≥ binary − 0.02 and ≥ 0.88; `index.C4_recall` ≥ 0.90.
+- **P4.** F10/1,000 graded `index.joint_index` ≥ binary + 0.03.
+- **P5.** F10/1,000 graded `index.C4_spurious` ≥ binary + 0.03 (the oldest 100 items are the
+  first ten per family, inside the ramp; the smallest expected gain).
+- **P6.** F10/1,000 graded `content.inherited.joint` ≤ 0.10 (H-046 holds); `content.assigned_A.joint`
+  in [0.20, 0.50].
+- **P7.** Graded `index.C3` ≥ 0.98 at F10 and independent, both loads.
+- **P8.** F10/500 graded: C1 ≥ 0.93, C2 ≥ 0.96, joint ≥ 0.90, C4_recall ≥ 0.94,
+  C4_spurious ≥ 0.92; `content.inherited.joint` ≥ binary's at 500.
+- **P9 (controls, F10/1,000).** graded ≥ graded_shuffled + 0.05 and ≥ history_rank + 0.05
+  on C2; label_oracle ≥ graded − 0.05; surplus_only within ±0.03 of binary on C2 (inert).
+- **P10 (independent).** Graded at 500 and 1,000: every `index.*` within ±0.03 of the
+  baseline's and `content.inherited.joint` within ±0.05; `gate.veto_episode_fraction` = 0;
+  `gate.tv_mean` ≤ the F10 graded arm's over 1-300; the forward SHA-256 is **not** expected
+  to equal the baseline's (w < 1 on chance-driven lines).
+- **P10b (mixed).** Independent-subset counts within ±3 cues of the baseline's on C1, C2 and
+  joint, content joint not more than 4 cues lower; F10-subset C2 ≥ binary's F10-subset C2.
+- **P11 (matched state).** `diagnostics.spurious50_mean` ≤ 0.85 × binary's; `own50_mean`
+  within ±1.0 of the baseline's; `learning.max_prototype_out_degree` ≤ 0.9 × binary's.
+- **P12 (integrity).** gate_off `forward_sha256` equals baseline at both loads; the lockstep
+  spike set equals `predict_set` on every episode of every gated arm; `uniform_integrity`
+  true; `matching` identical across gated F10 arms (items, A, E, H, sensory, coins).
+- **P13 (screen E classes, recomputed on seed 123 by the offline module).** Graded late class
+  ≤ 0.85 × binary's; early class ≤ 0.9 × binary's; other-family class within ±0.3.
+
+No prediction is revised after the run. A FEASIBILITY FAIL with P2's delta held is recorded
+as a failed hypothesis in its stated form with the ramp floor established; a delta below
++0.02 refutes H-086.
+
+## Diagnostics, riders, evidence, resource, hygiene
+
+As P2-E7 (per-episode logs once per checkpoint, H-042 diagnostics, latency split, riders on
+gate_off, familiarity log, `bench/results/p2e8.jsonl` and `bench/results/p2e8/`, cache root
+`~/.cache/brain-sim/plant2-research-20261022/p2e8`, per-worker journals, 3,600 s window,
+four processes, `OPENBLAS_NUM_THREADS=1` recorded, no git during the window, independent
+results review before any held-out seed). Record kinds and fields as P2-E7's table plus the
+gate fields named above (`structural_check`: `gate.expected_proto_flips_501_1000`,
+`gate.expected_proto_flips_1_300`, `gate.tv_mean_501_1000`, `gate.tv_mean_1_300`,
+`gate.lambda_mean`, `gate.p_capped_episodes`; `load`: `diagnostics.*` as P2-E7).
+
+## Tests required before any worker starts
+
+`plant2/tests/test_p2_e8.py`, non-slow, with the rest of the suite green and the safety
+lint showing no new finding: the lockstep spike set equals `predict_set` and `replay`'s
+trace, and d_j is read before reset (reuse of the screen-F test with the driver's function);
+empty store gives w = 1, p = 0.5 and E3's forward SHA; w ∈ {0, 1} reproduces the binary
+rule's flips exactly; gate_off equals the baseline's SHA at small M; Σp = 0.5|E| whenever
+uncapped and the cap is flagged; spiking lines get p = 0; exactly |E|·|A| coins; the shuffled
+and history-rank arms preserve the multiset of p, with history_rank deterministic and H
+updated after the write; surplus_only's p; no rec → mem path; the seed guard refuses every
+seed outside {123, 124, 151-155}, a repeat full-size attempt, and 124 / 151-155 without the
+committed prerequisites; artifacts through `plant2/evidence.py`; the blob pins (including
+the P2-E7 driver at 9bc6cf3 and the P2-E7 contract append-only).
+
+## What this cannot show
+
+A pass is an index result on one development seed under a frozen screen; it is not a
+capability. Content at F10/1,000 stays below its bar (H-046). The ramp floor is expected to
+bound the gain; a second informative fail is the likeliest outcome and is itself the result
+this contract is for. The rule keeps the random plateau key, episode boundaries, the write
+oracle and its timing, the verbatim value and the test regime; it removes the same sliver as
+P2-E7 (the selection half of eligibility, now graded) and adds no supply beyond P2-E7's
+declared one (the reconstruction readout computed during learning; it now reads that
+population's membrane, not only its spikes). Exact repeats are out of scope (familiarity
+deferral). It changes writes on veto-free episodes, unlike P2-E7, so independent
+non-regression is a live test, not a formality.
+
+## Compliance notes
+
+Not a retune: no P2-E7 constant changes; the binary rule is nested and runs on the same seed;
+the screen could only kill and survived; a fresh seed; P2-E7's verdict stands. One
+mechanism; surplus_only and the riders decide nothing and stack nothing. Family labels at
+scoring and in the oracle only. Frozen readout primary; no grid. The 50 ms and 75 ms windows,
+F = 10 canonical, no LLM, no teacher current (the drive gates plasticity and injects
+nothing). Frozen drivers byte-identical; no deletion; failures kept without rescue.
+
+## Frozen JSON (draft content of `docs/plant2/P2-E8-frozen.json`)
+
+```json
+{"experiment": "P2-E8", "contract_commit": "<the freezing commit>",
+ "contract_path": "docs/plant2/P2-E8-graded-error-eligibility.md",
+ "source_baseline": "55e16ebff62a90d6402745f44fb860010741eba5",
+ "pins": {"p2_e7_driver_and_riders": "9bc6cf309a5472b19c889cd16444833e0d3acedb", "p2_e7_contract_append_only": "fede3c249dad7ba6237bcedcbfe498e253c3de39", "p2_e7_frozen_json": "e38a6b0", "contract_group": "fede3c249dad7ba6237bcedcbfe498e253c3de39"},
+ "mechanism": {"prediction_window_ticks": 75, "drive": "peak (v - v_rest) over ticks 0-74 after integration before reset", "normaliser_mv": 20.0,
+               "weight": "0 if spiked else 1 - clip(d/20, 0, 1)", "budget_per_eligible": 0.5, "p_cap": 1.0, "water_filling": "exact sorted search", "p_when_all_w_zero": 0.0},
+ "streams": {"graded_shuffled": 37, "wrong_label_permutation": 38, "mixed_independent": 36, "episode_key": "1-based", "coin": 3, "plateau": 2, "rider_control": 30},
+ "loads": [500, 1000],
+ "conditions": {"F10": {"F": 10, "s": 60}, "independent": null, "mixed": {"F": 10, "s": 60, "interleave": "odd F10, even independent"}, "F40": {"F": 40, "s": 60}},
+ "arms": {"F10": ["baseline", "binary", "graded", "gate_off", "graded_shuffled", "history_rank", "label_oracle", "surplus_only"],
+          "independent": ["baseline", "binary", "graded"], "mixed": ["baseline", "binary", "graded"], "F40": ["baseline", "graded"]},
+ "seeds": {"development": 123, "held_out": 124, "gated": [151, 152, 153, 154, 155]},
+ "frozen": {"J_mem": 1.525, "acc_tau": 10000, "J_fb": 2.8, "g": 0.3, "window_mem": 50, "window_rec": 75, "settle": 50000},
+ "bars": {"C1": 0.9, "C2": 0.9, "C3": 0.9, "C4_recall": 0.9, "C4_spurious": 0.9, "joint_index": 0.85},
+ "margins": {"F10_C2_vs_baseline": 0.2, "F10_C2_vs_binary": 0.05, "F10_C2_vs_shuffled": 0.05, "F10_C2_vs_history_rank": 0.05,
+             "F10_joint_vs_baseline": 0.1, "F10_joint_vs_binary": 0.03, "C1_nonregression": 0.03, "F10_M1000_C4_recall_nonregression": 0.03,
+             "independent_C2_nonregression": 0.03, "independent_content_joint_nonregression": 0.05, "independent_content_D4_nonregression": 0.05,
+             "mixed_independent_subset_index_nonregression_cues": 4, "mixed_independent_subset_content_nonregression_cues": 5},
+ "structural_kill": {"episodes": [501, 1000], "min_mean_V": 5, "min_veto_precision": 0.7, "max_nonproto_predicted": 0.25, "min_proto_predicted": 0.25,
+                     "max_graded_over_binary_expected_proto_flips": 0.6, "independent_tv_max": "F10 graded tv_mean over episodes 1-300", "max_veto_episode_fraction_uncorrelated": 0.05},
+ "protocol": {"eligibility_min": 0.95, "mean_A_1000": [18.5, 21.5], "drift_max_mv": 0.2},
+ "sanity": {"wrong_label_C1_strict_upper": 0.1, "empty_store_responders": 0},
+ "resource": {"wall_seconds": 3600, "grace_seconds": 600, "max_simulation_processes": 4},
+ "predictions": {"F10_M1000_C2": [0.76, 0.88], "F10_M1000_delta_C2_vs_binary": [0.02, 0.10], "F10_M1000_C1_min": 0.88, "F10_M1000_C4_recall_min": 0.90,
+                 "F10_M1000_joint_delta_vs_binary_min": 0.03, "F10_M1000_C4_spurious_delta_vs_binary_min": 0.03,
+                 "F10_M1000_inherited_content_max": 0.10, "F10_M1000_assigned_A_content": [0.20, 0.50],
+                 "expected_proto_flips_ratio_max": 0.6, "spurious50_ratio_max": 0.85, "max_prototype_out_degree_ratio_max": 0.9,
+                 "independent_delta_max": 0.03, "mixed_independent_subset_delta_cues_max": 3,
+                 "most_likely_failure": "the ramp floor: a second informative FEASIBILITY FAIL with the delta over binary held"}}
+```
