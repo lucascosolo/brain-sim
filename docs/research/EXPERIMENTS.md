@@ -7,7 +7,7 @@ and checked by an independent Opus critic against the primary sources it cites (
 rules for adding an entry are in `README.md`. Entries are append-only after the experiment
 closes; corrections are appended as errata, never edited in place.
 
-Contents: P2-E1, P2-E2, P2-E3, P2-E4, P2-E5, P2-R1, P2-E6, P2-R2, P2-R2b, P2-E7 (contracted).
+Contents: P2-E1, P2-E2, P2-E3, P2-E4, P2-E5, P2-R1, P2-E6, P2-R2, P2-R2b, P2-E7 (contracted), OFFLINE-SCREENS-20261022 (offline analyses).
 
 ## P2-E1: one-shot episodic storage by behavioural-timescale plasticity (BTSP), predeclared 2026-10-10
 
@@ -2228,3 +2228,30 @@ Source: `RESULTS-P2-R2b.md:26-31`, reproduced by the review (`findings-results.m
 **What it cannot show.** A pass is an index result on one development seed; content at F10/1,000 is expected to stay below its bar (H-046); the random key, episode boundaries, write oracle, verbatim value and test regime remain supplied; the rule's behaviour on exact repeats is untested and deploying it on streams with repeats needs an owner ruling (familiarity deferral); the mixed condition's correction pressure is that of F10 at M = 500.
 
 **Capabilities and hypotheses.** None claimed. H-060 moves to `under_test` on the freezing commit's follow-up; H-055 is `under_test` through this contract's two ruling-4 tests.
+
+
+## OFFLINE-SCREENS-20261022: four zero-seed analyses on persisted evidence (offline, not an experiment)
+
+| field | value |
+|---|---|
+| status | complete (26 `offline_screen` records COMPLETE, 9 `evidence_verification` records passed) |
+| result label | offline (screen A additionally proxy); descriptive; no capability, no gate, no replication |
+| stage | Roadmap checkpoint 2026-10-22, priority 2; asked for by the judge panel before any contract cites the numbers |
+| dates | Contract committed 64ff692 (2026-10-22); tests c8be1ce; module dadc62e; run 2026-10-22 19:38-19:39 UTC; results and D extension 5c7199b |
+| mechanism under test | none; analyses of persisted P2-R2b (seeds 105/106) and P2-E6 (seed 101) evidence |
+| contract commit | 64ff692, `docs/plant2/OFFLINE-SCREENS-20261022.md` |
+| implementation commit | dadc62e (module, 27 tests green), 5c7199b (screen D extended to the P2-E6 files) |
+| results commit(s) | 5c7199b (`bench/results/offline-screens-20261022.jsonl`, `bench/results/offline-screens-20261022/`); Results section appended to the contract in the following commit |
+| other commits | — |
+
+**Objective.** Record, before P2-E7 spends a seed: (A) whether the error gate's teacher is already saturated on the baseline trajectory (proxy, advisory); (B) the branch static count behind B-013 with its coin-parity integrity gate; (C) the own-versus-spurious first-spike latency split and a latency-cut bound (B-008's cheapest test); (D) test-time regeneration saturation of the responder-written store.
+
+**Results (all offline).** A: on the baseline trajectory the prediction engages by block 3-4 and the teacher saturates late; over episodes 501-1,000 mean |V| 56.5-56.9 lines, prototype predicted 0.99, non-prototype predicted 0.29 (P2-E7 kill threshold 0.25), veto precision 0.72 (threshold 0.70); a warning, not a decision. B: integrity gate passed on both seeds; non-own cells per half cue at ≥ 12 cue synapses 91.9 / 86.9 point against 0.76 / 0.62 at K = 8; own cells untouched (20.3 of about 20 at every threshold). C: own first spikes median 22-24 ms, spurious median 66-69 ms with a 10th percentile of 36-41 ms; no latency cut from 20 to 50 ms clears C1 ≥ 0.90 and C2 ≥ 0.90 together; B-008 closed as a standalone mechanism. D: F10 full learned cues regenerate a median 3,638-3,643 lines at M = 1,000 (744-814 at 500; independent 133; E6 candidate 1,140; degree null 1,117-1,147); feedback density 0.313 / 0.318 at 1,000.
+
+**Failures and errata.** None. The panel's branch number for seed 106 (0.58, drawn with a non-stream coin generator) is superseded by the stream-3 value 0.62.
+
+**Reproducibility.** `BRAINSIM_CACHE=$HOME/.cache/brain-sim/plant2-research-20261022/offline-screens python -m analysis.offline_screens_20261022 run --screen {A,B,C,D}` then `summary`; every input verified against its descriptor before reading; single process; no simulation.
+
+**Conclusions.** The pre-screen's warning stands beside P2-E7's structural check; the branch screen's separation stands beside the unmeasured branch firing point; B-008 does not deserve a standalone contract; the saturation counts the judges quoted are now recorded.
+
+**Capabilities and hypotheses.** None claimed. H-060 gains offline evidence against (the warning); B-008 closed; B-013's cheapest test done.

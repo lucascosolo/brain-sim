@@ -323,10 +323,13 @@ deferral; (e) confirmation of the F = 10 reading of "ten canonical neuron famili
    implementation, development seed 121 with the structural kill before any test phase; held-out
    122 only if every E6-frozen absolute bar holds; gated 131-135 under a separately frozen
    gate.
-2. Zero-seed offline records on the persisted P2-R2b artifacts: the branch static screen
-   with its coin-parity gate; the own-versus-spurious first-spike latency split (B-008); the
-   regeneration-saturation diagnostic on `bench/results/p2e6`. Each appended through
-   `plant2/evidence.py` as offline records before any contract cites it.
+2. Done 2026-10-22 (`docs/plant2/OFFLINE-SCREENS-20261022.md`, Results): the gate pre-screen
+   warns that on the baseline trajectory the teacher saturates late (non-prototype predicted
+   fraction crosses 0.25 in block 8 of 10; precision falls below 0.70 in block 9), so P2-E7's
+   structural check is the live question; the branch static screen reproduces with its
+   integrity gate passed (B-013 stays blocked on the owner's answer); the latency split
+   closes B-008 as a standalone mechanism; the saturation counts reproduce the judges'
+   numbers.
 3. Branch-segregated dendritic storage (B-013), if the owner admits it, on seed 107.
 4. Content: one mechanism per contract, after an index mechanism passes at both loads.
 5. The online operating point (P2-E4's failures), after the index is specific on F10.

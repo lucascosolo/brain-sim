@@ -136,3 +136,72 @@ Nothing here is a memory capability, a replication, or a decision. Screen A's st
 warn and cannot clear P2-E7's kill rules. Screen B counts synapses, not spikes. Screen C's
 cut is not a brake. Screen D measures test-time saturation, not encoding-time prediction.
 Each result enters the ledger with the label `offline`.
+
+## Results (appended 2026-10-22, 19:38-19:39 UTC; commit 5c7199b)
+
+Module `analysis/offline_screens_20261022.py` (dadc62e, D extended in 5c7199b; 27 tests).
+Records: `bench/results/offline-screens-20261022.jsonl` (26 `offline_screen` records, all
+COMPLETE, and 9 `evidence_verification` records, all passed); artifacts under
+`bench/results/offline-screens-20261022/`. Every input descriptor verified before reading.
+All numbers below are **offline**; screen A is additionally a **proxy**.
+
+**Screen A (gate pre-screen, proxy).** Baseline trajectory, ORIGINAL arm, primary
+inhibition-aware threshold, episodes 501-1,000: seed 105 mean |V| 56.48, prototype
+predicted 0.988, non-prototype predicted 0.292, veto precision 0.720; seed 106: 56.87, 0.994,
+0.295, 0.717. By block of 100 episodes (seed 105; seed 106 alike): |V| 2.4, 13.1, 27.1,
+36.2, 39.2, 43.1, 50.1, 55.3, 62.9, 70.9; prototype predicted 0.06, 0.33, 0.68, 0.89, 0.93,
+0.97, 0.99, 1.00, 0.99, 0.99; non-prototype predicted 0.001, 0.002, 0.006, 0.015, 0.038,
+0.084, 0.181, 0.266, 0.393, 0.532; veto precision 0.98, 0.99, 0.99, 0.98, 0.95, 0.89, 0.79,
+0.73, 0.64, 0.56. Sensitivity: at fixed θ = 8 the non-prototype fraction is 0.87 and at
+θ = 24 it is 0.53, so the proxy's level depends on the count rule and only its time course
+is robust. **Reading:** on the baseline trajectory the prediction engages early (prototype
+lines are predicted for most of a family by block 3-4) and the teacher saturates late (the
+non-prototype fraction crosses P2-E7's 0.25 kill threshold in block 8 and the precision
+falls below 0.70 in block 9). This is the warning the skeptic judge asked for: P2-E7's
+saturated-teacher and contamination-driven-veto kill rules are at risk if the veto does not
+reduce responder contamination as learning proceeds. The candidate trajectory is not the
+baseline trajectory (fewer sibling synapses means fewer spurious responders writing the
+store), so the proxy cannot decide; the structural check on seed 121 does.
+
+**Screen B (branch static screen).** The integrity gate passed on both seeds: the forward
+store rebuilt from the persisted A and E with stream-(seed, 3) coins equals the persisted
+`forward_keys` exactly (a mismatch records INVALID; both records are COMPLETE). Mean over the
+200 half cues of non-own cells at or above T cue synapses, point versus branch-max (K = 8;
+K = 4): seed 105: T9 426.1 / 31.5 / 61.0; T10 270.9 / 10.0 / 23.8; T11 162.3 / 2.8 / 8.7;
+T12 91.9 / 0.76 / 3.0; T13 49.5 / 0.18 / 1.1; T14 25.0 / 0.08 / 0.37. Seed 106: T9 411.0 /
+29.7 / 58.5; T10 257.2 / 9.3 / 22.8; T11 153.2 / 2.5 / 8.5; T12 86.9 / 0.62 / 2.9; T13 46.9 /
+0.12 / 0.87; T14 23.6 / 0.02 / 0.25. Own cells at or above T: 20.3 of about 20 at every T on
+both seeds, point and branch alike (own mean cue-synapse count 24.8 / 24.6 point, 24.7 / 24.5
+branch-max at K = 8). The panel's point numbers (91.89 / 86.94 at T12) reproduce; its branch
+number for seed 106 (0.58) was drawn with a non-stream coin generator and is replaced by
+0.62. **Reading:** branch segregation shrinks the above-threshold non-own tail by about two
+orders of magnitude at T12 and by about fourteen times at T9 while leaving own cells
+untouched; the static separation is real at every T from 9 to 14, but a count is not a
+firing probability and the branch firing point is unmeasured. B-013 keeps this record as
+its cheapest test, done.
+
+**Screen C (own-versus-spurious first-spike latency).** Half cues, first spikes within
+100 ms. Own cells: median 22-24 ms, 10th percentile 13-15 ms, 90th 40-44 ms (every arm and
+load, both seeds). Spurious cells: median 66-69 ms, 10th percentile 36-41 ms, 90th 93-94 ms.
+Latency-cut bound at M = 1,000, ORIGINAL arm (seed 105; seed 106): cut 40 ms gives C1 0.775
+(0.790), C2 0.690 (0.670), joint 0.470 (0.480); cut 45 ms gives C1 0.870 (0.885), C2 0.575
+(0.535); cut 50 ms recovers the recorded C1 0.930 (0.925) and C2 0.450 (0.445). No cut
+reaches C1 ≥ 0.90 and C2 ≥ 0.90 together on either seed at either load. **Reading:** the
+spurious cells' early tail (10th percentile 36 ms) overlaps the own cells' late tail (90th
+percentile 40-44 ms), so a timing brake alone trades recall for specificity along H-067's
+curve and cannot clear both bars. B-008's cheapest test is done and the answer is no for a
+standalone timing mechanism; it stays a possible component of a recurrence contract only.
+
+**Screen D (regeneration saturation, test-time, settled).** Median lines with at least one
+rec spike in the 75 ms window (quartiles in brackets, 200 cues each). P2-R2b ORIGINAL at
+M = 1,000: full cues 3,640 [3,551, 3,713] (105) and 3,638 [3,548, 3,721] (106); half cues 1,962
+[1,122, 2,709] and 2,004 [1,144, 2,626]; novel 0. At M = 500: full 814 and 787; half 190 and
+166. DEGREE_NULL at 1,000: full 1,147 and 1,117; half 275 and 298. Feedback store density:
+ORIGINAL 0.123 / 0.120 at 500 and 0.313 / 0.318 at 1,000; DEGREE_NULL 0.065 and 0.153 / 0.154.
+P2-E6 seed 101 (exploratory): F10 baseline full 744 at 500 and 3,643 at 1,000; F10 candidate
+155 and 1,140; independent baseline 133 and candidate 126 at 1,000 (feedback density absent:
+no learned checkpoint on this host). The judges' quoted 743.5 / 3,643 / 133 reproduce.
+**Reading:** at the canonical load a learned F10 cue regenerates most of the 4,000 lines
+through the responder-written store, and the E6 history budget cut that three-fold; the
+quantity P2-E7 gates on is the encoding-time prediction, which screen A approximates and the
+structural check measures.

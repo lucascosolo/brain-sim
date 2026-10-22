@@ -187,7 +187,15 @@ synapses. It needs the replay to be self-generated, which the current system can
 and replay the P2-E5 rasters through the new store; if specificity does not rise without a
 recall loss on the oldest 100 items, close the item.
 
-## B-008 Phase-of-cycle separation of siblings (temporal multiplexing) — `open`, unconventional
+## B-008 Phase-of-cycle separation of siblings (temporal multiplexing) — `closed` as a standalone mechanism (2026-10-22, offline screen C)
+
+**Closure note (2026-10-22).** Screen C of `docs/plant2/OFFLINE-SCREENS-20261022.md` (offline,
+descriptive): own cells' first spikes have median 22-24 ms and 90th percentile 40-44 ms;
+spurious cells' first spikes have median 66-69 ms but a 10th percentile of 36-41 ms, so no
+latency cut from 20 to 50 ms reaches C1 ≥ 0.90 and C2 ≥ 0.90 together at either load on
+seeds 105/106 (best joint at M = 1,000 about 0.47-0.48 at a 40 ms cut, against the recorded
+0.42/0.39). A timing brake alone slides along H-067's curve. Reopen only as a component of a
+recurrence contract (H-063). The sketch below is kept as written.
 
 **Limitation addressed.** Siblings compete for the same 50 ms window.
 
@@ -301,12 +309,13 @@ not survive the branch firing curve; the constructive judge's rerun shows the no
 at 0.76 for ≥ 12 synapses, 10.1 at ≥ 10 and 32.29 at ≥ 9 (offline, judge-computed,
 unrecorded). An unbounded-branch variant conflicts with bounded forgetting and is not run.
 
-**Cheapest test.** Zero-seed: reproduce the proposer's static screen on the persisted P2-R2b
-ORIGINAL artifacts (point 91.89/86.94 non-own cells per cue at ≥ 12 cue synapses against
-branch 0.76/0.58 on seeds 105/106; own 18.94 → 18.77; offline, proposer-computed, unrecorded)
-with stream-(seed,3) coins and bit equality against the persisted forward keys, reporting the
-count at thresholds 9 through 14; append it as an offline record. Then, if the owner admits
-the mechanism, one development seed (107, reserved) under its own contract.
+**Cheapest test.** Done 2026-10-22 as screen B of `docs/plant2/OFFLINE-SCREENS-20261022.md`
+(offline static count, integrity gate passed on both seeds): non-own cells per half cue at
+≥ 12 cue synapses 91.9 / 86.9 point against 0.76 / 0.62 at K = 8 (3.0 / 2.9 at K = 4); at
+≥ 9, 426 / 411 against 31.5 / 29.7; own cells 20.3 of about 20 at every threshold, point and
+branch alike. The separation is real at every T from 9 to 14; the branch firing point is
+unmeasured. Next, if the owner admits the mechanism: one development seed (107, reserved)
+under its own contract.
 
 ## B-014 Non-plateau responder depression (false-positive correction on the forward store) — `open`
 
