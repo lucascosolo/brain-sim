@@ -394,6 +394,113 @@ def run_e6(log=print):
     return ver["passed"]
 
 
+# ------------------------------------------------------------------ screen E
+
+E7_DIR = record.REPO / "bench/results/p2e7"
+E7_RESULTS = record.REPO / "bench/results/p2e7.jsonl"
+E7_ATTEMPT = "seed121-1792699741870086415-c573e46d"
+E7_ARMS = ("baseline", "candidate", "random_drop", "history_drop", "gate_off", "no_conservation",
+           "label_oracle", "assigned_A_teacher")
+E_LABEL = "offline, descriptive, development seed 121"
+
+
+def responders_from_raster(raster_ticks, raster_cells, cue_index, cue_onset, cue_kind, window=50):
+    ticks = np.asarray(raster_ticks, np.int64)
+    out = {}
+    for idx, onset, kind in zip(cue_index, cue_onset, cue_kind):
+        if str(kind) != "half":
+            continue
+        lo, hi = np.searchsorted(ticks, [int(onset), int(onset) + window])
+        cells = [np.asarray(raster_cells[i], np.int64) for i in range(lo, hi)]
+        out[int(idx)] = np.unique(np.concatenate(cells)) if cells else np.empty(0, np.int64)
+    return out
+
+
+def spurious_classes(rows, A, responders_by_cue, first_engagement, F=10):
+    plateau_items = {}
+    for k, cells in enumerate(A):
+        for c in np.asarray(cells).tolist():
+            plateau_items.setdefault(c, []).append(k)
+    fam = lambda k: (k + 1) % F
+    first = lambda f: first_engagement.get(f)
+    early = lambda k: first(fam(k)) is None or k < first(fam(k))
+    per_cue = []
+    for r in rows:
+        if r["kind"] != "half":
+            continue
+        q = int(r["index_0based"])
+        resp = np.asarray(responders_by_cue[q], np.int64)
+        own = np.intersect1d(resp, np.asarray(A[q], np.int64))
+        if len(resp) != r["own50"] + r["spurious50"] or len(own) != r["own50"]:
+            raise ValueError(f"cue {q}: responders do not match own50 + spurious50")
+        counts = dict(same_family_early=0, same_family_late=0, other_family_only=0)
+        for c in np.setdiff1d(resp, own).tolist():
+            same = [k for k in plateau_items.get(c, []) if fam(k) == fam(q)]
+            counts["other_family_only" if not same else
+                   "same_family_early" if any(early(k) for k in same) else "same_family_late"] += 1
+        per_cue.append(dict(cue_index=q, spurious=int(len(resp) - len(own)), **counts))
+    mean = lambda key: float(np.mean([c[key] for c in per_cue])) if per_cue else None
+    members = [[k for k in range(len(A)) if fam(k) == f] for f in range(F)]
+    chance = [sum(early(k) for k in m) / len(m) for m in members if m]
+    return dict(cues=len(per_cue), spurious_per_cue=mean("spurious"),
+                same_family_early_per_cue=mean("same_family_early"),
+                same_family_late_per_cue=mean("same_family_late"),
+                other_family_only_per_cue=mean("other_family_only"),
+                items_before_engagement=int(sum(early(k) for k in range(len(A)))),
+                early_chance=float(np.mean(chance)), per_cue=per_cue)
+
+
+def _engagement(arm):
+    for line in E7_RESULTS.read_text().splitlines():
+        r = json.loads(line)
+        if (r.get("kind") == "structural_check" and r.get("arm") == arm and r.get("condition") == "F10"
+                and r.get("attempt") == E7_ATTEMPT):
+            return {int(f): v for f, v in r["gate"]["first_engagement_by_family"].items()}
+    return {f: None for f in range(10)}
+
+
+def _screen_e(arm):
+    path = E7_DIR / f"{E7_ATTEMPT}-F10-{arm}-M1000.json"
+    pdesc = dict(path=str(path.relative_to(record.REPO)), bytes=path.stat().st_size,
+                 sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+    d = json.loads(path.read_bytes().decode())
+    raster = evidence.load_npz_artifact(verify_input(d["raw"]))
+    state_desc = d["state"]
+    state = evidence.load_npz_artifact(verify_input(state_desc))
+    A = _unpack(state, "A")
+    ragged = _unpack(raster, "raster_cells")
+    resp = responders_from_raster(raster["raster_ticks"], ragged, raster["cue_index"].tolist(),
+                                  raster["cue_onset"].tolist(), raster["cue_kind"].tolist())
+    first = _engagement(arm)
+    out = spurious_classes(d["index_cues"], A, resp, first)
+    summary = {k: v for k, v in out.items() if k != "per_cue"}
+    summary["first_engagement"] = {str(f): v for f, v in sorted(first.items())}
+    return summary, dict(summary=summary, per_cue=out["per_cue"]), dict(portable=pdesc, raster=d["raw"], state=state_desc)
+
+
+def run_e(log=print):
+    EVIDENCE.mkdir(parents=True, exist_ok=True)
+    journal_path = EVIDENCE / "E-seed121.journal.jsonl"
+    journal = evidence.Journal(journal_path, "E121")
+    journal.append(dict(kind="run_started", screen="E", seed=121, runtime=record.runtime(),
+                        script_sha256=_script_sha256()))
+    manifest = evidence.Manifest()
+    for arm in E7_ARMS:
+        try:
+            summary, obj, inputs = _screen_e(arm)
+        except (evidence.EvidenceError, OSError, KeyError, ValueError) as e:
+            log(record_invalid(RESULTS, "E", 121, f"{arm}/M1000: input failure: {type(e).__name__}: {e}",
+                               journal)["reason"])
+            continue
+        rec = record_screen(RESULTS, EVIDENCE, "E", 121, arm, 1000, E_LABEL, summary, obj, inputs, journal)
+        manifest.add(Path(rec["artifact"]["path"]).name, rec["artifact"])
+        log(f"E seed 121 {arm} M1000 COMPLETE")
+    ver = _verification(manifest, journal_path)
+    record.append(dict(ver, screen="E", seed=121, timestamp=record.now()), RESULTS)
+    journal.append(ver)
+    return ver["passed"]
+
+
 def _verification(manifest, journal_path):
     failures = []
     try:
@@ -459,7 +566,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
     runner = commands.add_parser("run")
-    runner.add_argument("--screen", required=True, choices=("A", "B", "C", "D"))
+    runner.add_argument("--screen", required=True, choices=("A", "B", "C", "D", "E"))
     runner.add_argument("--seed", type=int, action="append", choices=SEEDS)
     commands.add_parser("summary")
     args = parser.parse_args(argv)
@@ -467,6 +574,8 @@ def main(argv=None):
         print(json.dumps(summary(), sort_keys=True))
         return 0
     log = lambda x: print(f"[{record.now()}] {x}", flush=True)
+    if args.screen == "E":
+        return 0 if run_e(log=log) else 1
     ok = run(args.screen, args.seed or list(SEEDS), log=log)
     if args.screen == "D" and not args.seed:
         ok = run_e6(log=log) and ok
