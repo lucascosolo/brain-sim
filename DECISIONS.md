@@ -878,3 +878,48 @@ predeclare fresh explanatory replication before selecting another learning mecha
 retune E6, combine R3 with it without a new contract, or begin Stage2. The takeover demonstrates
 partial selectivity effects and sharper diagnostics, not accepted robust memory, autonomous
 keys, capacity growth, abstraction or independent cognition. Stage1 remains incomplete.
+
+
+## 2026-10-22: autonomous research mandate; a research ledger; evidence durability before any new seed
+
+**Provenance.** The owner's instruction of 2026-10-22 ("autonomous research mandate: open-ended
+architectural discovery"), followed the same morning by the ledger structure (research map,
+hypothesis ledger, experiment ledger) and the request for a separate speculative backlog. The
+agent is lead researcher under the standing rules of this file; the invariants named by the
+owner are the 50 ms index process, the 75 ms content process and the ten canonical families.
+
+**Decisions.**
+1. Work continues on `plant2-research-20261022`, branched from the takeover tip
+   `5b5ee63` so that every takeover result and review is in the history. Nothing merges to
+   `main` without "merge".
+2. The research record gains `docs/research/` (README, RESEARCH-MAP, HYPOTHESES, EXPERIMENTS,
+   BACKLOG, ROADMAP). Its rules are in `docs/research/README.md`; the central one is that a
+   proposed idea, an attempted experiment and a demonstrated capability never share a table.
+   `docs/plant2/`, `bench/results/` and `review/` stay the primary record and are not edited to
+   fit the ledger. The first version of the three ledgers is built by reading the whole record
+   with independent extraction and adversarial verification before any synthesis, so that
+   numbers enter the ledger from the sources, not from recollection.
+3. The first engineering change is evidence durability (`docs/plant2/EVIDENCE-DURABILITY.md`,
+   `plant2/evidence.py`): verified exclusive artifacts, sequenced per-worker journals with
+   readback, and manifest completeness checks before any stage is declared complete. Every
+   reviewer of P2-R2 and the takeover handoff made this the first next step, and no new seed
+   is spent before it exists. Frozen drivers are not retrofitted.
+4. "Ten canonical neuron families" in the mandate is read as the F = 10 item-family stress
+   condition that ruling 5 of 2026-10-12 made canonical; the record has no ten neuron types.
+   The owner can correct this reading; nothing yet depends on it.
+5. The Python environment on this PC is the uv venv at `~/.cache/brain-sim/venv` (CPython
+   3.11.17, NumPy 2.4.6); the takeover ran on NumPy 2.3.5 elsewhere. New records carry their
+   own `runtime` field; no claim of byte-identical rasters across the two is made. The required
+   safety lint runs standalone from reflex-layer's `tools/safety_lint.py` (blob 443d3c2,
+   fetched read-only; the sibling checkout the wrapper test expects is absent here) and reports
+   only the twelve grandfathered findings.
+
+**Alternatives rejected.** Keeping the ledger in `review/ledger.jsonl` (that file is the
+review-disposition log and has a different schema); putting the ledger in `DECISIONS.md` (it
+would bury the owner's rulings); starting a mechanism contract before the durability module
+(cheap in compute, but it would spend seeds under the integrity limitation the record left
+open).
+
+**Revisit when** the owner rules on the "ten families" reading, or when the ledger's
+status vocabulary proves too coarse for a result (then extend the vocabulary in the README,
+never reinterpret an existing label).
