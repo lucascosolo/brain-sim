@@ -448,3 +448,193 @@ def test_responders_from_raster_window_and_duplicates():
     assert sorted(out) == [0, 1]  # the full cue is not a half cue
     assert list(out[0]) == [3, 5, 7, 9]  # cell 4 (tick 99) and 11 (tick 150) fall outside [100, 150)
     assert list(out[1]) == [2, 11]       # window [150, 200); cell 8 at tick 400 excluded
+
+
+# ---------------------------------------------------------------- screens F and E' (contract 20261022c)
+
+_NO = np.empty(0, np.int64)
+
+
+def _random_store_and_raster(seed, m=64, n=32):
+    rng = np.random.default_rng(seed)
+    store = BinarySynapses(n, m)
+    store.add(np.flatnonzero(rng.random(n * m) < 0.3).astype(np.int64))
+    raster = {t: (np.unique(rng.integers(0, n, 6)).astype(np.int64) if t < 20 else _NO) for t in range(75)}
+    return store, raster
+
+
+def _replay_lines(raster, store, m):
+    from plant2.readout import replay
+    indptr, post = store.csr()
+    cue = dict(onset=0, item=_NO, cue=_NO, missing=_NO, other_missing=_NO)
+    trace = []
+    replay(raster, 75, indptr, post, m, np.array([2.8]), np.array([0.3]), [cue],
+           window=75, short=50, span=75, trace=trace)
+    return np.unique(np.array([j for t, _, j in trace if t <= 74], np.int64))
+
+
+def test_rebuild_feedback_csr_equals_binary_synapses_add_only_union():
+    m, n = 12, 9
+    rng = np.random.default_rng(3)
+    R_seq = [np.unique(rng.integers(0, n, 3)) for _ in range(6)]
+    E_seq = [np.unique(rng.integers(0, m, 4)) for _ in range(6)]
+    for upto in (0, 1, 4, 6):
+        ref = BinarySynapses(n, m)
+        for R, E in zip(R_seq[:upto], E_seq[:upto]):
+            ref.add((np.asarray(R, np.int64)[:, None] * m + np.asarray(E, np.int64)[None, :]).ravel())
+        indptr, post, keys = osx.rebuild_feedback_csr(R_seq, E_seq, upto, m, n)
+        r_indptr, r_post = ref.csr()
+        assert np.array_equal(keys, ref.keys) and keys.dtype == np.int64
+        assert np.array_equal(indptr, r_indptr)
+        assert np.array_equal(post, r_post)
+
+
+def test_lockstep_rec_matches_replay_spike_set_and_dmax_threshold():
+    m = 64
+    seen_spike = seen_quiet = False
+    for seed in range(5):
+        store, raster = _random_store_and_raster(seed, m=m)
+        indptr, post = store.csr()
+        spikes, dmax = osx.lockstep_rec(raster, indptr, post, m)
+        assert np.array_equal(np.sort(np.asarray(spikes)), _replay_lines(raster, store, m))
+        dmax = np.asarray(dmax)
+        assert dmax.shape == (m,)
+        fired = np.zeros(m, bool)
+        fired[np.asarray(spikes, np.int64)] = True
+        assert (dmax[fired] >= 20.0).all()
+        assert (dmax[~fired] < 20.0).all()
+        seen_spike |= fired.any()
+        seen_quiet |= (~fired).any()
+    assert seen_spike and seen_quiet  # the comparison is not vacuous
+
+
+def test_lockstep_rec_dmax_read_after_integration_before_reset():
+    # eight memory cells fire at tick 0, all wired to line 0 of 4: 8 x 2.8 = 22.4 mV arrives at tick 1
+    n, m = 8, 4
+    store = BinarySynapses(n, m)
+    store.add(np.arange(n, dtype=np.int64) * m)
+    raster = {t: (np.arange(n, dtype=np.int64) if t == 0 else _NO) for t in range(75)}
+    indptr, post = store.csr()
+    spikes, dmax = osx.lockstep_rec(raster, indptr, post, m)
+    assert list(np.asarray(spikes)) == [0]
+    assert 22.0 <= dmax[0] <= 22.5  # not the reset value (5 mV above rest)
+
+
+def test_lockstep_rec_dmax_single_synapse_peak_below_threshold():
+    n, m = 4, 4
+    store = BinarySynapses(n, m)
+    store.add(np.array([2 * m + 1], np.int64))  # cell 2 -> line 1
+    raster = {t: (np.array([2], np.int64) if t == 0 else _NO) for t in range(75)}
+    indptr, post = store.csr()
+    spikes, dmax = osx.lockstep_rec(raster, indptr, post, m)
+    assert len(spikes) == 0
+    assert 2.5 <= dmax[1] <= 2.81
+    assert dmax[0] == pytest.approx(0.0, abs=1e-4)
+
+
+def test_water_fill_without_cap_is_proportional_and_exact():
+    p, capped = osx.water_fill(np.array([1.0, 1.0, 0.5, 0.0]), 1.5)
+    assert p == pytest.approx([0.6, 0.6, 0.3, 0.0], abs=1e-12)
+    assert not capped
+    assert float(np.sum(p)) == pytest.approx(1.5, abs=1e-12)
+
+
+def test_water_fill_cap_binds_and_redistributes():
+    p, capped = osx.water_fill(np.array([4.0, 1.0, 1.0]), 2.0)
+    assert p == pytest.approx([1.0, 0.5, 0.5], abs=1e-12)
+    assert not capped  # the budget is met exactly; the flag is for the unreachable case
+
+
+def test_water_fill_capped_flag_when_fewer_positive_than_budget():
+    p, capped = osx.water_fill(np.array([1.0, 0.0, 2.0]), 3.0)
+    assert list(p) == [1.0, 0.0, 1.0]
+    assert capped
+
+
+def test_counterfactual_binary_uniform_over_unpredicted():
+    E = np.array([10, 11, 12, 13], np.int64)
+    p = osx.counterfactual_p(E, np.array([11], np.int64), np.array([0.0, 20.0, 0.0, 0.0]), "binary")
+    assert p == pytest.approx([2 / 3, 0.0, 2 / 3, 2 / 3])
+    assert float(np.sum(p)) == pytest.approx(0.5 * len(E))
+
+
+def test_counterfactual_binary_caps_at_one():
+    E = np.array([1, 2], np.int64)
+    p = osx.counterfactual_p(E, np.array([2], np.int64), np.array([0.0, 25.0]), "binary")
+    assert p == pytest.approx([1.0, 0.0])
+
+
+def test_counterfactual_graded_weights_by_subthreshold_drive():
+    E = np.array([10, 11, 12, 13], np.int64)
+    d = np.array([0.0, 5.0, 20.0, 10.0])
+    p = osx.counterfactual_p(E, np.array([12], np.int64), d, "graded")
+    lam = 2.0 / 2.25  # w = [1, 0.75, 0, 0.5]; sum p = 0.5 |E| = 2
+    assert p == pytest.approx([lam, 0.75 * lam, 0.0, 0.5 * lam])
+    assert float(np.sum(p)) == pytest.approx(2.0)
+
+
+def test_counterfactual_graded_clips_drive_at_zero_and_twenty():
+    E = np.array([1, 2, 3], np.int64)
+    p = osx.counterfactual_p(E, np.empty(0, np.int64), np.array([-5.0, 30.0, 10.0]), "graded")
+    assert p[1] == 0.0 and p[0] > p[2] > 0.0  # w = [1, 0, 0.5], budget 1.5 -> p = [1, 0, 0.5] capped fill
+    assert float(np.sum(p)) == pytest.approx(1.5)
+
+
+def test_counterfactual_surplus_only_spends_vetoed_surplus_by_weight():
+    E = np.array([1, 2, 3, 4], np.int64)
+    d = np.array([0.0, 10.0, 0.0, 20.0])
+    p = osx.counterfactual_p(E, np.array([4], np.int64), d, "surplus_only")
+    # w = [1, 0.5, 1] on E', surplus 0.5 split 0.2 / 0.1 / 0.2 on top of 0.5
+    assert p == pytest.approx([0.7, 0.6, 0.7, 0.0])
+    assert float(np.sum(p)) == pytest.approx(2.0)
+
+
+def test_counterfactual_surplus_only_redistributes_past_the_cap():
+    E = np.array([1, 2, 3, 4], np.int64)
+    d = np.array([0.0, 18.0, 20.0, 20.0])
+    p = osx.counterfactual_p(E, np.array([3, 4], np.int64), d, "surplus_only")
+    assert p == pytest.approx([1.0, 1.0, 0.0, 0.0])  # surplus 1.0 exactly fills both lines to the cap
+
+
+def test_counterfactual_surplus_only_leaves_unspendable_surplus_unspent():
+    E = np.array([1, 2, 3, 4], np.int64)
+    d = np.array([0.0, 20.0, 20.0, 20.0])
+    p = osx.counterfactual_p(E, np.array([2, 3, 4], np.int64), d, "surplus_only")
+    assert p == pytest.approx([1.0, 0.0, 0.0, 0.0])  # surplus 1.5, room 0.5
+    assert float(np.sum(p)) < 0.5 * len(E)
+
+
+def test_counterfactual_rejects_unknown_rule():
+    with pytest.raises(ValueError):
+        osx.counterfactual_p(np.array([1], np.int64), _NO, np.array([0.0]), "nonsense")
+
+
+def test_auc_hand_cases():
+    assert osx.auc([3, 4], [1, 2]) == 1.0
+    assert osx.auc([1, 2], [3, 4]) == 0.0
+    assert osx.auc([5, 5], [5, 5, 5]) == 0.5
+    assert osx.auc([2, 4], [1, 3, 4]) == pytest.approx(3.5 / 6)
+
+
+def test_expected_flips_splits_prototype_and_other_lines():
+    E = np.array([1, 2, 3, 4], np.int64)
+    P = np.array([2, 4, 9], np.int64)
+    proto, nonproto = osx.expected_flips(E, P, np.array([0.1, 0.2, 0.3, 0.4]))
+    assert proto == pytest.approx(0.6)
+    assert nonproto == pytest.approx(0.4)
+
+
+def test_eprime_bins_by_minimum_same_family_coverage():
+    # family_of(k) = (k + 1) % 3; cue 3 is in family 1, cue 4 in family 2
+    family_of = lambda k: (k + 1) % 3
+    per_cue = [
+        {"cue_index": 3, "late_cells": [100, 101]},
+        {"cue_index": 4, "late_cells": [102, 103, 104]},
+    ]
+    cell_items = {100: [0, 3, 6], 101: [0, 2], 102: [1, 4], 103: [1], 104: [7]}
+    pp = {0: 0.9, 3: 0.1, 6: 0.8, 2: 0.0, 1: 0.5, 4: 0.6, 7: 0.75}
+    out = osx.eprime_bins(per_cue, cell_items, family_of, pp, {0: None, 1: None, 2: None})
+    # 100 -> min(0.9, 0.1, 0.8) = 0.1 low; 101 -> only item 0 is same-family, 0.9 high;
+    # 102 -> 0.5 mid; 103 -> 0.5 mid; 104 -> 0.75 high (the >= 0.75 edge)
+    assert out["counts_per_cue"] == pytest.approx({"<0.25": 0.5, "0.25-0.75": 1.0, ">=0.75": 1.0})
+    assert out["shares"] == pytest.approx({"<0.25": 0.2, "0.25-0.75": 0.4, ">=0.75": 0.4})
