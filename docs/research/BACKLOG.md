@@ -107,6 +107,18 @@ unless split.
 P2-E5 generator's items for several sparsities, with no simulation; if overlap does not fall
 below the independent-item level, drop the idea.
 
+**Offline screen run 2026-10-22** (`~/.cache/brain-sim/plant2-research-20261022/offline/
+b004_halfcue_overlap.py`; seed-44 F10/s60 items, 200 random half cues, fixed random fan-in,
+k-WTA by top-k drive; a computation on item sets, not a simulation). Half-cue drive as a
+fraction of the target code, own / sibling / non-sibling: raw lines 0.500 / 0.085 / 0.0125
+(own:sibling 5.9); expansion n = 16,000 fan-in 20 k = 1 %: 0.516 / 0.067 / 0.025 (7.7);
+n = 32,000 fan-in 50 k = 0.5 %: 0.534 / 0.059 / 0.024 (9.0); fan-in 10 k = 2 %: 0.762 /
+0.235 / 0.119 (3.2). A fixed random expansion buys at most a 1.3-1.5x own-to-sibling ratio
+and doubles the diffuse non-sibling drive, so the aggregate cross-talk over 999 other items
+does not fall. **Reading:** the fixed-random form is not promising; the item stays open only
+in its learned-competitive form (a layer that absorbs frequently co-occurring prototype lines
+into few cells), which is a different and larger mechanism.
+
 ## B-005 Inhibitory plasticity that balances hot lines (E/I balance by learned inhibition) — `open`
 
 **Limitation addressed.** Hot prototype lines deliver disproportionate drive; both E6 and R2
