@@ -1,0 +1,193 @@
+{
+ "experiment": "P2-E7",
+ "contract_commit": "fede3c249dad7ba6237bcedcbfe498e253c3de39",
+ "contract_path": "docs/plant2/P2-E7-error-gated-eligibility.md",
+ "source_baseline": "55e16ebff62a90d6402745f44fb860010741eba5",
+ "mechanism": {
+  "prediction_window_ticks": 75,
+  "replay_call": {
+   "n_ticks": 75,
+   "window": 75,
+   "short": 50,
+   "span": 75,
+   "J": [
+    2.8
+   ],
+   "g": [
+    0.3
+   ]
+  },
+  "regeneration_rule": ">=1 rec spike at tick <= 74",
+  "budget_per_eligible": 0.5,
+  "p_cap": 1.0,
+  "p_when_Eprime_empty": 0.0
+ },
+ "streams": {
+  "random_drop": 33,
+  "history_drop": 34,
+  "wrong_label_permutation": 35,
+  "mixed_independent": 36,
+  "episode_key": "1-based (streams 33, 34 and 36 are keyed (seed, id, k))",
+  "coin": 3,
+  "plateau": 2,
+  "rider_control": 30
+ },
+ "loads": [
+  500,
+  1000
+ ],
+ "conditions": {
+  "F10": {
+   "F": 10,
+   "s": 60
+  },
+  "independent": null,
+  "mixed": {
+   "F": 10,
+   "s": 60,
+   "interleave": "odd F10, even independent"
+  },
+  "F40": {
+   "F": 40,
+   "s": 60
+  }
+ },
+ "arms": {
+  "F10": [
+   "baseline",
+   "candidate",
+   "random_drop",
+   "history_drop",
+   "gate_off",
+   "no_conservation",
+   "label_oracle",
+   "assigned_A_teacher"
+  ],
+  "independent": [
+   "baseline",
+   "candidate"
+  ],
+  "mixed": [
+   "baseline",
+   "candidate"
+  ],
+  "F40": [
+   "baseline",
+   "candidate"
+  ]
+ },
+ "stages": [
+  "F10 candidate learns and structural_check",
+  "other arms learn",
+  "tests",
+  "riders after the run"
+ ],
+ "seeds": {
+  "development": 121,
+  "held_out": 122,
+  "gated": [
+   131,
+   132,
+   133,
+   134,
+   135
+  ]
+ },
+ "frozen": {
+  "J_mem": 1.525,
+  "acc_tau": 10000,
+  "J_fb": 2.8,
+  "g": 0.3,
+  "window_mem": 50,
+  "window_rec": 75,
+  "settle": 50000
+ },
+ "bars": {
+  "C1": 0.9,
+  "C2": 0.9,
+  "C3": 0.9,
+  "C4_recall": 0.9,
+  "C4_spurious": 0.9,
+  "joint_index": 0.85
+ },
+ "margins": {
+  "F10_C2_vs_baseline": 0.2,
+  "F10_C2_vs_random": 0.1,
+  "F10_C2_vs_history": 0.05,
+  "F10_joint_vs_each": 0.1,
+  "C1_nonregression": 0.03,
+  "F10_M1000_C4_recall_nonregression": 0.03,
+  "independent_C2_nonregression": 0.03,
+  "independent_content_joint_nonregression": 0.05,
+  "independent_content_D4_nonregression": 0.05,
+  "mixed_independent_subset_index_nonregression_cues": 4,
+  "mixed_independent_subset_content_nonregression_cues": 5
+ },
+ "structural_kill": {
+  "episodes": [
+   501,
+   1000
+  ],
+  "min_mean_V": 5,
+  "min_veto_precision": 0.7,
+  "max_nonproto_predicted": 0.25,
+  "min_proto_predicted": 0.25,
+  "max_veto_episode_fraction_uncorrelated": 0.05
+ },
+ "protocol": {
+  "eligibility_min": 0.95,
+  "mean_A_1000": [
+   18.5,
+   21.5
+  ],
+  "drift_max_mv": 0.2
+ },
+ "sanity": {
+  "wrong_label_C1_strict_upper": 0.1,
+  "empty_store_responders": 0
+ },
+ "resource": {
+  "wall_seconds": 3600,
+  "grace_seconds": 600,
+  "max_simulation_processes": 4
+ },
+ "predictions": {
+  "F10_M1000_C2": [
+   0.82,
+   0.97
+  ],
+  "F10_M1000_C1_min": 0.91,
+  "F10_M1000_C4_recall_min": 0.9,
+  "F10_M1000_joint": [
+   0.75,
+   0.93
+  ],
+  "F10_M1000_C4_spurious": [
+   0.7,
+   0.97
+  ],
+  "F10_M1000_inherited_content": [
+   0.02,
+   0.4
+  ],
+  "F10_M1000_assigned_A_content": [
+   0.3,
+   0.6
+  ],
+  "mean_V_501_1000_min": 20,
+  "veto_precision_min": 0.8,
+  "proto_predicted_min": 0.5,
+  "nonproto_predicted_max": 0.1,
+  "random_drop_C2_max": 0.55,
+  "candidate_minus_history_min": 0.1,
+  "uncorrelated_delta_max": 0.02,
+  "uncorrelated_veto_episode_fraction_max": 0.05,
+  "uncorrelated_max_V": 2,
+  "mixed_independent_subset_delta_cues_max": 2,
+  "mixed_independent_subset_C4_delta_cues_max": 1,
+  "spurious50_mean_max": 6,
+  "own50_mean_tolerance": 1.0,
+  "max_prototype_out_degree_ratio_max": 0.5,
+  "most_likely_failure": "oldest-item specificity bar or late veto onset"
+ }
+}

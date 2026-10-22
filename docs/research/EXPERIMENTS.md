@@ -7,7 +7,7 @@ and checked by an independent Opus critic against the primary sources it cites (
 rules for adding an entry are in `README.md`. Entries are append-only after the experiment
 closes; corrections are appended as errata, never edited in place.
 
-Contents: P2-E1, P2-E2, P2-E3, P2-E4, P2-E5, P2-R1, P2-E6, P2-R2, P2-R2b.
+Contents: P2-E1, P2-E2, P2-E3, P2-E4, P2-E5, P2-R1, P2-E6, P2-R2, P2-R2b, P2-E7 (contracted).
 
 ## P2-E1: one-shot episodic storage by behavioural-timescale plasticity (BTSP), predeclared 2026-10-10
 
@@ -2199,3 +2199,32 @@ Source: `RESULTS-P2-R2b.md:26-31`, reproduced by the review (`findings-results.m
 **Experimenter supply remaining.** Unchanged from P2-R2: the random plateau keys, episode boundaries, eligibility timing, verbatim values and the settle/test schedule remain supplied, and the randomisation recipe (row Curveball, 10,000 trades, 100-episode blocks, chain stream keys, fixed seeds) is the experimenter's (`RESULTS-P2-R2b.md:80-82`).
 
 **Capabilities and hypotheses.** No capability is claimed; `RESEARCH-MAP.md` lists this result under reported explanation results, not in the capability table. Hypotheses updated: H-044 (alias H-R2) `supported` on three valid seeds; H-045 `refuted`; H-046 `supported` at M = 1,000; H-043 `supported` for "grouping not necessary" with its apportioning clause removed; see `HYPOTHESES.md`.
+
+
+## P2-E7: prediction-gated (error-gated) forward eligibility with a conserved flip budget (contracted 2026-10-22)
+
+| field | value |
+|---|---|
+| status | contracted (contract committed, no code yet). This entry is completed when the result is recorded; until then every number below is a prediction or a baseline quoted from the record. |
+| result label | none yet |
+| stage | Stage 1, first mechanism contract under the 2026-10-22 mandate; selected at the roadmap checkpoint of that day (`docs/research/ROADMAP.md`, checkpoint 2026-10-22; `DECISIONS.md` entry of the same day) from a ten-proposal judge panel (workflow wf_848f4c6e-5b0). Owner authority: ruling 4 of 2026-10-10 (error-correcting write family) and ruling 3 of 2026-10-12 (local-error signal, forward index next, one mechanism). |
+| dates | Draft v1 committed af04c89 (2026-10-22); independent adversarial read, verdict REVISE AND RE-REVIEW (fifteen findings, one restructure); draft v2 committed 64ff692; re-review, verdict FREEZE WITH THE LISTED FIXES (nine findings); frozen fede3c2 (2026-10-22, `docs/plant2/P2-E7-error-gated-eligibility.md`); frozen JSON `docs/plant2/P2-E7-frozen.json` in the following commit. |
+| mechanism under test | One mechanism: during each 200 ms encoding, the memory layer's spikes in ticks 0-74 are played through the frozen readout `plant2.readout.replay` (pinned call: n_ticks 75, window 75, short 50, span 75, J [2.8], g [0.3]; the feedback store as it stands before the episode's write; rec at rest; no path back to the memory layer). The predicted set G(x) is the lines with a rec spike at tick ≤ 74; the veto is V(x) = E(x) ∩ G(x); only E'(x) = E(x) \ V(x) is toggled, with p = min(1, 0.5·\|E\|/\|E'\|) (p := 0 when E' is empty), coins drawn exactly as `btsp_update` draws them so the episode is bit-identical to E3 whenever V is empty. No new parameter. Labelled proxy: mismatch- or novelty-gated plasticity (comparator view; circuit-level proxy, not CA1 physiology). |
+| contract commit | fede3c2 (full fede3c249dad7ba6237bcedcbfe498e253c3de39), `docs/plant2/P2-E7-error-gated-eligibility.md`; drafts v1/v2 kept as `P2-E7-error-gated-eligibility-DRAFT.md` (preparation provenance). |
+| implementation commit | none yet (tests first by a test-author, then implementation; the contract's test list must pass and the safety lint must show no new finding before any worker starts). |
+| results commit(s) | none yet |
+| other commits | 82956d5 (ledgers), af04c89 (roadmap checkpoint, decision entry, seed registry), 64ff692 (offline-screens contract; draft v2). |
+
+**Objective.** Does a write rule that refuses to index the parts of an experience the network already regenerates from its own memory, while holding the expected flips per plateau cell at the baseline's wherever its cap allows, remove the forward-index cross-talk on correlated items at M = 1,000 without costing recall of unrelated or old items? Hypotheses: H-060 (primary), H-055 (ruling 4's two tests: the count-matched random-drop control; the mixed-stream condition scored on its independent subset plus the oldest cohort), with H-035, H-041, H-043, H-044 and H-046 bearing.
+
+**Configuration (summary; the contract is the specification).** Inherited from P2-E6/E3/E5 byte-identical (pins split between baseline 55e16eb for the E3-era files and the freezing commit for `p2_e6.py`, `evidence.py`, `p2r1_replay.py`): J_mem 1.525, accommodation tau 10,000 ms, J_fb 2.80, g 0.3, 50 ms index and 75 ms content windows, loads 500/1,000 as a snapshot of one run, the settled test protocol, E6's bars (C1-C4 ≥ 0.90, joint ≥ 0.85) and margins (C2 ≥ baseline + 0.20 and ≥ random + 0.10; joint ≥ each + 0.10; non-regression 0.03 index / 0.05 content) plus two declared additions (C2 ≥ history_drop + 0.05; F10/1,000 C4_recall non-regression 0.03). Conditions: F10 (eight arms: baseline, candidate, random_drop, history_drop, gate_off, no_conservation, label_oracle, assigned_A_teacher), independent (baseline, candidate), mixed (odd episodes F10 exemplars, even episodes independent items from stream (seed, 36, k); baseline, candidate; scored on the independent subset in cues: kill at ≥ 4 cues index, ≥ 5 cues content), F40 (transfer, reported only). New streams 33, 34, 35, 36. Execution in three stages: the F10 candidate learns first and is kill-checked before any test phase (no engagement, contamination-driven veto, saturated teacher, no structure, false engagement on uncorrelated input); then the other arms; then a coordinator runs the tests and cross-arm checks. Resource: 60 min wall, four processes, no git during the window. Evidence through `plant2/evidence.py` with per-worker journals.
+
+**Seeds.** Development 121; held-out 122 only on a committed FEASIBILITY PASS on 121; gated 131-135 only on committed passing screens and a `gate_ready` record, under a separately frozen gate contract. One full-size attempt per seed; an INVALID screen locks the rest.
+
+**Controls.** Literal E3 baseline (its forward store must equal E3 learning; `uniform_integrity`); count-matched random drop (stream 33; fails if the error signal carries no information); history-weighted drop (stream 34, E6's counts in a control only; separates a co-occurrence-sensitive prediction from a hot-line filter); gate_off integrity arm (forward SHA-256 must equal the baseline's at both checkpoints, else INVALID); no_conservation and label_oracle and assigned_A_teacher (reported/diagnostic only); independent and mixed candidates for non-regression; E6's sanity checks; H-042 matched-state diagnostics; the own-versus-spurious latency split (B-008) on every arm; riders (R_3/R_1/size-matched-random/anti-selected stores on the baseline trajectory from gate_off's persisted counts, reported only).
+
+**Predictions.** P1-P12 as frozen in the contract (F10/1,000 candidate C2 in [0.82, 0.97], C1 ≥ 0.91, joint in [0.75, 0.93], C4_spurious in [0.70, 0.97] as the weakest; inherited content still below the bar in [0.02, 0.40]; random_drop C2 ≤ 0.55; candidate ≥ history_drop + 0.10; uncorrelated non-regression within ±0.02 and the veto on ≤ 5 % of episodes; mixed independent subset within ±2 cues; spurious50 mean ≤ 6 with own50 within ±1.0 of the baseline; integrity equalities). Most likely failure: the oldest-item specificity bar or a late veto onset.
+
+**What it cannot show.** A pass is an index result on one development seed; content at F10/1,000 is expected to stay below its bar (H-046); the random key, episode boundaries, write oracle, verbatim value and test regime remain supplied; the rule's behaviour on exact repeats is untested and deploying it on streams with repeats needs an owner ruling (familiarity deferral); the mixed condition's correction pressure is that of F10 at M = 500.
+
+**Capabilities and hypotheses.** None claimed. H-060 moves to `under_test` on the freezing commit's follow-up; H-055 is `under_test` through this contract's two ruling-4 tests.

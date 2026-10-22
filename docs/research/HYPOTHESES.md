@@ -971,17 +971,17 @@ The owner's north star (human-level learning as a horizon, never a claim; `DECIS
 **H-060** Error-gated forward eligibility reduces forward-index cross-talk
 **Statement.** During encoding, an input line is eligible for BTSP only if the reconstruction layer did not regenerate it from the memory response to the item. Prototype lines that are already predicted stop being written after the first family members. Against a random-drop control, this reduces forward-index cross-talk on correlated items, and a predeclared contrast decides between error-gated and presynaptic-load-gated eligibility.
 **Origin.** P2-E4 constructive NS8 (`docs/plant2/EVAL-after-P2-E4.md:174-190`), 2026-10-11. P2-E5 skeptic NS2 and NS8 (`review/plant2/P2-E5/results-northstar_skeptic.md:20-21, 55-65`), 2026-10-11. Owner ruling 3 (`DECISIONS.md:786-788`), 2026-10-12.
-**Status.** `proposed`
-**Confidence.** Low: untested, and the error signal starts from a contaminated feedback store.
-**Expected outcome if true.** C2 and oldest specificity reach at least 0.90 at F10/M = 1,000 with recall preserved, beating a random-drop control.
+**Status.** `under_test` (contract P2-E7 frozen at fede3c2 on 2026-10-22; `docs/plant2/P2-E7-error-gated-eligibility.md`; development seed 121 not yet run)
+**Confidence.** Low: untested, and the error signal starts from a contaminated feedback store. P2-E7's structural kill measures that contamination before any test phase.
+**Expected outcome if true.** C2 and oldest specificity reach at least 0.90 at F10/M = 1,000 with recall preserved, beating a random-drop control. P2-E7's frozen predictions: F10/1,000 candidate C2 in [0.82, 0.97], C1 ≥ 0.91, joint index in [0.75, 0.93], C4_spurious in [0.70, 0.97]; random_drop C2 ≤ 0.55; candidate C2 ≥ history_drop + 0.10.
 **Evidence for.**
 - S1 fails whatever the feedback write is: at M = 500, C2 fails on seed 23 only (174 of 200) and C4 spurious fails on seeds 23 (86 of 100) and 25 (88 of 100) (gated; `review/plant2/P2-E5/results-northstar_skeptic.md:20`).
 - P2-E5 exploration at M = 1,000 gives C2 0.465-0.495 with about 19 spurious cells per cue, 98 % of them siblings' plateau cells (exploratory, seeds 44-45; `docs/plant2/P2-E5-structured-items.md:61, 80-83`; `docs/plant2/EVAL-after-P2-E4.md:158-160`).
 **Evidence against.**
 - P2-E6 chose load first. The inherited feedback's error signal is not a reliable teacher, and adding a cleaned feedback path would "stack two unproven mechanisms" (`docs/plant2/P2-E6-load-gated-encoding.md:15-19`).
 - P2-R1's results "do not discriminate error-gated from load-gated forward eligibility" (`review/plant2/P2-R1/findings-results-methodology.md:43`).
-**Tested by.** Untested; P2-E6 tested the load-gated alternative (H-040).
-**Experiment needed.** B-002: a development seed of the P2-E6 driver's structure with the eligibility rule swapped, scored against E6's frozen bars and against E6's candidate.
+**Tested by.** P2-E7 (contracted 2026-10-22, not yet run); P2-E6 tested the load-gated alternative (H-040).
+**Experiment needed.** P2-E7 as frozen: development seed 121 under the structural kill and the E6-derived screen, with the count-matched random drop, the history-weighted drop, the gate-off integrity arm and the mixed-stream condition; held-out 122 and gated 131-135 only on committed passes.
 **Notes.** The constructive reviewer asked for the burst-gated write first, as a clean comparator (`docs/plant2/EVAL-after-P2-E4.md:174-190`).
 
 **H-061** Activity-driven pattern separation before storage
@@ -1297,4 +1297,5 @@ The recovered plant is frozen research material (AGENTS.md invariant 4). These d
 ## Changelog
 
 - 2026-10-22: File created from the hypotheses arrays of `.agent/ledger/P2-E1.json` to `P2-R2.json`, the owner hypotheses, approved directions and rejections in `owner-rulings.json`, and the diagnosed causes in `recovered-plant.json`. It has 82 entries, H-001 to H-082. H-044 carries the alias H-R2. The P2-R2b result of 2026-10-22 is recorded against H-042, H-043, H-044, H-045, H-046 and H-061.
+- 2026-10-22, after the roadmap checkpoint: H-060 `proposed` to `under_test` (contract P2-E7 frozen at fede3c2); H-055 is tested through P2-E7's two ruling-4 controls and stays at its recorded status until the result. The intro's sentence "No entry is `under_test` at this date" no longer holds: H-060 is.
 - 2026-10-22, critic pass against the same sources: added H-083 (P2-E5's withdrawn "specific but slow" and "no pass observed in simulation") and H-084 (P2-R1 question 1, the audit of committed P2-E4/E5 counts), both in the source hypothesis arrays but missing from the first draft; the file now has 84 entries. Statuses lowered: H-017 `mixed` to `proposed` (synthetic raster only), H-035 `supported` to `mixed` (the record scores its C2 range as failed), H-058 `supported` to `mixed` (predeclared C4 failed in P2-E1, passed in P2-E2). H-043's statement lost the clause that per-line load contributes beyond sibling correlation, which P2-R2b erratum 1 says the design cannot decide; H-026's statement now uses the owner's "not necessarily". H-063's note on the stabiliser ruling, H-028's note on the latency question and H-060's seed attribution were corrected. Citations were corrected to the lines that hold each number in H-001, H-003, H-008, H-010-H-013, H-015, H-016, H-020, H-022, H-023, H-027, H-029-H-031, H-033-H-037, H-040, H-042-H-046, H-048, H-049, H-052, H-056, H-058, H-063, H-068, H-072-H-076 and H-078; H-043's coin-draw figure is "713/722 episodes", one figure per seed, not "713 of 722". The README rule on `mixed` is now quoted as the README states it, with this ledger's extensions marked as its own.

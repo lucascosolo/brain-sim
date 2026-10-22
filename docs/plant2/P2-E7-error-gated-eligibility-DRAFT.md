@@ -1,4 +1,8 @@
-# P2-E7: prediction-gated (error-gated) forward eligibility with a conserved flip budget
+# P2-E7: prediction-gated (error-gated) forward eligibility with a conserved flip budget — DRAFT (superseded)
+
+Preparation closure (2026-10-22): superseded by `docs/plant2/P2-E7-error-gated-eligibility.md`,
+frozen at fede3c2. This file is preparation provenance (drafts v1 af04c89, v2 64ff692, v3 =
+the frozen text) and not an additional experiment contract.
 
 Contract, 2026-10-22. The commit that adds `docs/plant2/P2-E7-error-gated-eligibility.md`
 freezes it; append only thereafter. `docs/plant2/P2-E7-frozen.json` carries that commit's
