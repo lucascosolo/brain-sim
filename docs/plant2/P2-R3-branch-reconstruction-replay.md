@@ -150,3 +150,15 @@ change to the frozen readout's integration (ruling 6) and would need the owner's
 dendritic subunits extended to reconstruction lines (question (a)); a gated content contract
 before an index pass needs the owner to accept the reordering against ruling 3 (question (g)).
 Nothing is removed from the experimenter's supply.
+
+
+## Result (appended 2026-10-22, after the replay)
+
+COMPLETE with verified evidence: step 0 did not kill (97.8 % of the oracle's failing cues at
+1,000 fail by cross-episode summation; 100 % on gate_off), every parity check held, no replay
+kill fired. Content joint under K = 32: label_oracle 1,000 .310 → **.985** (scramble .000;
+assigned-A .985), gate_off 500 .145 → **.895**, gate_off 1,000 .005 → .345 (unbounded .495),
+candidate 1,000 .005 → .710 (reported), independent unchanged or better (.975 at 1,000),
+mixed baseline 1,000 .180 → .830 with the independent subset 34 → 95 of 95 cues. P1, P4, P7,
+P9-P12 held; P2, P3, P5, P6, P8 failed by exceeding their upper bounds. Full record:
+`docs/plant2/RESULTS-P2-R3.md`; data `bench/results/p2r3.jsonl` and `bench/results/p2r3/`.

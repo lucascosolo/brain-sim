@@ -544,9 +544,32 @@ informative fail, the ramp floor is established as the error-gate family's struc
 on this substrate, which is the information that decides between B-013 (owner question (a))
 and the content wall.
 
+### 8. Outcome of P2-R3 (2026-10-22, 23:24-23:46 UTC)
+
+Step 0 did not kill: on the oracle raster at 1,000, 135 of 138 failing content cues fail by
+intrusions and 97.8 % of the failing cues by intrusions whose active writers span several
+episodes (gate_off: 198 of 199, 100 %). The replay (`docs/plant2/RESULTS-P2-R3.md`,
+reported-only, exact): K = 32 episode-clustered branches lift content joint on the oracle
+raster at 1,000 from .310 to .985 with zero median intrusions, on the deployable gate_off at
+500 from .145 to .895, at 1,000 from .005 to .345 (index-limited; unbounded .495), on the
+candidate raster from .005 to .710, and on the mixed store from .180 to .830 with its
+independent subset at 95 of 95 cues; the per-synapse scramble regenerates nothing (.000
+everywhere), so episode clustering is the ingredient; D1 costs at most 0.045. Five
+predictions failed by exceeding their upper bounds; parity, scramble, independent and dose
+predictions held. **Reading:** the content wall at F10/1,000 is reconstruction-side
+summation, removable by a bounded branch store, and once removed content tracks the index
+(.345 / .710 / .985 for C2 .500 / .745 / .970). H-085 enters the ledger as `mixed`
+(replay-only). Consequence: the two next seed-spending contracts both wait on the owner:
+P2-E8 on question (f) (acceptance file), and a fresh-seed content contract from P2-R3's rule
+on question (g) (ordering against ruling 3) with question (a) extended to reconstruction
+lines (ruling 6). Independent results review of P2-R3 pending.
+
 ## Priority order (current)
 
-1. Screens F and E′: done (section 7); P2-E8 contract drafting authorised.
+1. Screens F and E′: done (section 7); P2-E8 contract frozen, awaiting the owner's
+   acceptance of question (f) before seed 123.
+1b. P2-R3: done (section 8); a fresh-seed content contract from its rule is drafted next and
+   waits on questions (g) and (a).
 2. P2-R3 branch-reconstruction replay (zero seed; decides whether content at 1,000 is
    reconstruction-side summation).
 3. P2-E8 graded error weighting on seed 123, if screen F survives and the owner does not

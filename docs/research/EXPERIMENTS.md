@@ -7,7 +7,7 @@ and checked by an independent Opus critic against the primary sources it cites (
 rules for adding an entry are in `README.md`. Entries are append-only after the experiment
 closes; corrections are appended as errata, never edited in place.
 
-Contents: P2-E1, P2-E2, P2-E3, P2-E4, P2-E5, P2-R1, P2-E6, P2-R2, P2-R2b, P2-E7 (contracted), OFFLINE-SCREENS-20261022 (offline analyses).
+Contents: P2-E1, P2-E2, P2-E3, P2-E4, P2-E5, P2-R1, P2-E6, P2-R2, P2-R2b, P2-E7, OFFLINE-SCREENS-20261022 (offline analyses), P2-R3 (replay).
 
 ## P2-E1: one-shot episodic storage by behavioural-timescale plasticity (BTSP), predeclared 2026-10-10
 
@@ -2263,3 +2263,30 @@ Source: `RESULTS-P2-R2b.md:26-31`, reproduced by the review (`findings-results.m
 **Conclusions.** The pre-screen's warning stands beside P2-E7's structural check; the branch screen's separation stands beside the unmeasured branch firing point; B-008 does not deserve a standalone contract; the saturation counts the judges quoted are now recorded.
 
 **Capabilities and hypotheses.** None claimed. H-060 gains offline evidence against (the warning); B-008 closed; B-013's cheapest test done.
+
+
+## P2-R3: episode-clustered reconstruction store with bounded line-local branches, as an exact reported replay (B-015; 2026-10-22)
+
+| field | value |
+|---|---|
+| status | complete (replay on the persisted P2-E7 seed-121 rasters; verified evidence; independent results review pending) |
+| result label | reported-only (exact replay), development seed 121. Step 0: content failure at 1,000 is cross-episode writer summation (oracle 0.978, gate_off 1.000 of failing cues). Replay: K = 32 content joint label_oracle 1,000 .310 → .985, gate_off 500 .145 → .895, gate_off 1,000 .005 → .345, candidate 1,000 .005 → .710 (reported), mixed baseline 1,000 .180 → .830; scramble .000 everywhere; P1, P4, P7, P9-P12 held, P2, P3, P5, P6, P8 under-predicted (`docs/plant2/RESULTS-P2-R3.md`). Credits nothing. |
+| stage | Roadmap checkpoint 2, selected now (zero seed); ranked first by both judges of the checkpoint-2 panel. |
+| dates | Contract frozen 2c59cfa (2026-10-22); tests 04050e4; module 0195131, input fix 62369c5; step 0 23:24-23:25 UTC; replay 23:26-23:46 UTC; results 2c5b8d0 and the following commit. |
+| mechanism under test | Replayed, not deployed: each reconstruction line holds K = 32 writer sets filled round-robin by eligible episode; each (line, branch) is an LIF compartment under the frozen readout arithmetic; the line spikes when any branch spikes. K = 32 from M·a/m = 25 by B-013's power-of-two rule; K = 1 is the frozen readout (parity). Labelled proxy: branch-clustered plasticity on the reconstruction side. |
+| contract commit | 2c59cfa, `docs/plant2/P2-R3-branch-reconstruction-replay.md` (append-only; Result appended after the run) |
+| implementation commit | 0195131 (`analysis/p2r3_branch_rec.py`, 644 lines; `plant2/tests/test_p2r3.py`, 17 tests), 62369c5 (input descriptors from the P2-E7 load records) |
+| results commit(s) | 2c5b8d0 (`bench/results/p2r3.jsonl`, `bench/results/p2r3/`; the 159 MB gate_off step-0 table relocated to the cache with an `artifact_relocated` record), results document in the following commit |
+| other commits | — |
+
+**Objective.** Decide whether the content wall at F10/1,000 is cross-episode writer summation on the reconstruction lines (H-085, graduating B-015; bearing on H-036, H-046, H-049, H-052, H-057) and what a bounded episode-clustered store buys, by an exact replay on the persisted seed-121 rasters of gate_off (deployable), label_oracle (clean index, diagnostic), candidate (stacking diagnostic, reported), independent and mixed.
+
+**Controls.** K = 1 parity (8 of 8 reproduce the persisted content rows and feedback SHA-256); per-synapse scramble (episode clustering destroyed, writer multiset preserved: .000 everywhere); assigned-A branch store (writer contamination separated from summation: .985 on the oracle, .925 on gate_off at 1,000); dose K = 8 and unbounded (reported: non-decreasing in K everywhere); independent and mixed non-regression (independent .995/.975; mixed independent subset 95 of 95); novel cues (0 lines everywhere); index identity.
+
+**Conclusions.** On this seed's rasters, content at F10/1,000 is limited by summation across episodes on the reconstruction lines, which episode-clustered branches remove where the index is clean (oracle .985) and partly where it is not (candidate .710, gate_off .345): content tracks the index once summation is removed. Episode clustering, not splitting, is the ingredient (scramble .000). At the deployable M = 500 the store nearly clears the bar (.895). D1 costs at most 0.045.
+
+**Limitations.** A replay on one development seed; nothing on a fresh seed; no capability; deployment needs owner rulings (g) and (a) extended to reconstruction lines; K = 32 past M = 1,000 untested (bounded forgetting); the oracle substrate uses experimenter labels and is diagnostic only.
+
+**Failures and errata.** None in the result. Two first-attempt step-0 rows marked ABSENT (input-discovery defect, fixed before any artifact); one oversized table relocated.
+
+**Capabilities and hypotheses.** None claimed. H-085 enters `HYPOTHESES.md` as `mixed` (supported in the replay on three substrates, below the bar on the deployable substrate at 1,000; replay-only, never `supported`); H-046 narrowed; H-036, H-052, H-057 gain evidence.

@@ -732,8 +732,9 @@ alias: H-R2
 - P2-R2b's P4 held. Inherited content goes from .000 to .065 and from .000 to .070; assigned-A from .175 to .315 and from .110 to .295 (reported-only; `docs/plant2/RESULTS-P2-R2b.md:26-40, 59`).
 **Evidence against.**
 - At M = 500, index gains do carry content. The E6 candidate's inherited content joint at F10/500 is .785 against a baseline .120 (`docs/plant2/RESULTS-P2-E6.md:14-15`). P2-R2b's null inherited content goes from .115 to .960 and from .140 to .965. P2-R2 seed 103's null reads .980 (exploratory and reported-only; `docs/plant2/RESULTS-P2-E6.md:51-53`; `docs/plant2/RESULTS-P2-R2b.md:42-46`; `docs/plant2/RESULTS-P2-R2.md:92-101`).
-**Tested by.** P2-E6, P2-R2, P2-R2b
-**Experiment needed.** Settled at M = 1,000; see `docs/plant2/RESULTS-P2-R2b.md`. Content-side directions are H-047 and H-050.
+**Evidence (added 2026-10-22, P2-R3 exact replay on seed 121, reported-only).** The reading "index gains do not carry content at 1,000" holds for the point reconstruction store and is explained: every content failure but a handful at 1,000 is an intrusion failure by cross-episode writer summation (step 0: 97.8 % on the oracle, 100 % on gate_off). With K = 32 episode-clustered branches the content follows the index: gate_off (C2 .500) .005 → .345, candidate (C2 .745) .005 → .710, oracle (C2 .970) .310 → .985 (`docs/plant2/RESULTS-P2-R3.md`). Content at 1,000 is index-limited through the point store and summation-limited through the readout; H-085 carries the second half.
+**Tested by.** P2-E6, P2-R2, P2-R2b, P2-R3 (replay)
+**Experiment needed.** Settled at M = 1,000 for the point store; see `docs/plant2/RESULTS-P2-R2b.md`. Content-side directions are H-047, H-050 and H-085.
 **Notes.** P2-R2b erratum 4: the assigned-A changes at M = 1,000 carry the label MATERIAL GAIN (+0.140, +0.185) (`docs/plant2/RESULTS-P2-R2b.md:109-111`).
 
 **H-083** Online, the structured-item index is specific but slow, and no pass was observed in simulation

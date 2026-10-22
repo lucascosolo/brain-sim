@@ -343,6 +343,9 @@ parity gate, a per-synapse scramble control, the assigned-A store under the same
 arms K = 8 and unbounded (reported only), replayed exactly on the persisted P2-E7 seed-121
 rasters of gate_off, label_oracle, candidate (reported), independent and mixed, preceded by
 an intrusion-span decomposition. Contract: `docs/plant2/P2-R3-branch-reconstruction-replay.md`.
+Replay done 2026-10-22 (`docs/plant2/RESULTS-P2-R3.md`, reported-only): oracle 1,000 .310 →
+.985, gate_off 500 .145 → .895, gate_off 1,000 .005 → .345, scramble .000; H-085 `mixed`.
+Next: a fresh-seed content contract, after owner questions (g) and (a).
 The sketch below is kept as written.
 
 **Origin.** Contrarian secondary of the 2026-10-22 panel (sum 61 of 90, third overall; the
