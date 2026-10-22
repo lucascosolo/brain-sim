@@ -452,3 +452,26 @@ deploying the rule on streams with repeats requires an owner ruling on that defe
                  "spurious50_mean_max": 6, "own50_mean_tolerance": 1.0, "max_prototype_out_degree_ratio_max": 0.5,
                  "most_likely_failure": "oldest-item specificity bar or late veto onset"}}
 ```
+
+
+## Notes appended before the development run (2026-10-22, after the driver's architecture review)
+
+Append-only clarifications; no bar, margin, threshold or prediction changes.
+
+1. **False-engagement windows.** The structural-kill table's header window applies: the
+   independent and mixed false-engagement rules read `gate.veto_episode_fraction_501_1000`
+   and `gate.veto_episode_fraction_independent_subset_501_1000` (threshold 0.05 unchanged);
+   the all-episode fractions are reported beside them, and each `structural_check` record
+   names the deciding field (`kill_fields`) and window (`kill_window`).
+2. **Pins.** `plant2/experiments/p2_e7_error_gated.py` and `analysis/p2e7_riders.py` did not
+   exist at the freezing commit; they are pinned to commit bb22d05 (bb22d05138befeee24a275aff1756ed37c3ee7bb), which adds them,
+   and `docs/plant2/P2-E7-frozen.json` to its blob at e38a6b0. The run's source manifest
+   records every comparison (pin groups 55e16eb, contract, frozen_json, self).
+3. **Resource window.** Sixty minutes run from the first process of an attempt, one attempt
+   per seed; the window file is keyed by attempt and its path is recorded in the
+   `resource_window` record. Full-size runs refuse to start unless `OPENBLAS_NUM_THREADS` is
+   "1" (recorded in `seed_started`) and always enforce the structural kills.
+4. **Record-key names.** `sanity_load` carries `wrong_label` and `empty_store` as the field
+   table names them; every gated arm's `structural_check` carries `gate.V_sequence`;
+   `no_conservation` logs p = 0 on an episode with E' empty; the screen tags an F10/1,000
+   candidate C2 in [0.70, 0.90) with no kill as `informative`.
