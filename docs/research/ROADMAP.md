@@ -158,11 +158,13 @@ What the record says about where the cross-talk comes from (`HYPOTHESES.md` sect
 What is not known: whether a retrieval-side nonlinearity (B-001, B-013), an encoding-side
 error signal (B-002), a population brake (B-003) or a learned pre-storage separation (B-004
 learned form) removes the residual; no experiment has run any of them. No ablation isolates
-the cue-line term of H-003 at M = 1,000. No record measures the pre-screen the skeptic judge
-asked for (rebuilding the feedback store episode by episode and scoring the predicted set's
-prototype fraction): the P2-R2b artifacts persist per-episode coin counts and degrees, not
-the per-episode responder sets, so that measurement is folded into the contract's structural
-kill on the development seed.
+the cue-line term of H-003 at M = 1,000. No record yet measures the pre-screen the skeptic
+judge asked for (rebuilding the feedback store episode by episode and scoring the predicted
+set's prototype fraction). The P2-R2b raw learned checkpoints under the cache do persist the
+per-episode `items`, `A`, `E` and `R` sets (checked 2026-10-22), so that pre-screen is
+feasible without a seed; it is contracted as screen A of
+`docs/plant2/OFFLINE-SCREENS-20261022.md`, labelled proxy and advisory, and P2-E7's
+structural kill measures the exact quantity on the development seed.
 
 ### 3. Candidate mechanisms
 
@@ -333,3 +335,7 @@ deferral; (e) confirmation of the F = 10 reading of "ten canonical neuron famili
 
 - 2026-10-22: first version, written at the checkpoint after P2-R2b. Priority order as
   above; no previous order.
+- 2026-10-22, later the same day: corrected the evidence-review statement that per-episode
+  responder sets are not persisted (they are, in the P2-R2b raw learned checkpoints); the
+  four zero-seed screens are contracted in `docs/plant2/OFFLINE-SCREENS-20261022.md` and run
+  in parallel with the P2-E7 contract review. Priority order unchanged.
