@@ -923,3 +923,72 @@ open).
 **Revisit when** the owner rules on the "ten families" reading, or when the ledger's
 status vocabulary proves too coarse for a result (then extend the vocabulary in the README,
 never reinterpret an existing label).
+
+
+## 2026-10-22: roadmap checkpoint after P2-R2b; P2-E7 error-gated forward eligibility selected; seed registry; owner questions bundled
+
+**Provenance.** The first checkpoint under the 2026-10-22 mandate, run after P2-R2b closed
+(COMPLETE on seeds 105/106, independent recomputation, errata; `docs/plant2/RESULTS-P2-R2b.md`).
+The three ledgers were built first (`docs/research/`, commit `82956d5`). A judge panel of five
+independent Opus proposers (circuit biology, theory, engineering, supply reduction,
+contrarian) and three Opus judges (skeptic, constructive, owner-intent) scored ten proposals;
+the full record is `docs/research/ROADMAP.md`, checkpoint 2026-10-22.
+
+**Decisions.**
+1. The most consequential limitation is forward-index cross-talk on F10 items at M = 1,000
+   (C2 0.435-0.515 gated; .895 after P2-E6 on one seed; .720-.755 under the exact-degree null
+   on three valid seeds). Ruling 3 of 2026-10-12 names it; P2-R2b's replication satisfies
+   the capability review's condition for choosing a co-occurrence-sensitive mechanism, and by
+   P2-R2b erratum 5 that condition informs this decision rather than authorising it.
+2. The next contract is **P2-E7: prediction-gated (error-gated) forward eligibility with a
+   conserved flip budget** (B-002, H-060; the owner-approved error-correcting family of
+   2026-10-10 ruling 4; the local-error signal of 2026-10-12 ruling 3). One mechanism, no new
+   parameter, no retuning of P2-E6 (E6's history counts appear only inside a control, never
+   in the candidate). The engineering and supply-reduction proposals are merged into one
+   contract with these mandatory controls: inherited baseline; count-matched random drop
+   (stream 33); history-weighted drop (stream 34, control only); gate-off integrity arm whose
+   forward store must equal the baseline's byte for byte; reported no-conservation arm;
+   label-oracle comparator (diagnostic only); independent-input baseline and candidate for
+   non-regression; the H-042 matched-state diagnostics; P2-E6's sanity checks. A structural
+   kill runs before any test phase. The contract is committed before any code, read
+   adversarially before freezing, and the feasibility bars are copied from
+   `docs/plant2/P2-E6-frozen.json` verbatim.
+3. **Seed registry.** P2-E7: development 121, held-out 122, gated 131-135. Branch-segregated
+   dendritic storage (B-013), if the owner admits it: development 107, held-out 108, gated
+   141-145. Reported replays that need one fresh independent raster: 109. Spent or reserved
+   before today: 0-25, 42-45, 90, 97, 99, 101-106, and 102 plus 111-115 (P2-E6, unrun). The
+   panel's proposals claimed 107, 108, 121 and 131-135 two or three times each; this entry
+   assigns each once. No seed is shared between contracts.
+4. P2-E7's baseline-arm raster carries, as reported-only passive diagnostics that change no
+   raster and score no outcome, the R_3/R_1/size-matched-random/anti-selected stores (a
+   fresh-seed replication of P2-R1 at no simulation cost) and, if its replay is ready, the
+   episode-clustered reconstruction store. Per-episode continuation counts and the R, A and
+   E sets are persisted through `plant2/evidence.py` so later replays need no new seed.
+5. Zero-seed offline records go into `bench/results/` through `plant2/evidence.py` before any
+   contract cites them: the branch static screen on the P2-R2b artifacts with its stream-3
+   coin-parity gate; the own-versus-spurious first-spike latency split (B-008's cheapest
+   test); the regeneration-saturation diagnostic on `bench/results/p2e6`. Until recorded,
+   the panel's and judges' offline numbers are quoted only as unrecorded computations.
+6. `docs/research/ROADMAP.md` now exists (the constructive judge noted that `BACKLOG.md` and
+   decision 2 of the previous entry cited it before it was written).
+
+**Alternatives rejected.** Branch-segregated dendritic storage first (second-ranked, 59-60 of
+90; an orthogonal attack on the same limitation, but it needs a ruling on whether a K-branch
+cell is the same system or memory-only scaling, and it is not inside ruling 3's named
+signals). Memory-layer E%-max inhibition (H-008 records that global feedback inhibition
+cannot satisfy C3; ruling 2 allows it only as a stabiliser). Deployed R_3 (ruling 1; content
+is index-limited at 1,000 by H-046). Mismatch-gated plateau initiation (blocked on the
+familiarity deferral). Non-plateau responder depression (its own author predicts it misses
+the bar; kept as the in-scope fallback). Running two mechanism contracts on one development
+seed (different selection histories; one mechanism per contract).
+
+**Questions for the owner (none blocks P2-E7).** (a) Does dendritic-subunit storage count as
+the same 4,000-cell Stage 1 system under ruling 3, or as memory-only scaling under the
+capacity rule (`DECISIONS.md:319-325`)? (b) May R_3 move from reported replay to a gated
+contract? (c) May memory-layer inhibition be used standalone rather than as a recurrence
+stabiliser? (d) Does the familiarity deferral still block mismatch-gated plateau initiation?
+(e) Is the F = 10 reading of "ten canonical neuron families" correct?
+
+**Revisit when** P2-E7's development screen returns (pass: held-out 122, then the gated
+contract; structural or kill-rule death: classify the failure and move to B-013 if admitted,
+else to responder depression), or when the owner answers any of (a)-(e).

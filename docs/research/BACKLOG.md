@@ -11,7 +11,14 @@ proxy is ours.
 Status values: `open`, `graduated` (to an H-id), `closed` (with reason), `blocked` (on an
 owner ruling or a prerequisite).
 
-Last reviewed 2026-10-22. See `ROADMAP.md` for which items are under active consideration.
+Last reviewed 2026-10-22, after the first roadmap checkpoint (judge panel wf_848f4c6e-5b0).
+See `ROADMAP.md` for which items are under active consideration. Panel cross-references added
+that day: B-002 graduated to the P2-E7 contract; B-013, B-014 and B-015 added from the panel;
+B-003 (the panel's E%-max variant returns only as a recurrence stabiliser, H-008's C3 warning
+stands), B-006 (mismatch-gated plateau initiation needs the familiarity ruling), B-008 (the
+own-versus-spurious first-spike latency split on persisted `index_cues` rows is its cheapest
+test and rides every P2-E7 arm) and B-011 (the passive R_3 store rides P2-E7's baseline-arm
+raster as a reported diagnostic) are updated by reference here rather than rewritten.
 
 ## B-001 Conjunctive dendritic gating of memory cells (two-or-more-compartment AND) — `open`
 
@@ -40,7 +47,15 @@ re-simulate the memory layer with compartmentalised cells on the identical input
 score C1/C2 at M = 500/1,000 against the one-compartment baseline and a control with the
 same total threshold but no conjunction. One development seed; under an hour.
 
-## B-002 Mismatch-gated (error-gated) forward eligibility — `open`, owner-approved family
+## B-002 Mismatch-gated (error-gated) forward eligibility — `graduated` (H-060; contract P2-E7 selected 2026-10-22)
+
+**Graduation note (2026-10-22).** Selected at the first roadmap checkpoint as the next
+contract, P2-E7, merging the panel's engineering and supply-reduction versions: the
+prediction set is read from the frozen readout arithmetic on the encoding-phase memory
+raster, the veto removes predicted eligible lines, the flip budget is conserved, and the
+controls are the count-matched random drop, the history-weighted drop (E6's counts, control
+only), a gate-off integrity arm and a label-oracle comparator. See `ROADMAP.md` and the
+2026-10-22 `DECISIONS.md` entry. The sketch below is kept as written.
 
 **Limitation addressed.** The same cross-talk, at its source: hot lines accumulate synapses
 into every family member's assembly. P2-E6 bounded this with a presynaptic-history budget and
@@ -246,3 +261,85 @@ homeostat (SPEC 8.13); here the opponent is the toggle itself, which is a differ
 **Why it might fail.** Protecting old synapses is exactly what makes hot-line fan-out
 permanent; it works against B-002 and B-007. Needs the capacity experiment (B-010) to measure
 anything.
+
+## B-013 Branch-segregated (episode-clustered) dendritic storage with an OR soma — `blocked` (owner question (a) of the 2026-10-22 checkpoint)
+
+**Origin.** The circuit-biology, theory and contrarian primaries of the 2026-10-22 judge
+panel converged on one mechanism (`ROADMAP.md`, checkpoint 2026-10-22, candidate 2; panel
+sum 55-60 of 90, second behind P2-E7). Distinct from B-001: B-001 is a retrieval-side
+conjunction (the soma fires only when two or more compartments agree); this is a storage-side
+segregation (each plateau writes onto one fresh branch; the soma fires when any single branch
+crosses the frozen threshold).
+
+**Limitation addressed.** The same forward-index cross-talk as B-001 and B-002, located by
+the panel in the point-neuron summation: a memory cell holds about five items at f_q 0.005
+and M = 1,000 and sums a half cue's overlap with all of them.
+
+**Sketch.** Each memory cell gets K = 8 branch units (the smallest power of two at or above
+the expected plateaus per cell at M = 1,000), each an LIF with the frozen memory constants
+and its own accommodation. The inp→branch synapses are binary at J = 1.525 mV. Each plateau
+writes item x onto branch c_i mod K, where c_i is a cell-local round-robin counter; the BTSP
+toggle, eligibility and coin order are unchanged, so plateau sets and coin streams stay
+aligned with the point-cell arm. A branch spike drives the soma through a fixed coupling of
+(v_th − v_rest) + 5 = 25 mV at delay 1, so the soma is an OR over branches. Index scoring,
+R(x), the feedback write and the readout are unchanged. Labelled proxy: dendritic branches as
+independent nonlinear storage subunits with branch-restricted plasticity (Poirazi & Mel 2001;
+Losonczy, Makara & Magee 2008); not a claim that CA1 plateaus are branch-restricted. A pass is
+a per-soma storage-capacity and specificity mechanism, not pattern separation and not a
+supply reduction.
+
+**Controls the panel named.** A dilution-equivalence control (32,000 point cells at f_q/8,
+unpooled) so a pass is labelled "per-integrator episode load" if it matches; a per-synapse
+branch-scrambled control; a linear-dendrite union-store point control (same synapse set,
+point integration), which can fail; a B = 1 twin whose forward store must equal E3's sha256;
+a reported fixed-threshold-branch arm; a reported K = 4 dose arm; a stream-3 coin-rebuild
+integrity gate as a precondition for citing any offline screen.
+
+**Why it might fail.** Branches differ from point cells in noise, not in mean offset (per-
+branch accommodation cancels each branch's background), so the static count's separation may
+not survive the branch firing curve; the constructive judge's rerun shows the non-own count
+at 0.76 for ≥ 12 synapses, 10.1 at ≥ 10 and 32.29 at ≥ 9 (offline, judge-computed,
+unrecorded). An unbounded-branch variant conflicts with bounded forgetting and is not run.
+
+**Cheapest test.** Zero-seed: reproduce the proposer's static screen on the persisted P2-R2b
+ORIGINAL artifacts (point 91.89/86.94 non-own cells per cue at ≥ 12 cue synapses against
+branch 0.76/0.58 on seeds 105/106; own 18.94 → 18.77; offline, proposer-computed, unrecorded)
+with stream-(seed,3) coins and bit equality against the persisted forward keys, reporting the
+count at thresholds 9 through 14; append it as an offline record. Then, if the owner admits
+the mechanism, one development seed (107, reserved) under its own contract.
+
+## B-014 Non-plateau responder depression (false-positive correction on the forward store) — `open`
+
+**Origin.** Theory secondary of the 2026-10-22 panel (sum 56 of 90).
+
+**Sketch.** During encoding, a memory cell that responds to the item without a plateau has
+its active cue synapses depressed (an Artola-Brocher-Singer-style rule: moderate depolarisation
+depresses, plateau potentiates), so the synapses that made it a false positive are removed.
+Labelled proxy for depolarisation-dependent LTD. The key remains the teacher of what counts
+as "correct", which the owner-intent judge flagged as a key-as-teacher conflict.
+
+**Why it might fail.** Its author predicts it misses the bar; depression on reused cells can
+cost oldest recall; the judges found its offset arithmetic wrong (the 4.70 mV write/read gap
+is 3.08 synapses at J 1.525, not 3.85).
+
+**Cheapest test.** The in-scope local-error fallback if P2-E7 dies and B-013 is not admitted:
+one development seed under its own contract, E6 bars verbatim.
+
+## B-015 Episode-clustered reconstruction store (rec-line dendritic branches per episode) — `open`, reported replay first
+
+**Origin.** Contrarian secondary of the 2026-10-22 panel (sum 61 of 90, third overall; the
+only proposal aimed at H-046).
+
+**Sketch.** Each continuation write puts R(x)'s synapses onto a fresh dendritic branch of
+every eligible rec line instead of the single Willshaw matrix; at readout a rec line
+regenerates when one stored episode's writers dominate on one branch, so contamination from
+other episodes' writers no longer sums. Labelled proxy: branch-clustered plasticity on the
+reconstruction side. Reported replay first on persisted rasters (P2-R2b artifacts and
+P2-E7's baseline-arm raster), with a parity gate (the one-branch form must equal the frozen
+readout bit for bit) and a shuffled-compartment control.
+
+**Why it might fail.** Branch count per rec line grows with load (bounded forgetting);
+the writer set R(x) is itself contaminated at F10, so clustering contaminated writers may
+regenerate siblings' content on their own branches.
+
+**Cheapest test.** The exact replay on the persisted P2-R2b artifacts; no seed.
