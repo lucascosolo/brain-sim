@@ -292,27 +292,40 @@ def _unpack(z, name):
     return [flat[off[i]:off[i + 1]].astype(np.int64) for i in range(len(off) - 1)]
 
 
-def _portable_descriptor(cond, arm, M, attempt):
-    path = E7_DIR / f"seed{SEED}-{cond}-{arm}.journal.jsonl"
+E7_RESULTS = record.REPO / "bench/results/p2e7.jsonl"
+
+
+def _input_descriptors(cond, arm, M, attempt):
+    """Portable JSON, test NPZ and state NPZ descriptors from the P2-E7 load record; the coordinator journal
+    supplies the portable descriptor only when no load record exists."""
+    for line in E7_RESULTS.read_text().splitlines():
+        r = json.loads(line) if line.strip() else {}
+        ld = r.get("load")
+        if (r.get("kind") == "load" and r.get("attempt") == attempt and isinstance(ld, dict)
+                and (ld.get("condition"), ld.get("arm"), ld.get("M")) == (cond, arm, M)):
+            return dict(portable=ld["portable"], raw=ld["raw"], state=ld["state"], source="load_record")
     name = f"{attempt}-{cond}-{arm}-M{M}.json"
+    path = E7_DIR / f"seed{SEED}-coordinator.journal.jsonl"
     for r in evidence.verify_journal(path):
         if r.get("kind") == "artifact_written" and r.get("name") == name:
-            return r["descriptor"]
-    raise evidence.EvidenceError(f"{name}: no descriptor in {path.name}")
+            portable = json.loads(evidence.verify_artifact(r["descriptor"]).decode())
+            return dict(portable=r["descriptor"], raw=portable["raw"], state=portable["state"],
+                        source="coordinator_journal")
+    raise evidence.EvidenceError(f"{name}: no load record and no descriptor in {path.name}")
 
 
 def load_inputs(cond, arm, M, attempt):
     """Verified inputs of one substrate and load; raises on anything absent or unverifiable."""
-    pdesc = _portable_descriptor(cond, arm, M, attempt)
-    portable = json.loads(evidence.verify_artifact(pdesc).decode())
-    state = evidence.load_npz_artifact(portable["state"])
-    test = evidence.load_npz_artifact(portable["raw"])
+    descs = _input_descriptors(cond, arm, M, attempt)
+    portable = json.loads(evidence.verify_artifact(descs["portable"]).decode())
+    state = evidence.load_npz_artifact(descs["state"])
+    test = evidence.load_npz_artifact(descs["raw"])
     smeta, tmeta = json.loads(str(state["metadata_json"])), json.loads(str(test["metadata_json"]))
     raster = dict(zip(test["raster_ticks"].tolist(), _unpack(test, "raster_cells")))
     parts = {k: _unpack(test, "cue_" + k) for k in ("item", "cue", "missing", "other_missing")}
     cues = [dict(kind=str(test["cue_kind"][i]), index=int(test["cue_index"][i]), onset=int(test["cue_onset"][i]),
                  **{k: parts[k][i] for k in parts}) for i in range(len(test["cue_kind"]))]
-    return dict(portable=portable, inputs=dict(portable=pdesc, state=portable["state"], raw=portable["raw"]),
+    return dict(portable=portable, inputs=dict(descs, verified=True),
                 R=_unpack(state, "R"), E=_unpack(state, "E"), A=_unpack(state, "A"),
                 feedback_keys=state["feedback_keys"], plateau_keys=state["plateau_keys"],
                 labels=smeta.get("labels"), cfg=tmeta["cfg"], raster=raster, n_ticks=tmeta["n_ticks"], cues=cues)
@@ -378,8 +391,17 @@ def _append(rec):
 
 
 def _put(journal, name, obj):
-    desc = evidence.write_json_artifact(EVIDENCE / name, obj)
-    journal.append(dict(kind="artifact_written", name=name, descriptor=desc))
+    """Exclusive create; a name taken by an earlier attempt gets a rerun suffix, recorded in the descriptor."""
+    stem, rerun = name[:-len(".json")], 0
+    while True:
+        final = name if rerun == 0 else f"{stem}.rerun{rerun}.json"
+        try:
+            desc = evidence.write_json_artifact(EVIDENCE / final, obj)
+            break
+        except FileExistsError:
+            rerun += 1
+    desc = dict(desc, rerun=rerun)
+    journal.append(dict(kind="artifact_written", name=final, descriptor=desc))
     return desc
 
 
@@ -468,7 +490,7 @@ def step0_one(cond, arm, M, journal, manifest, attempt, log):
         kill = bool(frac is None or frac < 0.5)
     name = f"{attempt}-{cond}-{arm}-M{M}-step0.json"
     desc = _put(journal, name, dict(summary=summary, tables=tables))
-    manifest.add(name, desc)
+    manifest.add(Path(desc["path"]).name, desc)
     _append(dict(kind="step0", status="COMPLETE", condition=cond, arm=arm, M=M, summary=summary, kill=kill,
                  artifact=desc, inputs=d["inputs"], source=_source()))
     log(f"step0 {cond}/{arm}/M{M} inherited fraction_summation={summary['inherited']['fraction_summation']} kill={kill}")
@@ -530,7 +552,7 @@ def run_one(cond, arm, role, M, journal, manifest, attempt, only, log):
         name = f"{attempt}-{cond}-{arm}-M{M}-{variant}.json"
         desc = _put(journal, name, dict(variant=variant, mode=mode, K=K, writers=side,
                                         content=content_table(res, lat)))
-        manifest.add(name, desc)
+        manifest.add(Path(desc["path"]).name, desc)
         _append(dict(kind="replay", status="COMPLETE", condition=cond, arm=arm, M=M, role=role, variant=variant,
                      mode=mode, K=K, writers=side, summary=summary, artifact=desc, inputs=d["inputs"],
                      source=_source()))
