@@ -80,7 +80,7 @@ def test_csr_by_memory_cell_lists_every_line_branch_pair_of_its_writes():
     expect = {j_b: s.writers(*j_b) for j_b in [(0, 0), (0, 1), (1, 0), (1, 1)]}
     for c in range(5):
         assert got[c] == {jb for jb, w in expect.items() if c in w}
-    assert got[3] == {(0, 0), (0, 1), (1, 0)}
+    assert got[3] == {(0, 0), (0, 1), (1, 0), (1, 1)}
 
 
 def _scramble_inputs():
