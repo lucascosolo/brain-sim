@@ -1302,8 +1302,44 @@ The recovered plant is frozen research material (AGENTS.md invariant 4). These d
 **Experiment needed.** Settled for the design properties; see P2-E1.
 **Notes.** Cause (3) returns in another form on correlated items (H-035). H-083 and H-084 sit in section 4 by theme but were numbered after this entry.
 
+## 10. Added after the roadmap checkpoints of 2026-10-22
+
+**H-085** At F10 the content failure is cross-episode writer summation on the reconstruction lines, which a bounded episode-clustered store removes without changing the writers
+**Statement.** A later sibling's responder set R(y) contributes a few of an earlier item q's cells to each of q's prototype lines; summed over the roughly forty sibling episodes that write a prototype line, those contributions regenerate the line at q's cue as an intrusion. Clustering each episode's writers on one of K = 32 line-local branches (K from M·a/m = 25 by the power-of-two rule), each an LIF compartment under the frozen readout arithmetic with the line spiking when any branch spikes, removes the summation and the intrusions without changing which cells write.
+**Origin.** B-015 (contrarian secondary of the checkpoint-1 panel, 2026-10-22), restated in its bounded form by the contrarian primary of the checkpoint-2 panel and ranked first by both judges; contract `docs/plant2/P2-R3-branch-reconstruction-replay.md` (2c59cfa).
+**Status.** `mixed` (replay-only, never `supported`: supported in the exact replay on the oracle, candidate and mixed substrates and at the deployable M = 500; below the bar on the deployable substrate at M = 1,000, where the index limits it)
+**Confidence.** High that summation is the mechanism of the content failure on seed 121 (step 0 and the scramble control); medium that a deployed branch store would behave as the replay on the three substrates where the feedback store never feeds back; untested on fresh seeds.
+**Expected outcome if true.** Step 0 classifies the failing cues as multi-episode intrusion failures; K = 32 raises the content joint where the index is clean and leaves it index-limited where it is not; the per-synapse scramble does not.
+**Evidence for.**
+- Step 0: oracle 1,000, 138 failing cues, 135 by intrusions, 0.978 by cross-episode summation; gate_off 1,000, 199 failing, 198 by intrusions, 1.000; D1 ≥ .95 everywhere (reported-only, exact replay; `docs/plant2/RESULTS-P2-R3.md`).
+- K = 32: oracle 1,000 .310 → .985 (intrusions median 18.5 → 0); gate_off 500 .145 → .895; candidate 1,000 .005 → .710; mixed baseline 1,000 .180 → .830 with the independent subset 34 → 95 of 95 cues; independent unchanged or better; D1 drop ≤ 0.045 (reported-only).
+- The per-synapse scramble regenerates nothing (joint and D1 .000 on every substrate): episode clustering, not splitting, is the ingredient. The assigned-A branch store reaches .985 on the oracle and .925 on gate_off at 1,000.
+- Dose non-decreasing in K on every substrate (K = 8 .055, K = 32 .345, unbounded .495 on gate_off 1,000).
+**Evidence against.**
+- On the deployable substrate at 1,000 the store reaches .345 (unbounded .495): the index still limits content there, and the bounded store shares branches once prototype lines see about forty write events.
+- Nothing on a fresh seed; no deployed run; the oracle substrate uses experimenter labels.
+**Tested by.** P2-R3 (exact replay, 2026-10-22).
+**Experiment needed.** A fresh-seed content contract with the literal E3 learner and the branch readout, scored at F10/500 and on independent and mixed inputs with the index scored separately, after the owner rules on ordering against ruling 3 (question (g)) and on dendritic subunits for reconstruction lines (question (a) extended); and K past M = 1,000 (bounded forgetting).
+**Notes.** The replay is the exact deployed computation on the gate_off, label_oracle and independent trajectories because the feedback store never feeds back into memory dynamics there; the candidate replay is a stacking diagnostic, reported only. Bears on H-036, H-046, H-049, H-052 (the assigned-A store is not an upper bound under branches: equal to inherited on the oracle), H-057 (the add-only store's saturation is a point-integration effect).
+
+**H-086** Graded reconstruction error carries the prototype membership the spike criterion misses, and a budget weighted by it reduces the forward-index leak beyond the binary veto
+**Statement.** During encoding, the peak subthreshold depolarisation d_j of a line's reconstruction unit (read after integration, before reset, over the 75-tick window) separates the prototype lines the ≥ 1-spike prediction misses from the item's unique lines; weighting the conserved flip budget by w_j = 1 − clip(d_j/20 mV, 0, 1) (w = 0 on predicted lines, the binary veto nested) with exact water-filling to 0.5·|E| raises F10/1,000 C2 over the binary rule on the same seed by at least 0.05 without costing recall of unrelated or old items.
+**Origin.** Engineering primary of the checkpoint-2 panel (2026-10-22; judges 20 / 22 of 30), B-016; contract P2-E8 frozen at 68b636d (`docs/plant2/P2-E8-graded-error-eligibility.md`).
+**Status.** `under_test` (contract frozen; development seed 123 opens only on the owner's recorded acceptance of question (f))
+**Confidence.** Low: the signal separates the classes offline (screen F AUC 0.858 over episodes 501-1,000, counterfactual flip ratio 0.441) but about 90 % of the residual was written during each family's onset ramp, where the counterfactual removes only a quarter of the expected missed-prototype flips (screen E′); the contract's own point prediction is C2 .81 with a delta of +.06, a second informative fail.
+**Expected outcome if true.** F10/1,000 graded C2 ≥ binary + 0.05 and ≥ graded_shuffled + 0.05 and ≥ history_rank + 0.05, with C1 within 0.03 of the baseline and independent and mixed non-regression.
+**Evidence for.**
+- Screen F (offline, proxy, seed 121): AUC 0.858; graded/binary counterfactual prototype-flip ratio 0.441 over 501-1,000 and 0.750 over 1-300; the independent perturbation of the graded rule is an order of magnitude below the F10 ramp's (TV 0.017 against 0.161) (`docs/plant2/OFFLINE-SCREENS-20261022c.md`).
+**Evidence against.**
+- Screen E′: 89 % of the late-class residual cells hold an item written when coverage was below 0.25 (ramp leak); the early class (1.97 per cue) is untouched by any error gate (offline, seed 121).
+- The skeptic and owner-intent judges both called the rule "borderline" on the rescue question; admitted only with the binary same-seed comparator, the kill-only screen and explicit acceptance.
+**Tested by.** P2-E8 (contracted 2026-10-22; not run).
+**Experiment needed.** P2-E8 on seed 123 under its frozen screen and outcome bands, once the owner accepts question (f).
+**Notes.** The binary rule is H-060's; this is its graded form. A control kill (shuffled or history_rank within 0.05) refutes the "beyond the binary veto" clause; a structural "no graded reduction" kill refutes the hypothesis; a delta in [+0.02, +0.05) weakens it.
+
 ## Changelog
 
+- 2026-10-22, P2-R3 replay and P2-E8 freeze (`docs/plant2/RESULTS-P2-R3.md`; P2-E8 contract 68b636d): H-085 added as `mixed` (replay-only); H-086 added as `under_test`; H-046 gains the summation explanation; H-036, H-052 and H-057 gain evidence by reference in H-085's notes.
 - 2026-10-22: File created from the hypotheses arrays of `.agent/ledger/P2-E1.json` to `P2-R2.json`, the owner hypotheses, approved directions and rejections in `owner-rulings.json`, and the diagnosed causes in `recovered-plant.json`. It has 82 entries, H-001 to H-082. H-044 carries the alias H-R2. The P2-R2b result of 2026-10-22 is recorded against H-042, H-043, H-044, H-045, H-046 and H-061.
 - 2026-10-22, P2-E7 development seed 121 (`docs/plant2/RESULTS-P2-E7.md`): H-060 `under_test` to `mixed` (feasibility screen failed on the absolute bars, informative; comparative margins held on one development seed); evidence added to H-060. H-055's two ruling-4 tests came out favourable on the same seed (useful error information; unrelated memories preserved) and H-046's prediction held again (inherited content ≤ .055 at F10/1,000 on every non-oracle arm, .005 on candidate and baseline); their statuses are unchanged pending the next checkpoint's review of the whole record. Independent results review 2026-10-22: every number reproduces; twelve wording errata appended to `docs/plant2/RESULTS-P2-E7.md` and applied here (H-060 confidence stays low; erratum 4 and 5 wording).
 - 2026-10-22, offline screens (`docs/plant2/OFFLINE-SCREENS-20261022.md`): H-060 gains the screen-A warning as offline proxy evidence against; B-008's timing-brake reading enters as offline evidence that a latency cut cannot clear C1 and C2 together (bears on H-062 and H-067; statuses unchanged).

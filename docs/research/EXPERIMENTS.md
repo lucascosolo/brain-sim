@@ -7,7 +7,7 @@ and checked by an independent Opus critic against the primary sources it cites (
 rules for adding an entry are in `README.md`. Entries are append-only after the experiment
 closes; corrections are appended as errata, never edited in place.
 
-Contents: P2-E1, P2-E2, P2-E3, P2-E4, P2-E5, P2-R1, P2-E6, P2-R2, P2-R2b, P2-E7, OFFLINE-SCREENS-20261022 (offline analyses), P2-R3 (replay).
+Contents: P2-E1, P2-E2, P2-E3, P2-E4, P2-E5, P2-R1, P2-E6, P2-R2, P2-R2b, P2-E7, OFFLINE-SCREENS-20261022 (offline analyses), P2-R3 (replay), P2-E8 (contracted).
 
 ## P2-E1: one-shot episodic storage by behavioural-timescale plasticity (BTSP), predeclared 2026-10-10
 
@@ -2290,3 +2290,26 @@ Source: `RESULTS-P2-R2b.md:26-31`, reproduced by the review (`findings-results.m
 **Failures and errata.** None in the result. Two first-attempt step-0 rows marked ABSENT (input-discovery defect, fixed before any artifact); one oversized table relocated.
 
 **Capabilities and hypotheses.** None claimed. H-085 enters `HYPOTHESES.md` as `mixed` (supported in the replay on three substrates, below the bar on the deployable substrate at 1,000; replay-only, never `supported`); H-046 narrowed; H-036, H-052, H-057 gain evidence.
+
+
+## P2-E8: graded prediction-error weighting of the conserved flip budget (contracted 2026-10-22; awaiting the owner's acceptance before seed 123)
+
+| field | value |
+|---|---|
+| status | contracted (contract frozen; tests and implementation proceed; the full-size development seed is blocked by the seed guard until `docs/plant2/P2-E8-acceptance.json` records the owner's yes to question (f)) |
+| result label | none yet |
+| stage | Stage 1; selected conditionally at roadmap checkpoint 2 (second of six panel proposals, 42 of 60) and authorised for drafting by offline screen F (AUC 0.858; counterfactual flip ratio 0.441 steady state, 0.750 ramp; no kill). Owner authority: ruling 4 of 2026-10-10 (error-correcting family) and ruling 3 of 2026-10-12 (local-error signal); the judges' admission as a new rule requires explicit acceptance (owner question (f)). |
+| dates | Draft v1 c01f431; adversarial read (twelve findings, REVISE AND RE-REVIEW); v2 and the narrow re-review (FREEZE WITH THE LISTED FIXES); v3 with the fixes 2c5b8d0; frozen 68b636d (2026-10-22); frozen JSON in the following commit. |
+| mechanism under test | One mechanism: P2-E7's prediction-gated eligibility with the per-line flip probability replaced by a graded residual-error weight: the same lockstep reconstruction readout yields the spike set G (the binary veto, w = 0) and each line's peak subthreshold depolarisation d_j; w_j = 1 − clip(d_j/20 mV, 0, 1) on unpredicted lines; p_j = min(1, λ·w_j) with λ the exact water-filling solution of Σp = 0.5·|E|; coins as `btsp_update`. No new constant. Labelled proxy: graded mismatch-scaled plasticity (comparator view; circuit-level proxy). |
+| contract commit | 68b636d (full 68b636dc3651e7538c73ff0837f41753af2ea6b1), `docs/plant2/P2-E8-graded-error-eligibility.md`; drafts kept as `P2-E8-graded-error-eligibility-DRAFT.md` (preparation provenance). |
+| implementation commit | none yet (test-author first, then a deep-implementer importing the P2-E7 driver pinned at 9bc6cf3; small-size rehearsal; a pre-run timing note). |
+| results commit(s) | none yet |
+| other commits | 2c59cfa (checkpoint 2), 724b69a and fd96310 (screens F and E′). |
+
+**Objective.** Does the subthreshold drive of the reconstruction units carry the prototype membership the spike criterion misses, and does a budget weighted by it raise F10/1,000 C2 over the binary rule on the same seed by ≥ 0.05 without costing recall of unrelated or old items? Hypotheses: H-086 (primary), H-060 (its binary form), H-055 (ruling 4's two tests), H-041, H-043, H-044, H-042, H-046.
+
+**Configuration (summary; the contract is the specification).** Fourteen trajectories as P2-E7: F10 baseline, binary (P2-E7's candidate class imported unchanged, the decisive same-seed comparator), graded, gate_off (integrity), graded_shuffled (stream 37, the w multiset permuted), history_rank (the w multiset assigned by usage), label_oracle, surplus_only (reported); independent and mixed (stream 36) baseline and graded; F40 reported. Structural kills before any test phase: P2-E7's four plus a within-arm "no graded reduction" (graded over binary-counterfactual expected prototype flips > 0.6 over episodes 501-1,000), independent perturbation (TV above the F10 ramp's) and false engagement. Screen: E6's bars and margins with P2-E7's additions plus graded ≥ binary + 0.05, ≥ shuffled + 0.05, ≥ history_rank + 0.05, joint ≥ binary + 0.03; outcome bands on ΔC2 (≥ +0.05 pass or informative; [+0.02, +0.05) kill, weakened; < +0.02 refuted; control kill refutes the "beyond the veto" clause). Seeds 123 (development, acceptance-gated), 124 (held-out), 151-155 (gated). Predictions P1-P13 with provenance labels; the point prediction is C2 .81 with ΔC2 +.06 (extrapolation; most likely a second informative fail establishing the ramp floor).
+
+**What it cannot show.** As P2-E7's, plus: the ramp floor is expected to bound the gain; the rule changes writes on veto-free episodes, so independent non-regression is a live test.
+
+**Capabilities and hypotheses.** None claimed. H-086 `under_test`.

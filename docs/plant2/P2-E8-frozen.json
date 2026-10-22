@@ -1,0 +1,183 @@
+{
+ "experiment": "P2-E8",
+ "contract_commit": "68b636dc3651e7538c73ff0837f41753af2ea6b1",
+ "contract_path": "docs/plant2/P2-E8-graded-error-eligibility.md",
+ "acceptance_path": "docs/plant2/P2-E8-acceptance.json",
+ "source_baseline": "55e16ebff62a90d6402745f44fb860010741eba5",
+ "pins": {
+  "e3_era": "55e16ebff62a90d6402745f44fb860010741eba5",
+  "contract_group": "fede3c249dad7ba6237bcedcbfe498e253c3de39",
+  "p2_e7_driver_and_riders": "9bc6cf309a5472b19c889cd16444833e0d3acedb",
+  "p2_e7_contract_append_only": "fede3c249dad7ba6237bcedcbfe498e253c3de39",
+  "p2_e7_frozen_json": "e38a6b07c6825757cd9c3d72515b76709e1fe171",
+  "offline_screens": "9cf822d4c535a1f85f1e6323b8cd5c66bc038587",
+  "p2_e8_frozen_json": "recorded by the P2-E8 driver as FROZEN_JSON_COMMIT at implementation",
+  "self": "the commit that adds the driver, tests and riders, named in the pre-run note"
+ },
+ "mechanism": {
+  "prediction_window_ticks": 75,
+  "drive": "max(0, peak (v - v_rest) over ticks 0-74 after integration before reset)",
+  "normaliser_mv": 20.0,
+  "weight": "0 if spiked else 1 - clip(d/20, 0, 1)",
+  "budget_per_eligible": 0.5,
+  "p_cap": 1.0,
+  "water_filling": "exact sorted search",
+  "p_capped": "lines with w > 0 at most 0.5*|E|",
+  "p_when_all_w_zero": 0.0
+ },
+ "streams": {
+  "graded_shuffled": 37,
+  "wrong_label_permutation": 38,
+  "mixed_independent": 36,
+  "episode_key": "1-based",
+  "coin": 3,
+  "plateau": 2,
+  "rider_control": 30
+ },
+ "loads": [
+  500,
+  1000
+ ],
+ "conditions": {
+  "F10": {
+   "F": 10,
+   "s": 60
+  },
+  "independent": null,
+  "mixed": {
+   "F": 10,
+   "s": 60,
+   "interleave": "odd F10, even independent"
+  },
+  "F40": {
+   "F": 40,
+   "s": 60
+  }
+ },
+ "arms": {
+  "F10": [
+   "baseline",
+   "binary",
+   "graded",
+   "gate_off",
+   "graded_shuffled",
+   "history_rank",
+   "label_oracle",
+   "surplus_only"
+  ],
+  "independent": [
+   "baseline",
+   "graded"
+  ],
+  "mixed": [
+   "baseline",
+   "graded"
+  ],
+  "F40": [
+   "baseline",
+   "graded"
+  ]
+ },
+ "seeds": {
+  "development": 123,
+  "held_out": 124,
+  "gated": [
+   151,
+   152,
+   153,
+   154,
+   155
+  ]
+ },
+ "frozen": {
+  "J_mem": 1.525,
+  "acc_tau": 10000,
+  "J_fb": 2.8,
+  "g": 0.3,
+  "window_mem": 50,
+  "window_rec": 75,
+  "settle": 50000
+ },
+ "bars": {
+  "C1": 0.9,
+  "C2": 0.9,
+  "C3": 0.9,
+  "C4_recall": 0.9,
+  "C4_spurious": 0.9,
+  "joint_index": 0.85
+ },
+ "margins": {
+  "F10_C2_vs_baseline": 0.2,
+  "F10_C2_vs_binary": 0.05,
+  "F10_C2_vs_shuffled": 0.05,
+  "F10_C2_vs_history_rank": 0.05,
+  "F10_joint_vs_baseline": 0.1,
+  "F10_joint_vs_binary": 0.03,
+  "C1_nonregression": 0.03,
+  "F10_M1000_C4_recall_nonregression": 0.03,
+  "independent_C2_nonregression": 0.03,
+  "independent_content_joint_nonregression": 0.05,
+  "independent_content_D4_nonregression": 0.05,
+  "mixed_independent_subset_index_nonregression_cues": 4,
+  "mixed_independent_subset_content_nonregression_cues": 5
+ },
+ "delta_bands": {
+  "refuted_below": 0.02,
+  "kill_below": 0.05
+ },
+ "structural_kill": {
+  "episodes": [
+   501,
+   1000
+  ],
+  "min_mean_V": 5,
+  "min_veto_precision": 0.7,
+  "max_nonproto_predicted": 0.25,
+  "min_proto_predicted": 0.25,
+  "max_within_arm_graded_over_binary_cf": 0.6,
+  "independent_tv_max": "F10 graded gate.tv_mean_1_300 of this run",
+  "max_veto_episode_fraction_uncorrelated": 0.05
+ },
+ "protocol": {
+  "eligibility_min": 0.95,
+  "mean_A_1000": [
+   18.5,
+   21.5
+  ],
+  "drift_max_mv": 0.2
+ },
+ "sanity": {
+  "wrong_label_C1_strict_upper": 0.1,
+  "empty_store_responders": 0
+ },
+ "resource": {
+  "wall_seconds": 3600,
+  "grace_seconds": 600,
+  "max_simulation_processes": 4
+ },
+ "predictions": {
+  "F10_M1000_C2": [
+   0.76,
+   0.88
+  ],
+  "F10_M1000_delta_C2_vs_binary": [
+   0.02,
+   0.1
+  ],
+  "F10_M1000_C1_min": 0.88,
+  "F10_M1000_C4_recall_min": 0.9,
+  "F10_M1000_joint_delta_vs_binary_min": 0.03,
+  "F10_M1000_C4_spurious_delta_vs_binary_min": 0.03,
+  "F10_M1000_inherited_content_max": 0.1,
+  "F10_M1000_assigned_A_content": [
+   0.2,
+   0.5
+  ],
+  "within_arm_graded_over_binary_cf_max": 0.6,
+  "spurious50_ratio_max": 0.85,
+  "max_prototype_out_degree_ratio_max": 0.9,
+  "independent_delta_max": 0.03,
+  "mixed_independent_subset_delta_cues_max": 3,
+  "most_likely_failure": "the ramp floor: a second informative FEASIBILITY FAIL with the delta over binary held"
+ }
+}

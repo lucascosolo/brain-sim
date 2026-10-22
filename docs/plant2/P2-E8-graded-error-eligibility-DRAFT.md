@@ -1,4 +1,8 @@
-# P2-E8: graded prediction-error weighting of the conserved flip budget
+# P2-E8: graded prediction-error weighting of the conserved flip budget — DRAFT (superseded)
+
+Preparation closure (2026-10-22): superseded by `docs/plant2/P2-E8-graded-error-eligibility.md`,
+frozen at 68b636d. This file is preparation provenance (drafts v1 c01f431, v2/v3 2c5b8d0 and
+the frozen text) and not an additional experiment contract.
 
 Contract, 2026-10-22. The commit that adds `docs/plant2/P2-E8-graded-error-eligibility.md`
 freezes it; append only thereafter. `docs/plant2/P2-E8-frozen.json` carries that commit's SHA
