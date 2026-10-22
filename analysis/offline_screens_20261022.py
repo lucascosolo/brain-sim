@@ -416,7 +416,7 @@ def responders_from_raster(raster_ticks, raster_cells, cue_index, cue_onset, cue
     return out
 
 
-def spurious_classes(rows, A, responders_by_cue, first_engagement, F=10):
+def spurious_classes(rows, A, responders_by_cue, first_engagement, F=10, return_cells=False):
     plateau_items = {}
     for k, cells in enumerate(A):
         for c in np.asarray(cells).tolist():
@@ -434,11 +434,15 @@ def spurious_classes(rows, A, responders_by_cue, first_engagement, F=10):
         if len(resp) != r["own50"] + r["spurious50"] or len(own) != r["own50"]:
             raise ValueError(f"cue {q}: responders do not match own50 + spurious50")
         counts = dict(same_family_early=0, same_family_late=0, other_family_only=0)
+        cells = dict(early_cells=[], late_cells=[], other_cells=[])
         for c in np.setdiff1d(resp, own).tolist():
             same = [k for k in plateau_items.get(c, []) if fam(k) == fam(q)]
-            counts["other_family_only" if not same else
-                   "same_family_early" if any(early(k) for k in same) else "same_family_late"] += 1
-        per_cue.append(dict(cue_index=q, spurious=int(len(resp) - len(own)), **counts))
+            cls = "other_family_only" if not same else "same_family_early" if any(early(k) for k in same) else "same_family_late"
+            counts[cls] += 1
+            cells[{"other_family_only": "other_cells", "same_family_early": "early_cells",
+                   "same_family_late": "late_cells"}[cls]].append(int(c))
+        row = dict(cue_index=q, spurious=int(len(resp) - len(own)), **counts)
+        per_cue.append(dict(row, **cells) if return_cells else row)
     mean = lambda key: float(np.mean([c[key] for c in per_cue])) if per_cue else None
     members = [[k for k in range(len(A)) if fam(k) == f] for f in range(F)]
     chance = [sum(early(k) for k in m) / len(m) for m in members if m]
@@ -450,6 +454,351 @@ def spurious_classes(rows, A, responders_by_cue, first_engagement, F=10):
                 early_chance=float(np.mean(chance)), per_cue=per_cue)
 
 
+
+# ------------------------------------------------------------------ screens F and E-prime
+
+F_LABEL = "offline, development seed 121; proxy (counterfactual on the binary trajectory)"
+EP_LABEL = "offline, development seed 121"
+RULES = ("binary", "graded", "surplus_only")
+BLOCK = 100
+
+
+def rebuild_feedback_csr(R_seq, E_seq, upto, m, n):
+    W = np.zeros((n, m), bool)
+    for R, E in zip(R_seq[:upto], E_seq[:upto]):
+        W[np.ix_(np.asarray(R, np.int64), np.asarray(E, np.int64))] = True
+    return _csr(W) + (np.flatnonzero(W).astype(np.int64),)
+
+
+def _csr(W):
+    r, c = np.nonzero(W)
+    return np.concatenate(([0], np.cumsum(np.bincount(r, minlength=W.shape[0])))).astype(np.int64), c.astype(np.int64)
+
+
+def lockstep_rec(raster, indptr, post, m, J=2.8, g=0.3, tau_m=20.0, v_rest=-70.0, v_reset=-65.0, v_th=-50.0,
+                 t_ref=2, n_ticks=75):
+    f32 = np.float32
+    gJ = f32(np.float64(g) * np.float64(J))
+    J32 = f32(J)
+    decay = f32(np.exp(-1.0 / tau_m))
+    v_c = f32(v_rest * (1.0 - decay))
+    rest = f32(v_rest)
+    v = np.full(m, v_rest, f32)
+    t_last = np.full(m, -10_000, np.int64)
+    ring = np.zeros((3, m), f32)
+    dmax = np.zeros(m, f32)
+    fired = np.zeros(m, bool)
+    for t in range(n_ticks):
+        slot = ring[t % 3]
+        np.multiply(v, decay, out=v)
+        v += v_c
+        v += slot
+        slot[:] = 0.0
+        np.maximum(dmax, v - rest, out=dmax)
+        hit = (v >= v_th) & (t - t_last > t_ref)
+        if hit.any():
+            v[hit] = v_reset
+            t_last[hit] = t
+            fired |= hit
+        s = raster.get(t)
+        if s is not None and len(s):
+            s = np.asarray(s, np.int64)
+            lo, cnt = indptr[s], indptr[s + 1] - indptr[s]
+            n_ev = int(cnt.sum())
+            if n_ev:
+                idx = np.repeat(lo, cnt) + (np.arange(n_ev) - np.repeat(np.cumsum(cnt) - cnt, cnt))
+                counts = np.bincount(post[idx], minlength=m)
+                nxt = ring[(t + 1) % 3]
+                for kk in range(1, int(counts.max()) + 1):
+                    nxt += J32 * (counts >= kk).astype(f32)
+            ring[(t + 2) % 3] -= f32(gJ * s.size)
+    return np.flatnonzero(fired).astype(np.int64), dmax.astype(np.float64)
+
+
+def water_fill(w, budget):
+    w = np.asarray(w, float)
+    p = np.zeros(w.size)
+    pos = np.flatnonzero(w > 0)
+    if budget <= 0 or not pos.size:
+        return p, False
+    if pos.size <= budget:
+        p[pos] = 1.0
+        return p, bool(pos.size < budget)
+    order = pos[np.argsort(-w[pos], kind="stable")]
+    sw = w[order]
+    tail = np.concatenate((np.cumsum(sw[::-1])[::-1], [0.0]))
+    for c in range(order.size):
+        lam = (budget - c) / tail[c]
+        if lam * sw[c] <= 1.0:
+            p[order[c:]] = lam * sw[c:]
+            p[order[:c]] = 1.0
+            return p, False
+    p[order] = 1.0
+    return p, False
+
+
+def surplus_only_p(E, G, d):
+    E = np.asarray(E, np.int64)
+    in_G = np.isin(E, np.asarray(G, np.int64))
+    surplus = 0.5 * int(in_G.sum())
+    p = np.where(in_G, 0.0, 0.5)
+    w = np.where(in_G, 0.0, 1.0 - np.clip(np.asarray(d, float) / 20.0, 0.0, 1.0))
+    q, _ = water_fill(w, 2.0 * surplus)
+    extra = 0.5 * q
+    return p + extra, float(surplus - extra.sum())
+
+
+def counterfactual_p(E, G, d, rule):
+    E = np.asarray(E, np.int64)
+    if rule == "surplus_only":
+        return surplus_only_p(E, G, d)[0]
+    if rule not in ("binary", "graded"):
+        raise ValueError(f"unknown rule {rule!r}")
+    in_G = np.isin(E, np.asarray(G, np.int64))
+    if rule == "binary":
+        n_free = int((~in_G).sum())
+        if n_free == 0:
+            return np.zeros(E.size)
+        return np.where(in_G, 0.0, min(1.0, 0.5 * E.size / n_free))
+    w = np.where(in_G, 0.0, 1.0 - np.clip(np.asarray(d, float) / 20.0, 0.0, 1.0))
+    return water_fill(w, 0.5 * E.size)[0]
+
+
+def auc(positives, negatives):
+    pos, neg = np.asarray(positives, float), np.sort(np.asarray(negatives, float))
+    if not pos.size or not neg.size:
+        return None
+    less, leq = np.searchsorted(neg, pos, "left"), np.searchsorted(neg, pos, "right")
+    return float((less + 0.5 * (leq - less)).sum() / (pos.size * neg.size))
+
+
+def expected_flips(E, P, p):
+    in_P = np.isin(np.asarray(E, np.int64), np.asarray(P, np.int64))
+    p = np.asarray(p, float)
+    return float(p[in_P].sum()), float(p[~in_P].sum())
+
+
+def _gate_col(gate_log, key):
+    if isinstance(gate_log, dict):
+        return list(gate_log[key])
+    return [row[key] for row in gate_log]
+
+
+def _raster_dict(ticks, cells):
+    ticks, cells = np.asarray(ticks, np.int64), np.asarray(cells, np.int64)
+    return {int(t): cells[ticks == t] for t in np.unique(ticks)}
+
+
+def _window_summary(rows, lo, hi):
+    w = rows[lo:hi]
+    pos = np.concatenate([r["pos"] for r in w]) if w else np.empty(0)
+    neg = np.concatenate([r["neg"] for r in w]) if w else np.empty(0)
+    out = dict(episodes=len(w), auc=auc(pos, neg), n_missed_proto=int(pos.size), n_unpredicted_nonproto=int(neg.size),
+               missed_proto_ge10=_fraction(int((pos >= 10).sum()), pos.size), rules={})
+    for rule in RULES:
+        out["rules"][rule] = dict(proto=float(np.mean([r[rule]["proto"] for r in w])),
+                                  nonproto=float(np.mean([r[rule]["nonproto"] for r in w])),
+                                  tv_mean_abs_dev_from_half=float(np.mean([r[rule]["tv"] for r in w])),
+                                  any_p_below_049=float(np.mean([r[rule]["any_below"] for r in w])))
+    base = out["rules"]["binary"]["proto"]
+    out["graded_over_binary"] = _fraction(out["rules"]["graded"]["proto"], base)
+    out["surplus_over_binary"] = _fraction(out["rules"]["surplus_only"]["proto"], base)
+    out["graded_capped_episodes"] = int(sum(r["graded_capped"] for r in w))
+    out["surplus_unspent_episodes"] = int(sum(r["surplus_unspent"] > 0 for r in w))
+    return out
+
+
+def screen_f(items, E, R, A, enc_tick, enc_cell, feedback_keys, gate_log, protos, family, m, n):
+    G_size, V_size = _gate_col(gate_log, "G_size"), _gate_col(gate_log, "V_size")
+    W = np.zeros((n, m), bool)
+    rows = []
+    for k in range(len(items)):
+        indptr, post = _csr(W)
+        spikes, dmax = lockstep_rec(_raster_dict(enc_tick[k], enc_cell[k]), indptr, post, m)
+        Ek = np.asarray(E[k], np.int64)
+        V = np.intersect1d(spikes, Ek)
+        if len(spikes) != G_size[k] or len(V) != V_size[k]:
+            raise ValueError(f"lockstep gate fails at episode {k}: |G| {len(spikes)} vs {G_size[k]}, "
+                             f"|G and E| {len(V)} vs {V_size[k]}")
+        P = np.intersect1d(items[k], protos[family(k)])
+        if P.size != 40:
+            raise ValueError(f"P_k has {P.size} lines at episode {k}")
+        d = dmax[Ek]
+        in_G, in_P = np.isin(Ek, V), np.isin(Ek, P)
+        row = dict(pos=d[in_P & ~in_G], neg=d[~in_P & ~in_G])
+        for rule in RULES:
+            p = counterfactual_p(Ek, V, d, rule)
+            proto, nonproto = expected_flips(Ek, P, p)
+            row[rule] = dict(proto=proto, nonproto=nonproto, tv=float(np.mean(np.abs(p - 0.5))) if p.size else 0.0,
+                             any_below=bool((p < 0.49).any()))
+        row["graded_capped"] = bool(water_fill(np.where(in_G, 0.0, 1.0 - np.clip(d / 20.0, 0, 1)), 0.5 * Ek.size)[1])
+        row["surplus_unspent"] = surplus_only_p(Ek, V, d)[1]
+        rows.append(row)
+        W[np.ix_(np.asarray(R[k], np.int64), Ek)] = True
+    if not np.array_equal(np.flatnonzero(W).astype(np.int64), np.asarray(feedback_keys, np.int64)):
+        raise ValueError("rebuilt S_1000 keys differ from persisted feedback_keys")
+    n_ep = len(rows)
+    out = dict(blocks=[_window_summary(rows, lo, lo + BLOCK) for lo in range(0, n_ep, BLOCK)],
+               w501_1000=_window_summary(rows, 500, n_ep), w1_300=_window_summary(rows, 0, 300),
+               all=_window_summary(rows, 0, n_ep),
+               tv_definition="mean over eligible lines of |p - 0.5|, then mean over episodes")
+    proto_pred = _gate_col(gate_log, "proto_predicted")
+    out["b017_gate_log_proto_predicted_101_500"] = dict(mean=float(np.mean(proto_pred[100:500])), reference=0.595)
+    per_episode = [dict(episode=k, n_missed_proto=int(r["pos"].size), n_unpredicted_nonproto=int(r["neg"].size),
+                        **{f"proto_{rule}": r[rule]["proto"] for rule in RULES}) for k, r in enumerate(rows)]
+    return out, per_episode
+
+
+def p2e8_kill_reading(auc_501_1000, graded_over_binary_501_1000, ramp_graded_over_binary_1_300,
+                      eprime_low_coverage_share):
+    fired, undecided = [], []
+    if auc_501_1000 is None or auc_501_1000 < 0.70:
+        fired.append("auc_501_1000 < 0.70")
+    if graded_over_binary_501_1000 is None or graded_over_binary_501_1000 > 0.6:
+        fired.append("graded_over_binary_501_1000 > 0.6")
+    if ramp_graded_over_binary_1_300 is not None and ramp_graded_over_binary_1_300 > 0.85:
+        if eprime_low_coverage_share is None:
+            undecided.append("ramp ratio > 0.85 and E-prime low-coverage share > 0.5 (E-prime not yet run)")
+        elif eprime_low_coverage_share > 0.5:
+            fired.append("ramp ratio > 0.85 and E-prime low-coverage share > 0.5")
+    return dict(auc_501_1000=auc_501_1000, graded_over_binary_501_1000=graded_over_binary_501_1000,
+                ramp_graded_over_binary_1_300=ramp_graded_over_binary_1_300,
+                eprime_low_coverage_share=eprime_low_coverage_share, killed=bool(fired),
+                rules_fired=fired, undecided=undecided)
+
+
+EP_BINS = ("<0.25", "0.25-0.75", ">=0.75")
+
+
+def _ep_bin(x):
+    return EP_BINS[0] if x < 0.25 else EP_BINS[1] if x < 0.75 else EP_BINS[2]
+
+
+def eprime_bins(per_cue_classes, cell_items, family_of, proto_predicted_by_episode, first_engagement):
+    counts, weights, n_late = dict.fromkeys(EP_BINS, 0), dict.fromkeys(EP_BINS, 0), 0
+    for row in per_cue_classes:
+        f = family_of(int(row["cue_index"]))
+        for c in row["late_cells"]:
+            same = [k for k in cell_items[c] if family_of(k) == f]
+            b = _ep_bin(min(proto_predicted_by_episode[k] for k in same))
+            counts[b] += 1
+            weights[b] += len(same)
+            n_late += 1
+    n_cues, wsum = len(per_cue_classes), sum(weights.values())
+    return dict(counts_per_cue={b: (counts[b] / n_cues if n_cues else None) for b in EP_BINS},
+                shares={b: _fraction(counts[b], n_late) for b in EP_BINS},
+                items_weighted_shares={b: _fraction(weights[b], wsum) for b in EP_BINS}, n_late=n_late)
+
+
+def _state_inputs(file_stem):
+    path = E7_DIR / f"{E7_ATTEMPT}-{file_stem}-M1000.json"
+    pdesc = dict(path=str(path.relative_to(record.REPO)), bytes=path.stat().st_size,
+                 sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+    d = json.loads(path.read_bytes().decode())
+    state_desc = d["state"]
+    z = evidence.load_npz_artifact(verify_input(state_desc))
+    meta = json.loads(str(z["metadata_json"]))
+    return d, z, meta, dict(portable=pdesc, state=state_desc)
+
+
+def _screen_f(arm, stem):
+    from plant2.experiments import p2_e5_structured as e5
+    d, z, meta, inputs = _state_inputs(stem)
+    cfg = meta.get("cfg", {})
+    m, n = cfg.get("m", 4000), cfg.get("n", 4000)
+    protos = e5.FamilyGen(121, 4000, 100, 60, 10).protos
+    items, E, R, A = (_unpack(z, k) for k in ("items", "E", "R", "A"))
+    obj, per_episode = screen_f(items, E, R, A, _unpack(z, "enc_tick"), _unpack(z, "enc_cell"), z["feedback_keys"],
+                                meta["gate_log"], protos, lambda k: (k + 1) % 10, m, n)
+    summary = dict(w501_1000=obj["w501_1000"], w1_300=obj["w1_300"], all=obj["all"],
+                   b017=obj["b017_gate_log_proto_predicted_101_500"], blocks=obj["blocks"])
+    return summary, dict(obj, per_episode=per_episode), inputs
+
+
+def _latest_summary(screen, arm):
+    if not RESULTS.exists():
+        return None
+    found = None
+    for line in RESULTS.read_text().splitlines():
+        r = json.loads(line)
+        if r.get("kind") == "offline_screen" and r.get("screen") == screen and r.get("arm") == arm \
+                and r.get("status") == "COMPLETE":
+            found = r["summary"]
+    return found
+
+
+def _run_jobs(screen, label, jobs, log):
+    EVIDENCE.mkdir(parents=True, exist_ok=True)
+    journal_path = EVIDENCE / f"{screen}-seed121.journal.jsonl"
+    journal = evidence.Journal(journal_path, f"{screen}121")
+    journal.append(dict(kind="run_started", screen=screen, seed=121, runtime=record.runtime(),
+                        script_sha256=_script_sha256()))
+    manifest = evidence.Manifest()
+    for arm, fn in jobs:
+        try:
+            summary, obj, inputs = fn()
+        except (evidence.EvidenceError, OSError, KeyError, ValueError) as e:
+            log(record_invalid(RESULTS, screen, 121, f"{arm}/M1000: {type(e).__name__}: {e}", journal)["reason"])
+            continue
+        rec = record_screen(RESULTS, EVIDENCE, screen, 121, arm, 1000, label, summary, obj, inputs, journal)
+        manifest.add(Path(rec["artifact"]["path"]).name, rec["artifact"])
+        log(f"{screen} seed 121 {arm} M1000 COMPLETE")
+    ver = _verification(manifest, journal_path)
+    record.append(dict(ver, screen=screen, seed=121, timestamp=record.now()), RESULTS)
+    journal.append(ver)
+    return ver["passed"]
+
+
+def run_f(log=print):
+    results = {}
+
+    def job(arm, stem):
+        def go():
+            summary, obj, inputs = _screen_f(arm, stem)
+            results[arm] = summary
+            if arm == "candidate" and "gate_off" in results:
+                eprime = _latest_summary("Eprime", "candidate")
+                share = eprime["shares"]["<0.25"] if eprime else None
+                summary["p2e8_kill_reading"] = p2e8_kill_reading(
+                    summary["w501_1000"]["auc"], summary["w501_1000"]["graded_over_binary"],
+                    results["gate_off"]["w1_300"]["graded_over_binary"], share)
+            return summary, obj, inputs
+        return go
+
+    jobs = [("gate_off", job("gate_off", "F10-gate_off")), ("candidate", job("candidate", "F10-candidate")),
+            ("independent", job("independent", "independent-candidate"))]
+    return _run_jobs("F", F_LABEL, jobs, log)
+
+
+def _screen_eprime():
+    e = _e7_load("candidate")
+    A = e["A"]
+    cell_items = {}
+    for k, cells in enumerate(A):
+        for c in np.asarray(cells).tolist():
+            cell_items.setdefault(c, []).append(k)
+    out = spurious_classes(e["d"]["index_cues"], A, e["resp"], e["first"], return_cells=True)
+    gate = e["meta"]["gate_log"]
+    pp = dict(enumerate(_gate_col(gate, "proto_predicted")))
+    p = _gate_col(gate, "p")
+    bins = eprime_bins(out["per_cue"], cell_items, lambda k: (k + 1) % 10, pp, e["first"])
+    eps = sorted({k for r in out["per_cue"] for c in r["late_cells"] for k in cell_items[c]
+                  if (k + 1) % 10 == (r["cue_index"] + 1) % 10})
+    pe = np.asarray([p[k] for k in eps], float)
+    p_dist = dict(episodes=len(eps), p10=float(np.percentile(pe, 10)), median=float(np.median(pe)),
+                  p90=float(np.percentile(pe, 90))) if eps else dict(episodes=0)
+    screen_e = _latest_summary("E", "candidate")
+    e_late = (screen_e["same_family_late_per_cue"] * screen_e["cues"]) if screen_e else None
+    summary = dict(bins, p_distribution_on_late_item_episodes=p_dist, late_count_recomputed=bins["n_late"],
+                   late_count_from_screen_e_record=None if e_late is None else round(e_late),
+                   late_count_matches=None if e_late is None else bool(round(e_late) == bins["n_late"]))
+    return summary, dict(summary=summary, per_cue=[{k: v for k, v in r.items()} for r in out["per_cue"]]), e["inputs"]
+
+
+def run_eprime(log=print):
+    return _run_jobs("Eprime", EP_LABEL, [("candidate", _screen_eprime)], log)
+
+
 def _engagement(arm):
     for line in E7_RESULTS.read_text().splitlines():
         r = json.loads(line)
@@ -459,7 +808,7 @@ def _engagement(arm):
     return {f: None for f in range(10)}
 
 
-def _screen_e(arm):
+def _e7_load(arm):
     path = E7_DIR / f"{E7_ATTEMPT}-F10-{arm}-M1000.json"
     pdesc = dict(path=str(path.relative_to(record.REPO)), bytes=path.stat().st_size,
                  sha256=hashlib.sha256(path.read_bytes()).hexdigest())
@@ -467,15 +816,20 @@ def _screen_e(arm):
     raster = evidence.load_npz_artifact(verify_input(d["raw"]))
     state_desc = d["state"]
     state = evidence.load_npz_artifact(verify_input(state_desc))
-    A = _unpack(state, "A")
     ragged = _unpack(raster, "raster_cells")
     resp = responders_from_raster(raster["raster_ticks"], ragged, raster["cue_index"].tolist(),
                                   raster["cue_onset"].tolist(), raster["cue_kind"].tolist())
-    first = _engagement(arm)
-    out = spurious_classes(d["index_cues"], A, resp, first)
+    return dict(d=d, A=_unpack(state, "A"), resp=resp, first=_engagement(arm),
+                meta=json.loads(str(state["metadata_json"])),
+                inputs=dict(portable=pdesc, raster=d["raw"], state=state_desc))
+
+
+def _screen_e(arm):
+    e = _e7_load(arm)
+    out = spurious_classes(e["d"]["index_cues"], e["A"], e["resp"], e["first"])
     summary = {k: v for k, v in out.items() if k != "per_cue"}
-    summary["first_engagement"] = {str(f): v for f, v in sorted(first.items())}
-    return summary, dict(summary=summary, per_cue=out["per_cue"]), dict(portable=pdesc, raster=d["raw"], state=state_desc)
+    summary["first_engagement"] = {str(f): v for f, v in sorted(e["first"].items())}
+    return summary, dict(summary=summary, per_cue=out["per_cue"]), e["inputs"]
 
 
 def run_e(log=print):
@@ -566,7 +920,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
     runner = commands.add_parser("run")
-    runner.add_argument("--screen", required=True, choices=("A", "B", "C", "D", "E"))
+    runner.add_argument("--screen", required=True, choices=("A", "B", "C", "D", "E", "F", "Eprime"))
     runner.add_argument("--seed", type=int, action="append", choices=SEEDS)
     commands.add_parser("summary")
     args = parser.parse_args(argv)
@@ -574,8 +928,8 @@ def main(argv=None):
         print(json.dumps(summary(), sort_keys=True))
         return 0
     log = lambda x: print(f"[{record.now()}] {x}", flush=True)
-    if args.screen == "E":
-        return 0 if run_e(log=log) else 1
+    if args.screen in ("E", "F", "Eprime"):
+        return 0 if {"E": run_e, "F": run_f, "Eprime": run_eprime}[args.screen](log=log) else 1
     ok = run(args.screen, args.seed or list(SEEDS), log=log)
     if args.screen == "D" and not args.seed:
         ok = run_e6(log=log) and ok
