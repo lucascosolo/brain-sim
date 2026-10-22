@@ -162,3 +162,11 @@ partition into frequency and correlation contributions; fine timing, actual elig
 alignment and adaptive state change with the inputs. A replicated label is an explanation
 result that informs which mechanism to contract next; it is not a memory capability, removes
 no experimenter supply and authorises no Stage 2 work.
+
+## Result (appended 2026-10-22, after execution)
+
+COMPLETE on both seeds with verified evidence; replicated label at M = 1,000 MATERIAL
+STRUCTURE SENSITIVITY (Delta C2 +0.260 / +0.265, Delta joint index +0.240 / +0.280, recall
+deltas within tolerance); P1-P4 held, P5 failed (no oldest-recall cost at 500 on either seed),
+P6 failed on seed 106 (spurious responders fell by 6.97, not 10). Full record:
+`docs/plant2/RESULTS-P2-R2b.md`; data `bench/results/p2r2b.jsonl` and `bench/results/p2r2b/`.
