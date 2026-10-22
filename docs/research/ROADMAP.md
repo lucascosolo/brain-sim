@@ -556,10 +556,14 @@ candidate raster from .005 to .710, and on the mixed store from .180 to .830 wit
 independent subset at 95 of 95 cues; the per-synapse scramble regenerates nothing (.000
 everywhere), so episode clustering is the ingredient; D1 costs at most 0.045. Five
 predictions failed by exceeding their upper bounds; parity, scramble, independent and dose
-predictions held. **Reading:** the content wall at F10/1,000 is reconstruction-side
-summation, removable by a bounded branch store, and once removed content tracks the index
-(.345 / .710 / .985 for C2 .500 / .745 / .970). H-085 enters the ledger as `mixed`
-(replay-only). Consequence: the two next seed-spending contracts both wait on the owner:
+predictions held. **Reading (as corrected by the independent review, errata 7 and 9):** the
+content wall at F10/1,000 is reconstruction-side summation, removable by a bounded branch
+store; what remains on the deployable substrate at 1,000 (.345) is write-time contamination
+of the responder-written writer sets, since the assigned-A writers reach .925 on the same
+raster under K = 32; "content tracks the index" (.345 / .710 / .985 for C2 .500 / .745 /
+.970) is a three-point observation on one seed, two of the points diagnostics, and the
+candidate substrate is a stacking diagnostic, not an exact replay. H-085 enters the ledger as
+`mixed` (replay-only). Consequence: the two next seed-spending contracts both wait on the owner:
 P2-E8 on question (f) (acceptance file), and a fresh-seed content contract from P2-R3's rule
 on question (g) (ordering against ruling 3) with question (a) extended to reconstruction
 lines (ruling 6). Independent results review of P2-R3 pending.

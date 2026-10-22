@@ -103,7 +103,56 @@ No prediction is revised; the five misses are recorded as under-predictions.
 ## Failure classification
 
 None. A reported replay whose kill and parity rules all held; five predictions
-under-predicted the effect. The two first-attempt step-0 rows marked ABSENT came from an
+under-predicted the effect. The first-attempt step-0 rows marked ABSENT came from an
 input-discovery defect in the module (fixed at 62369c5 before any artifact), not from
 evidence. The 159 MB step-0 table of gate_off at 1,000 was relocated to the cache after the
 remote refused it; its recorded descriptor verifies at the new path (`artifact_relocated`).
+
+## Errata from the independent results review (appended 2026-10-22)
+
+The review (`review/plant2/P2-R3/findings-results.md`) recomputed all 48 replay cells, the
+mixed subsets, every parity table, every step-0 flag, the prediction scoring, 76 descriptors
+and 18 journals, and matched every number in this document. It asked for these corrections,
+which supersede the sentences they name:
+
+1. Record counts: `bench/results/p2r3.jsonl` holds **4 COMPLETE `step0` rows plus 4 ABSENT
+   rows** of the refused first attempt (the header's "8 `step0` … plus 5 `ABSENT`" and the
+   classification's "two first-attempt rows" are wrong).
+2. "At the deployable M = 500 … the mixed store .830 with its independent subset at 95 of
+   95": **the mixed substrate is M = 1,000.**
+3. "H-085 supported in the replay" reads **H-085 enters the ledger as `mixed` (replay-only).**
+4. The candidate substrate is a **stacking diagnostic, reported only, not exact**; wherever
+   this document, the EXPERIMENTS label or ROADMAP §8 calls the whole replay exact, the
+   candidate is excepted, and "a branch readout cannot change memory dynamics on these
+   substrates" holds for gate_off, label_oracle, independent and mixed only.
+5. The assigned-A branch store is **at least the inherited branch store in all eight cells**
+   (gate_off 1,000 .925 against .345; candidate .950 against .710; mixed .990 against .830)
+   and equal to it on the clean-index oracle only.
+6. (H-046) The point store is **summation-limited; with branches, content is limited by
+   what the writers carry**, not the reverse.
+7. **Change of reading, bullet 4.** "The index still limits content at the deployable
+   M = 1,000" conflicts with the assigned-A arm: with the same raster and C2 .500, the
+   plateau-set writers reach .925 under K = 32. The residual on the deployable substrate at
+   1,000 therefore lives in the **responder-written writer sets (write-time contamination,
+   H-036)**, not in cue-time recall; "content tracks the index" (.345 / .710 / .985 for C2
+   .500 / .745 / .970) is a three-point observation on one seed, two of the points diagnostics.
+8. "Prototype lines see about forty write events" is in no record. Eligible write events per
+   line (from the persisted E sequences, reviewer-recomputed): gate_off 500 median 9, 99th
+   percentile 48, maximum 71 (179 lines over 32); label_oracle 1,000 median 17, 99th
+   percentile 94, maximum 136 (891 lines over 32). The tail exceeds K = 32 far beyond the
+   M·a/m = 25 premise.
+9. "Exact replay" in the title and header: **exact on the gate_off, label_oracle, independent
+   and mixed substrates; a stacking diagnostic on the candidate substrate.**
+10. "Nearly clears the bar (.895 against .90)" in a replay that is not a gate reads **.895
+    against the .90 reference**; the R_3 comparison reads **differs in kind (no writer
+    selection, no burst threshold); lower in level than the R_3 rider's .925.**
+11. Step-0 operationalisation, not stated in the contract: a failing cue counts as a
+    cross-episode summation failure when **more than half of its intrusion lines** have active
+    writers spanning at least two episodes with no single episode reaching the coincidence
+    requirement; the kill reads the inherited store; the majority rule gives the same counts
+    as an any-line rule in every inherited cell here; oracle 500's "0.000" is 0 of 2 D1-only
+    failures.
+12. "Three `evidence_verification` records passed" reads **4 + 48 artifacts verified across
+    the two completed runs** (the third record is the refused attempt's, verifying 0); the
+    relocated table's journal descriptor still names its original path, so a re-verification
+    must apply the `artifact_relocated` record.

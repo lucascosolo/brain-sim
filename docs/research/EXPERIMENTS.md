@@ -2269,8 +2269,8 @@ Source: `RESULTS-P2-R2b.md:26-31`, reproduced by the review (`findings-results.m
 
 | field | value |
 |---|---|
-| status | complete (replay on the persisted P2-E7 seed-121 rasters; verified evidence; independent results review pending) |
-| result label | reported-only (exact replay), development seed 121. Step 0: content failure at 1,000 is cross-episode writer summation (oracle 0.978, gate_off 1.000 of failing cues). Replay: K = 32 content joint label_oracle 1,000 .310 → .985, gate_off 500 .145 → .895, gate_off 1,000 .005 → .345, candidate 1,000 .005 → .710 (reported), mixed baseline 1,000 .180 → .830; scramble .000 everywhere; P1, P4, P7, P9-P12 held, P2, P3, P5, P6, P8 under-predicted (`docs/plant2/RESULTS-P2-R3.md`). Credits nothing. |
+| status | complete (replay on the persisted P2-E7 seed-121 rasters; verified evidence; independent results review done: every number reproduces, twelve wording errata appended) |
+| result label | reported-only (exact replay on the gate_off, label_oracle, independent and mixed substrates; a stacking diagnostic on the candidate substrate), development seed 121. Step 0: content failure at 1,000 is cross-episode writer summation (oracle 0.978, gate_off 1.000 of failing cues). Replay: K = 32 content joint label_oracle 1,000 .310 → .985, gate_off 500 .145 → .895, gate_off 1,000 .005 → .345, candidate 1,000 .005 → .710 (reported), mixed baseline 1,000 .180 → .830; scramble .000 everywhere; P1, P4, P7, P9-P12 held, P2, P3, P5, P6, P8 under-predicted (`docs/plant2/RESULTS-P2-R3.md`). Credits nothing. |
 | stage | Roadmap checkpoint 2, selected now (zero seed); ranked first by both judges of the checkpoint-2 panel. |
 | dates | Contract frozen 2c59cfa (2026-10-22); tests 04050e4; module 0195131, input fix 62369c5; step 0 23:24-23:25 UTC; replay 23:26-23:46 UTC; results 2c5b8d0 and the following commit. |
 | mechanism under test | Replayed, not deployed: each reconstruction line holds K = 32 writer sets filled round-robin by eligible episode; each (line, branch) is an LIF compartment under the frozen readout arithmetic; the line spikes when any branch spikes. K = 32 from M·a/m = 25 by B-013's power-of-two rule; K = 1 is the frozen readout (parity). Labelled proxy: branch-clustered plasticity on the reconstruction side. |
@@ -2287,7 +2287,7 @@ Source: `RESULTS-P2-R2b.md:26-31`, reproduced by the review (`findings-results.m
 
 **Limitations.** A replay on one development seed; nothing on a fresh seed; no capability; deployment needs owner rulings (g) and (a) extended to reconstruction lines; K = 32 past M = 1,000 untested (bounded forgetting); the oracle substrate uses experimenter labels and is diagnostic only.
 
-**Failures and errata.** None in the result. Two first-attempt step-0 rows marked ABSENT (input-discovery defect, fixed before any artifact); one oversized table relocated.
+**Failures and errata.** None in the result. Four first-attempt step-0 rows marked ABSENT (input-discovery defect, fixed before any artifact); one oversized table relocated. Twelve wording errata from the independent review (`docs/plant2/RESULTS-P2-R3.md`), the main one a change of reading: the residual on the deployable substrate at 1,000 is write-time contamination of the responder-written writer sets (assigned-A branch store .925 on the same raster), not cue-time recall.
 
 **Capabilities and hypotheses.** None claimed. H-085 enters `HYPOTHESES.md` as `mixed` (supported in the replay on three substrates, below the bar on the deployable substrate at 1,000; replay-only, never `supported`); H-046 narrowed; H-036, H-052, H-057 gain evidence.
 
