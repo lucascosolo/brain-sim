@@ -47,7 +47,10 @@ PIN_BASELINE = ["plant2/engine.py", "plant2/btsp.py", "plant2/readout.py", "plan
                 "plant2/experiments/p2_e1_btsp.py", "plant2/experiments/p2_e2_accommodation.py",
                 "plant2/experiments/p2_e3_completion.py", "plant2/experiments/p2_e4_online.py",
                 "plant2/experiments/p2_e5_structured.py"]
-PIN_CONTRACT = ["plant2/experiments/p2_e6.py", "plant2/evidence.py", "analysis/p2r1_replay.py", FROZEN["contract_path"]]
+PIN_CONTRACT = ["plant2/experiments/p2_e6.py", "plant2/evidence.py", "analysis/p2r1_replay.py"]
+# The contract text is append-only after its freezing commit: the frozen blob must be a prefix of the
+# current file, and the current file must itself be committed at HEAD (so every appended note is in history).
+PIN_CONTRACT_DOC = [FROZEN["contract_path"]]
 PIN_FROZEN_JSON = [FROZEN_PATH]
 FROZEN_JSON_COMMIT = "e38a6b0"
 PIN_SELF = ["plant2/experiments/p2_e7_error_gated.py", "analysis/p2e7_riders.py"]
@@ -484,15 +487,22 @@ def source_manifest(require_committed=False):
     files = {}
     for paths, pin, rev in ((PIN_BASELINE, "55e16eb", FROZEN["source_baseline"]),
                             (PIN_CONTRACT, "contract", FROZEN["contract_commit"]),
+                            (PIN_CONTRACT_DOC, "contract_append_only", FROZEN["contract_commit"]),
                             (PIN_FROZEN_JSON, "frozen_json", FROZEN_JSON_COMMIT), (PIN_SELF, "self", "HEAD")):
         for path in paths:
             raw = (record.REPO / path).read_bytes()
             blob = _git("cat-file", "blob", f"{rev}:{path}")
             equal = raw == blob
+            if pin == "contract_append_only":
+                head_blob = _git("cat-file", "blob", f"HEAD:{path}")
+                equal = blob is not None and raw.startswith(blob) and raw == head_blob
             passed = True if pin == "self" and not require_committed else equal
             files[path] = dict(pin=pin, rev=rev, sha256=hashlib.sha256(raw).hexdigest(), passed=bool(passed),
-                               equals_pinned_blob=bool(equal),
+                               equals_pinned_blob=bool(raw == blob),
                                pinned_blob_sha256=hashlib.sha256(blob).hexdigest() if blob is not None else None)
+            if pin == "contract_append_only":
+                files[path]["append_only_ok"] = bool(equal)
+                files[path]["appended_bytes"] = (len(raw) - len(blob)) if blob is not None else None
     if require_committed:
         bad = [p for p, f in files.items() if not f["passed"]]
         if bad:
