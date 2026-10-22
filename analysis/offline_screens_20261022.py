@@ -9,6 +9,7 @@ import hashlib
 import json
 import math
 import os
+import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -340,6 +341,59 @@ def _screen_d(seed, arm, M, run):
     return summary, dict(summary=summary), dict(combined=cdesc, learned=ldesc), None
 
 
+E6_DIR = record.REPO / "bench/results/p2e6"
+E6_FILES = tuple((f"{c}-{a}", M) for c, a, M in (("F10", "baseline", 500), ("F10", "baseline", 1000),
+                 ("F10", "candidate", 500), ("F10", "candidate", 1000),
+                 ("independent", "baseline", 1000), ("independent", "candidate", 1000)))
+E6_LABEL = "offline, descriptive, P2-E6 development seed 101 (exploratory)"
+ABSENT = {"absent": True}
+
+
+def _e6_descriptor(path):
+    data = path.read_bytes()
+    rel = str(path.relative_to(record.REPO))
+    tracked = subprocess.run(["git", "-C", str(record.REPO), "ls-files", "--error-unmatch", rel],
+                             capture_output=True).returncode == 0
+    return dict(path=rel, bytes=len(data), sha256=hashlib.sha256(data).hexdigest(), committed_at_head=tracked), data
+
+
+def _screen_d_e6(name, M):
+    desc, data = _e6_descriptor(E6_DIR / f"e6-s101-v1-{name}-M{M}.json")
+    d = json.loads(data.decode())
+    table = d.get("content", {}).get("inherited")
+    cues = d.get("index_cues")
+    if table and cues and len(cues) == len(table["rows"]):
+        saturation = saturation_summary(table["columns"], table["rows"], [r["kind"] for r in cues])
+    else:
+        saturation = dict(ABSENT)
+    summary = dict(saturation=saturation, feedback_density=dict(ABSENT),
+                   forward_density=d.get("learning", {}).get("forward_density", dict(ABSENT)))
+    return summary, dict(summary=summary), dict(source=desc)
+
+
+def run_e6(log=print):
+    EVIDENCE.mkdir(parents=True, exist_ok=True)
+    journal_path = EVIDENCE / "D-seed101.journal.jsonl"
+    journal = evidence.Journal(journal_path, "D101")
+    journal.append(dict(kind="run_started", screen="D", seed=101, runtime=record.runtime(),
+                        script_sha256=_script_sha256()))
+    manifest = evidence.Manifest()
+    for name, M in E6_FILES:
+        try:
+            summary, obj, inputs = _screen_d_e6(name, M)
+        except (OSError, KeyError, ValueError) as e:
+            log(record_invalid(RESULTS, "D", 101, f"{name}/M{M}: input failure: {type(e).__name__}: {e}",
+                               journal)["reason"])
+            continue
+        rec = record_screen(RESULTS, EVIDENCE, "D", 101, name, M, E6_LABEL, summary, obj, inputs, journal)
+        manifest.add(Path(rec["artifact"]["path"]).name, rec["artifact"])
+        log(f"D seed 101 {name} M{M} COMPLETE")
+    ver = _verification(manifest, journal_path)
+    record.append(dict(ver, screen="D", seed=101, timestamp=record.now()), RESULTS)
+    journal.append(ver)
+    return ver["passed"]
+
+
 def _verification(manifest, journal_path):
     failures = []
     try:
@@ -412,7 +466,10 @@ def main(argv=None):
     if args.command == "summary":
         print(json.dumps(summary(), sort_keys=True))
         return 0
-    ok = run(args.screen, args.seed or list(SEEDS), log=lambda x: print(f"[{record.now()}] {x}", flush=True))
+    log = lambda x: print(f"[{record.now()}] {x}", flush=True)
+    ok = run(args.screen, args.seed or list(SEEDS), log=log)
+    if args.screen == "D" and not args.seed:
+        ok = run_e6(log=log) and ok
     return 0 if ok else 1
 
 

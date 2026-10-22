@@ -1,0 +1,1 @@
+{"summary": {"feedback_density": 0.31759925, "forward_density": 0.0567015, "saturation": {"full": {"median": 3637.5, "n": 200, "q1": 3548.5, "q3": 3721.25}, "half": {"median": 2004.0, "n": 200, "q1": 1144.25, "q3": 2626.5}, "novel": {"median": 0.0, "n": 200, "q1": 0.0, "q3": 0.0}}}}
