@@ -323,15 +323,18 @@ Informative FEASIBILITY FAIL (`docs/plant2/RESULTS-P2-E7.md`): F10/1,000 candida
 (bar .90), C1 .895, C4_spurious .720, joint .645; every comparative margin held (+0.265 C2
 over the count-matched random drop, +0.110 over the history-weighted drop, non-regression on
 independent and mixed inputs); no structural kill fired; integrity true. The veto engaged
-late (a family's first four to fourteen members written in full; mean |V| 13.0 over episodes
+late (a family's first four to thirteen members written in full; mean |V| 13.0 over episodes
 1-500) and the label oracle, vetoing the true prototype lines from the first episode, reached
-C2 .970 with C1 .920. The budget is load-bearing (without it C2 .840 but C1 .680). The
-responder-written teacher beat the clean plateau-set teacher. Content stayed at .005.
-Classification: failed hypothesis in its stated form; the comparative hypotheses supported on
-one development seed. Not retuned; held-out seed 122 does not open. Pre-mortem item 2 ("the
-veto engaged too late ... an informative fail like E6's .895") is what happened, at .745.
-The next checkpoint (section 8, pending) starts from the oracle gap: the mechanism family's
-ceiling is high and the loss is onset and coverage.
+C2 .970 with C1 .920; the oracle differs from the candidate in onset, coverage and precision
+at once, and the design does not separate them. The budget is load-bearing on this seed
+(without it C2 .840 but C1 .680). The responder-written teacher gave a higher C2 than the
+clean plateau-set teacher (.745 against .645) with more vetoes at lower precision. Inherited
+content stayed at or below .055 on every non-oracle arm. Classification: failed hypothesis in
+its stated form; the comparative hypotheses supported on one development seed (exploratory).
+Not retuned; held-out seed 122 does not open. Pre-mortem item 2 ("the veto engaged too late
+... an informative fail like E6's .895") is what happened, at .745. Independent results
+review: every number reproduces; twelve wording errata (`docs/plant2/RESULTS-P2-E7.md`).
+The next checkpoint (section 8, pending) starts from the oracle gap.
 
 ## Priority order (current)
 

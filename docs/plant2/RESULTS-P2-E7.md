@@ -2,8 +2,8 @@
 
 Measured 2026-10-22, 20:09-20:19 UTC, on this PC (CPython 3.11.17, NumPy 2.4.6,
 `OPENBLAS_NUM_THREADS=1`), from commit 6a9e204 (driver and riders at 9bc6cf3, contract frozen
-at fede3c2, frozen JSON e38a6b0). Records: `bench/results/p2e7.jsonl` (117 rows: 115 from the
-run, 2 `rider` rows after it); portable per-cue, structural and state evidence under
+at fede3c2, frozen JSON e38a6b0). Records: `bench/results/p2e7.jsonl` (118 rows: 115 from the
+run, 2 `rider` rows and 1 riders `evidence_verification` after it; erratum 7); portable per-cue, structural and state evidence under
 `bench/results/p2e7/`; raw checkpoints and per-worker journals under the cache root
 `~/.cache/brain-sim/plant2-research-20261022/p2e7`. A first start at 20:07:31 UTC was refused
 by the source manifest before any record was written (contract note 5).
@@ -29,7 +29,7 @@ exploratory by the README vocabulary):
 | baseline (literal E3) | .920 | .500 | 1.000 | .940 | .470 | .425 | .005 | .110 | 18.73 | 20.96 | 1,022 |
 | **candidate** | **.895** | **.745** | 1.000 | .940 | .720 | **.645** | .005 | .250 | 18.69 | 8.63 | 618 |
 | random_drop (count-matched, stream 33) | .925 | .480 | 1.000 | .960 | .420 | .410 | .000 | .135 | 18.70 | 19.15 | 1,023 |
-| history_drop (E6 counts, stream 34) | .945 | .635 | 1.000 | .950 | .580 | .595 | .000 | .180 | 18.74 | 12.11 | 653 |
+| history_drop (candidate counts, history-weighted choice with E6's counts, stream 34) | .945 | .635 | 1.000 | .950 | .580 | .595 | .000 | .180 | 18.74 | 12.11 | 653 |
 | gate_off (integrity) | .920 | .500 | 1.000 | .940 | .470 | .425 | .005 | .110 | 18.73 | 20.96 | 1,022 |
 | no_conservation (reported) | .680 | .840 | 1.000 | .950 | .800 | .545 | .055 | .385 | 15.78 | 5.47 | 579 |
 | label_oracle (diagnostic) | .920 | .970 | 1.000 | .920 | .950 | .890 | .310 | .500 | 18.84 | 1.68 | 460 |
@@ -138,3 +138,52 @@ supported on one development seed. No implementation failure (integrity checks a
 inadequate experiment (every kill rule, screen rule and prediction decided from its named
 field), no resource stop. Not retuned; no held-out seed opened. The next step is a roadmap
 checkpoint, not a parameter.
+
+## Errata from the independent results review (appended 2026-10-22)
+
+The review (`review/plant2/P2-E7/findings-results.md`) recomputed every index, content,
+subset, structural, screen and rider value from the per-cue rows, the persisted labels and
+veto sequences and the frozen rules, re-read all 99 artifact descriptors and verified all 16
+journals, and found every number in this document reproduced and every prediction scored
+from its named field. It asked for these wording corrections, which supersede the sentences
+they name:
+
+1. "Index counts moved by at most one cue" (What this establishes; P10b evidence; H-060):
+   the independent subset's joint-index count went **89 → 91 (+2)**; the prose "candidate
+   91, 95, 89" should read **91, 95, 91**. P10b's outcome (failed on content only) is
+   unchanged.
+2. "Inherited content .005 at F10/1,000 on every arm but the oracle": **≤ .055 on every
+   non-oracle arm** (candidate and baseline .005; random_drop, history_drop and
+   assigned_A_teacher .000; no_conservation .055).
+3. "A family's first four to fourteen members are written in full": **four to thirteen**
+   (members before first engagement, family map (k + 1) mod 10; families 1 and 9 have 13).
+4. "The ceiling of this family of mechanisms is high, and the gap is onset and coverage, not
+   the idea" is replaced by: **the label oracle, which differs from the candidate in onset,
+   coverage and precision at once (true labels, never a contaminated teacher), reaches C2
+   .970; which of these closes the gap is not separated by this design.**
+5. "Coverage, not precision, limits the gain" and "engages later" are replaced by: **the
+   plateau-set teacher gave a lower mean |V| (27.9 against 40.4) at higher precision (.975
+   against .817) and a lower C2 (.645 against .745) on this seed; its first engagement equals
+   the candidate's in nine of ten families. The arm changes the teacher store, not precision
+   alone, so no causal attribution follows.**
+6. Causal readings are observations on one development seed: "P2-E7 is not a hot-line
+   filter in disguise" reads **consistent with a prediction that adds beyond the hot-line
+   marginal (kill e did not fire) on one development seed**; "because the fully written
+   early members keep feeding spurious responders into the store" is **a hypothesis, not a
+   measured mechanism**; "the veto reduced its own teacher's contamination" is **a
+   cross-trajectory comparison with gate_off's own-gate 0.291, not an intervention**.
+7. Row count: `bench/results/p2e7.jsonl` holds **118 rows** (115 from the run, 2 `rider`,
+   1 riders `evidence_verification`).
+8. H-060's confidence stays **low**; the comparative evidence is labelled exploratory,
+   one development seed.
+9. Sources for the comparators: E6 candidate content .785 at F10/500 (`RESULTS-P2-E6.md`,
+   exploratory, seed 101); degree null .960 / .965 (`RESULTS-P2-R2b.md`, reported-only).
+10. The drop controls' persisted V sequence is the candidate's applied counts (identical
+    digest); their own-gate figures (54.4 / 48.2, precision .687 / .745) and every arm's
+    precision and predicted fractions exist only in the `structural_check` records and are
+    not re-derivable from the portable evidence.
+11. Table label: **history_drop (candidate counts, history-weighted choice with E6's
+    counts, stream 34)**.
+12. Rider records carry the seed_screen row's `source` and `git_commit`, not their own run's
+    provenance (harmless here: the blobs are identical at 9bc6cf3, 6a9e204 and d1a0f4e); to
+    fix in the next driver.
