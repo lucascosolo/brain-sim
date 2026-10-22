@@ -526,9 +526,27 @@ Pre-mortem (it is three weeks later and this failed):
 - **B-014 responder depression** stays the in-scope fallback if P2-E8 dies offline and
   B-013 is not admitted.
 
+### 7. Outcome of screens F and E′ (2026-10-22, 23:13-23:15 UTC)
+
+Screen F survived every kill (candidate AUC 0.858 over episodes 501-1,000; graded/binary
+counterfactual prototype-flip ratio 0.441 over 501-1,000 and 0.750 over 1-300), so the
+decision rule authorises drafting P2-E8. Screen E′ changes the expected size of its gain:
+89 % of the late-class residual cells hold a same-family item written while the prediction
+covered less than a quarter of its prototype lines, so about 90 % of the residual (with the
+early class) was written during each family's onset ramp, where the graded rule removes only
+25 % of the expected missed-prototype flips; the steady-state leak, where it removes 56 %,
+holds about 4 % of the residual. B-017 closes (gate_off coverage 0.513 over episodes
+101-500 against its own 0.595). Consequence for P2-E8's contract: its predictions are set
+from this screen (a modest gain over the binary rule is the honest point prediction, with
+the ramp floor as the most likely failure), the binary rule stays the same-seed comparator,
+and the mixed-stream and independent arms stay as ruling-4 tests. If P2-E8 lands as a second
+informative fail, the ramp floor is established as the error-gate family's structural limit
+on this substrate, which is the information that decides between B-013 (owner question (a))
+and the content wall.
+
 ## Priority order (current)
 
-1. Screens F and E′ (zero seed; decides P2-E8).
+1. Screens F and E′: done (section 7); P2-E8 contract drafting authorised.
 2. P2-R3 branch-reconstruction replay (zero seed; decides whether content at 1,000 is
    reconstruction-side summation).
 3. P2-E8 graded error weighting on seed 123, if screen F survives and the owner does not

@@ -114,3 +114,43 @@ would change the forward store, the responders and therefore its own teacher fro
 vetoed episode on, so the screen can kill (no separation, no flip reduction) and cannot
 clear. The AUC is a separation of line classes by a proxy signal, not a C2 prediction.
 Screen E′ bins by the prediction's coverage, not by what each cell carries.
+
+## Results (appended 2026-10-22, 23:13-23:15 UTC; module feaf31f, 51 tests green)
+
+Records: `offline_screen` E′ (candidate) COMPLETE; F gate_off and F candidate COMPLETE with
+both integrity gates passed on every episode (rebuilt feedback keys equal `feedback_keys`;
+lockstep |G| and |G ∩ E| equal the gate log on all 1,000 episodes); the F independent arm
+recorded INVALID on a first attempt because the job asserted family prototypes that the
+independent condition does not have (an implementation assumption, not an evidence
+failure; the arm is rerun after the fix and its line is appended below). All numbers
+**offline, development seed 121**; F's counterfactuals **proxy**.
+
+**Screen E′ (candidate, 1,238 late-class cells over 200 cues, equal to screen E's count).**
+Binned by the minimum write-time coverage (`proto_predicted`) over the same-family items
+each cell holds: < 0.25: 5.52 per cue (share 0.891; items-weighted 0.909); 0.25-0.75: 0.42
+(0.068); ≥ 0.75: 0.26 (0.041). On the episodes of those same-family items p had median
+0.627 (10th percentile 0.50, 90th 0.99). **Reading:** the late class is a ramp leak, not a
+steady-state leak: nearly nine in ten of the cells classified "after engagement" hold an
+item written while the prediction still covered less than a quarter of its prototype lines.
+With the early class (1.97 per cue), about 90 % of the residual was written during the onset
+ramp of its family.
+
+**Screen F (candidate).** AUC of the subthreshold drive separating missed prototype lines
+from unpredicted non-prototype lines, by block of 100 episodes: 0.752 in block 1 (the first
+block has 3,843 missed prototype lines against 5,979 unpredicted unique lines); over
+episodes 501-1,000: **0.858**. Counterfactual expected prototype flips per plateau cell,
+graded over binary: **0.441** over 501-1,000, **0.750** over episodes 1-300. Kill reading for
+P2-E8: AUC ≥ 0.70 held; ratio ≤ 0.6 held; the third rule (ramp ratio > 0.85 and a late class
+concentrated below 0.25) did not fire because the ramp ratio is 0.750, although E′'s
+low-coverage share is 0.891. **Survives**: drafting the P2-E8 contract is authorised, and
+nothing else. **Screen F (gate_off, the baseline trajectory's own gate).** Block-1 AUC 0.750
+and ratio 0.884; B-017's line: mean prototype coverage over episodes 101-500 is **0.513**
+against the twin-store proposal's own kill of 0.595, so B-017 closes.
+
+Reading for the next contract (arithmetic on recorded values, exploratory): the graded rule's
+counterfactual reach is largest where the residual is smallest. It removes 56 % of the
+expected missed-prototype flips in the steady state, which holds about 4 % of the late
+class, and 25 % during the ramp, which holds about 90 % of the residual together with the
+early class. A graded rule's gain is therefore expected to be modest, and the panel's
+predicted C2 point of .86 is optimistic; the contract sets its predictions from this
+screen, not from the panel.

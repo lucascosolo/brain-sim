@@ -362,7 +362,7 @@ regenerate siblings' content on their own branches.
 
 **Cheapest test.** The exact replay on the persisted P2-R2b artifacts; no seed.
 
-## B-016 Graded prediction-error weighting of the conserved flip budget (P2-E8 candidate) — `open`, contracted if offline screen F survives
+## B-016 Graded prediction-error weighting of the conserved flip budget (P2-E8 candidate) — `open`; screen F survived on 2026-10-22 (AUC 0.858; flip ratio 0.44 steady state, 0.75 ramp), contract P2-E8 in drafting with predictions set from screens F and E′
 
 **Origin.** Engineering primary of the checkpoint-2 panel (2026-10-22; judges 20 / 22 of
 30, second overall); the graded continuation of B-002 after P2-E7's informative
@@ -406,7 +406,7 @@ binary, graded and surplus-only; the ramp on gate_off. Kill if AUC < 0.70 over e
 501-1,000 or the graded/binary flip ratio > 0.6. Then seed 123 (registered) under its own
 contract.
 
-## B-017 Error-gated eligibility taught by an unselective twin store — `closed` pending its one-line offline record
+## B-017 Error-gated eligibility taught by an unselective twin store — `closed` (2026-10-22; screen F recorded gate_off's own coverage over episodes 101-500 as 0.513 against the proposal's own kill of 0.595)
 
 **Origin.** Theory secondary of the checkpoint-2 panel (judges 14 / 18 of 30, last).
 
