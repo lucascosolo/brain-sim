@@ -334,7 +334,16 @@ is 3.08 synapses at J 1.525, not 3.85).
 **Cheapest test.** The in-scope local-error fallback if P2-E7 dies and B-013 is not admitted:
 one development seed under its own contract, E6 bars verbatim.
 
-## B-015 Episode-clustered reconstruction store (rec-line dendritic branches per episode) — `open`, reported replay first
+## B-015 Episode-clustered reconstruction store (rec-line dendritic branches per episode) — `graduated` to the P2-R3 reported replay (2026-10-22, checkpoint 2)
+
+**Graduation note (2026-10-22).** Ranked first by both judges of the checkpoint-2 panel
+(25 / 24 of 30) in its bounded form: K = 32 line-local branches filled round-robin by
+episode (K fixed by the B-013 rule from M·a/m = 25), K = 1 equal to the frozen readout as a
+parity gate, a per-synapse scramble control, the assigned-A store under the same rule, dose
+arms K = 8 and unbounded (reported only), replayed exactly on the persisted P2-E7 seed-121
+rasters of gate_off, label_oracle, candidate (reported), independent and mixed, preceded by
+an intrusion-span decomposition. Contract: `docs/plant2/P2-R3-branch-reconstruction-replay.md`.
+The sketch below is kept as written.
 
 **Origin.** Contrarian secondary of the 2026-10-22 panel (sum 61 of 90, third overall; the
 only proposal aimed at H-046).
@@ -352,3 +361,62 @@ the writer set R(x) is itself contaminated at F10, so clustering contaminated wr
 regenerate siblings' content on their own branches.
 
 **Cheapest test.** The exact replay on the persisted P2-R2b artifacts; no seed.
+
+## B-016 Graded prediction-error weighting of the conserved flip budget (P2-E8 candidate) — `open`, contracted if offline screen F survives
+
+**Origin.** Engineering primary of the checkpoint-2 panel (2026-10-22; judges 20 / 22 of
+30, second overall); the graded continuation of B-002 after P2-E7's informative
+FEASIBILITY FAIL (`docs/plant2/RESULTS-P2-E7.md`; screen E).
+
+**Limitation addressed.** The two parts of the P2-E7 residual: the late-episode leak (about
+one prototype line in six escapes the ≥ 1-spike prediction and is written at p ≈ 0.84) and
+the slow onset (a family's first four to thirteen members written in full). Both are
+invisible to a binary spike criterion and should show as subthreshold depolarisation of
+the line's reconstruction unit.
+
+**Sketch.** P2-E7's learn_one with only the per-line flip probability changed: run the same
+lockstep reconstruction readout on the 75-tick encoding raster (its spike set must equal
+P2-E7's predict_set every episode); for each eligible line read the peak depolarisation
+d_j over ticks 0-74; w_j = 0 if the line spiked (the binary veto nested), else
+w_j = 1 − clip(d_j / 20 mV, 0, 1); p_j = min(1, λ·w_j) with λ the exact water-filling
+solution of Σ_j p_j = 0.5·|E| (no bisection tolerance; cap flagged); coins exactly as
+`btsp_update`. No new constant: 20 mV is the rec layer's v_th − v_rest. Labelled proxy:
+graded mismatch-scaled plasticity in the comparator view (circuit-level proxy). Controls that
+can fail: graded_shuffled (the episode's w multiset permuted over unpredicted lines, stream
+(seed, 37, k)) and history_rank (the same multiset assigned by E6 usage, most-used line the
+smallest w), plus the P2-E7 binary rule on the same seed, gate_off (p = 0.5, forward SHA
+equal to the baseline's), the label oracle, independent and mixed non-regression,
+surplus-only as a reported arm.
+
+**Why it might fail.** No separation under late inhibition (AUC near 0.5); drive tracks
+writer count (a load marginal: history_rank matches); recall cost on near-predicted own
+unique lines; independent perturbation (the rule changes veto-free episodes); the early and
+other-family floor (about 2.4 spurious per cue) leaving C2 at .82-.87; a self-defeating
+teacher.
+
+**Rescue question.** Both judges: no P2-E7 constant is retuned; the rule functionally
+softens the spike criterion, so it is admitted as "a different rule with a reason" only with
+the binary same-seed comparator, a kill-only offline screen, a fresh seed and explicit
+acceptance (owner question (f)).
+
+**Cheapest test.** Screen F (`docs/plant2/OFFLINE-SCREENS-20261022c.md`), zero seed: AUC of
+d_j separating missed prototype lines from unpredicted unique lines on the persisted
+candidate trajectory; counterfactual expected prototype flips per plateau cell under
+binary, graded and surplus-only; the ramp on gate_off. Kill if AUC < 0.70 over episodes
+501-1,000 or the graded/binary flip ratio > 0.6. Then seed 123 (registered) under its own
+contract.
+
+## B-017 Error-gated eligibility taught by an unselective twin store — `closed` pending its one-line offline record
+
+**Origin.** Theory secondary of the checkpoint-2 panel (judges 14 / 18 of 30, last).
+
+**Sketch.** Break the self-taught fixed point by reading the prediction from an unselective
+twin feedback store that does not depend on the student's cross-talk, with an earliest-spike
+truncation to an exact budget bound.
+
+**Why closed.** The skeptic judge computed from the persisted gate_off gate log (the
+baseline trajectory's own gate, which the twin teacher equals) a prototype coverage of 0.513
+over episodes 101-500, below the proposal's own kill of 0.595, and noted that the twin
+teacher starts outside P2-E7's kill envelope (precision .685, non-prototype predicted .291
+over 501-1,000). Two changes in one contract (teacher swap plus truncation). Screen F
+appends the coverage line as a recorded offline result; the item then closes for good.

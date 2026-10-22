@@ -336,10 +336,206 @@ Not retuned; held-out seed 122 does not open. Pre-mortem item 2 ("the veto engag
 review: every number reproduces; twelve wording errata (`docs/plant2/RESULTS-P2-E7.md`).
 The next checkpoint (section 8, pending) starts from the oracle gap.
 
+## Checkpoint 2026-10-22 (second; after P2-E7 on development seed 121)
+
+### 1. The most consequential limitation
+
+**Forward-index cross-talk on correlated items at the canonical load, now located.** P2-E7's
+prediction-gated eligibility moved F10/1,000 C2 from .500 to .745 on development seed 121
+and left it short of the .90 bar (`docs/plant2/RESULTS-P2-E7.md`; exploratory, one seed).
+Offline screen E (`docs/plant2/OFFLINE-SCREENS-20261022b.md`, offline, descriptive) locates
+the residual: of the candidate's 8.62 spurious responders per half cue, 6.19 are cells whose
+same-family plateau items were all written after the veto had engaged for that family, 1.97
+hold a member written in full before engagement (chance level 0.08), and 0.47 hold other
+families' items only. The label oracle, which vetoes the true 40 prototype lines from the
+first episode, leaves 1.68 and reaches C2 .970 with C1 .920. The legacy of the fully written
+early members is minor; the leak is on later episodes.
+
+Why the leak persists under the frozen rule (arithmetic from the contract; a hypothesis
+until measured): the prediction covers 0.835 of the eligible prototype lines over episodes
+501-1,000, so about one prototype line in six escapes the veto on each late episode, and the
+conserved budget writes each unvetoed line with p = min(1, 0.5·|E|/|E'|) ≈ 0.84 at |V| ≈ 40
+(p = 1 on the 144 capped episodes) against 0.5 under the baseline rule. In aggregate this is
+about 5.5 expected missed-prototype flips per plateau cell on a late episode against about
+19.7 prototype flips under the baseline (the skeptic judge's correction of the per-line
+statement): the rule removes most of the prototype drive and the residual is what is left,
+amplified. During the ramp (blocks 1-4, mean |V| 1.0-17.8) the leak is much larger because
+coverage is low. The no_conservation arm supports the reading from the other side: p = 0.5
+on E' gives 5.47 spurious responders and C2 .840 but C1 .680 and own50 15.8.
+
+The other limitations keep their order from checkpoint 1. One moves up: inherited content
+at F10/1,000 stayed at or below .055 on every non-oracle arm and reached only .310 on the
+oracle, and every recorded content failure on seed 121 is an intrusion failure (D1 ≥ .955
+everywhere; the oracle's intrusions median 18.5 inherited, 9.0 assigned-A, exploratory): the
+content wall behind the index is cross-episode writer summation on the reconstruction lines,
+which no index mechanism reaches (H-046, H-036 generalised).
+
+### 2. Evidence review
+
+- Ruling 4's two tests came out favourable on one development seed: the candidate beat the
+  count-matched random drop by +0.265 C2 and the history-weighted drop by +0.110; the veto
+  never fired on independent inputs; the mixed store's independent subset moved by at most
+  two index cues and gained 14 content cues (`RESULTS-P2-E7.md`, errata 1 and 6).
+- The conserved budget is load-bearing and double-edged: it preserves recall (own50 within
+  0.05 of the baseline) and it writes every escaped prototype line at p ≈ 0.84.
+- The responder-written teacher gave more vetoes at lower precision than the clean
+  plateau-set teacher and a higher C2 (.745 against .645); no causal attribution (erratum 5).
+- Onset: a family's first four to thirteen members are written in full; per-block mean |V|
+  1.0, 4.3, 16.8, 17.8, 24.8, 31.2, 34.6, 37.7, 47.5, 50.9. An error gate that learns from
+  its own memory response has a self-limiting fixed point: coverage scales with the
+  cross-talk it removes (own-gate prototype coverage over 501-1,000 by arm: gate_off .956,
+  random_drop .946, history_drop .909, candidate .835, against spurious50 20.96, 19.15,
+  12.11, 8.63; cross-trajectory, not an intervention).
+- The persisted seed-121 state holds, per arm and episode, the 75-tick encoding raster, the
+  gate log (G, V, p, cap, prototype fractions), R, E, A and the continuation counts, so the
+  leak, the subthreshold drive of the reconstruction units and the content store's
+  per-episode structure can all be measured without a seed.
+- The branch static screen (B) and the latency split (C) stand; the riders replicate P2-R1's
+  pattern on a fresh seed (R_3 content .925 at 500, .140 at 1,000, reported only).
+- Not known: what the late cells carry, line by line; whether graded subthreshold drive
+  separates the missed prototype lines from unique lines; whether reconstruction-side
+  summation or late memory recruitment limits content at 1,000.
+
+### 3. Candidate mechanisms
+
+A judge panel (workflow wf_d9fc89e1-dac, 2026-10-22: three Opus proposers with the lenses
+theory, engineering and contrarian; two Opus judges, skeptic and owner-intent; full output
+under `~/.cache/brain-sim/plant2-research-20261022/ledger/checkpoint2-panel-wf_d9fc89e1-dac.json`)
+produced six proposals:
+
+1. **Episode-clustered reconstruction store with bounded line-local branches (B-015,
+   bounded form), as a zero-seed reported replay on the persisted seed-121 evidence (working
+   name P2-R3)** (contrarian primary). Each reconstruction line holds K = 32 writer sets
+   filled round-robin by episode; each is an LIF compartment under the frozen readout
+   arithmetic and the line spikes when any branch spikes; K = 1 is the frozen readout
+   (parity gate). Replayed on the gate_off (deployable), label_oracle (clean-index
+   diagnostic), candidate (stacking diagnostic), independent and mixed rasters, with a
+   per-synapse scramble control, the assigned-A store under the same rule, and dose arms.
+   Aimed at the content wall (H-046, H-036); no seed; decision 4 of checkpoint 1 already
+   allows the replay.
+2. **P2-E8: graded prediction-error weighting of the conserved flip budget** (engineering
+   primary). The same lockstep reconstruction readout, read for its peak subthreshold
+   depolarisation d_j: w_j = 0 for predicted lines (the binary veto nested), otherwise
+   w_j = 1 − clip(d_j / 20 mV, 0, 1); p_j = min(1, λ·w_j) with λ the exact water-filling
+   solution of Σp = 0.5|E|. No new constant (20 mV is the rec threshold gap). Decided first
+   by a zero-seed screen (AUC of d_j; counterfactual flip counts) that can only kill.
+3. **Leak-neutral (surplus-only) conservation** (engineering secondary): p = 0.5 floor on E'
+   and only the vetoed surplus steered by residual error; its author predicts C2 below the
+   bar; a reported arm inside 2, deciding nothing.
+4. **Branch-segregated dendritic storage with an OR soma (B-013)**, in two forms (theory
+   primary with a calibrated count model; contrarian secondary with an out-of-sample
+   firing-curve validation): the summation-across-held-items attack; needs owner question
+   (a); its zero-seed screen F comes first.
+5. **Error-gated eligibility taught by an unselective twin store** (theory secondary): a
+   teacher independent of the student's cross-talk, with an earliest-spike truncation. The
+   skeptic judge computed from the persisted gate_off gate log that the baseline trajectory's
+   own coverage over episodes 101-500 is 0.513, below the proposal's own kill of 0.595, and
+   that the twin teacher starts outside P2-E7's kill envelope (precision .685, non-prototype
+   .291). To be recorded as a one-line offline result, then closed.
+
+Rescue question, as the judges put it: none of the six retunes a frozen P2-E7 constant; the
+graded rule (2) "comes closest" because it functionally softens the ≥ 1-spike criterion
+into a continuous one; both judges admit it as a different rule with a stated reason only
+with the binary rule as a same-seed comparator, a kill-only offline screen, a fresh seed and
+explicit acceptance. Surplus-only is the closest to a rescue and rides as a reported arm.
+
+### 4. Comparison
+
+Judge scores (0-5 on six criteria, total out of 30 per judge; skeptic / owner-intent / sum):
+
+| mechanism | skeptic | owner-intent | sum |
+|---|---|---|---|
+| 1 B-015 replay (P2-R3) | 25 | 24 | 49 |
+| 2 P2-E8 graded error weighting | 20 | 22 | 42 |
+| 3 surplus-only conservation | 18 | 20 | 38 |
+| 4 B-013 branch storage, contrarian form | 16 | 19 | 35 |
+| 4 B-013 branch storage, theory form | 16 | 18 | 34 |
+| 5 twin-store teacher | 14 | 18 | 32 |
+
+Both judges ranked the B-015 replay first on testability and cost (exact on three
+substrates, parity gate, zero seed, already permitted) and the graded rule second as the
+primary seed-spending candidate; both recommended the same sequence: zero-seed screens
+first, in parallel, each under an offline-screen contract; then the P2-E8 contract on a
+fresh seed only if its screen survives; question (a) to the owner only with a surviving
+B-013 screen; a gated content contract only after the owner accepts the reordering against
+ruling 3. Factual errors the judges found and that this checkpoint corrects: screen E was
+recorded (eb724c3) by the time the proposals were written; the own-gate coverages are .956 /
+.946 / .909 / .835; "every missed prototype line is written with higher probability" is
+true per line, not in aggregate; the theory primary's count model is unrecorded; the
+contrarian primary's D1 question is already answered by the recorded D1 fields.
+
+### 5. Selection, rationale, pre-mortem
+
+**Selected now (zero seed, in parallel, each under its own contract):**
+
+- **Screens F and E′** (`docs/plant2/OFFLINE-SCREENS-20261022c.md`): the kill-only screen
+  for the graded rule on the persisted candidate and gate_off states (AUC of the
+  subthreshold drive separating missed prototype lines from unpredicted unique lines;
+  counterfactual expected prototype flips per plateau cell under binary, graded and
+  surplus-only; the ramp; the twin-store coverage line) and the re-binning of screen E's
+  late class by write-time coverage.
+- **P2-R3** (`docs/plant2/P2-R3-branch-reconstruction-replay.md`): the B-015 bounded
+  reconstruction store as an exact reported replay with its parity gate, scramble, assigned-A
+  store and dose arms, preceded by the intrusion-span decomposition.
+- **B-013 screen F** stays on the list but is not contracted at this checkpoint: it needs
+  the single-unit firing curve, which is a (small) simulation, and the owner's question (a)
+  is still open; it is contracted if P2-E8's screen F kills.
+
+**Selected conditionally (the next seed-spending contract):** **P2-E8** on development seed
+123 (held-out 124, gated 151-155, registered in the `DECISIONS.md` entry), only if screen F
+survives its kills (AUC ≥ 0.70 over episodes 501-1,000; counterfactual graded/binary
+prototype-flip ratio ≤ 0.6 over 501-1,000; and not both a ramp ratio > 0.85 and a late class
+concentrated in the low-coverage bins of E′). It runs the P2-E7 binary rule as a same-seed
+comparator, the graded_shuffled and history_rank controls that hold the exact multiset of
+p, gate_off integrity, the label oracle, independent and mixed non-regression, and
+surplus-only as a reported arm. It is submitted to the owner as question (f): a graded
+prediction-error weight with the binary veto nested as its w = 0 case and no new constant is
+treated here as a different rule with a reason, not a rescue of P2-E7; the owner can veto
+before seed 123 is spent.
+
+Rationale: the residual is located (late-episode leak under an imprecise, self-limited
+teacher), the graded signal is the quantity the same reconstruction unit already computes,
+the screen can kill it for nothing, and it stays inside ruling 3's local-error family with
+no deferred ruling. The B-015 replay attacks the other wall at zero cost with an exact
+computation and decides whether content at 1,000 is reconstruction-side summation.
+
+Pre-mortem (it is three weeks later and this failed):
+
+1. **No separation.** Late in learning, about 40 memory spikes in the 75-tick window deliver
+   about 34 mV of inhibition and every unspiked line's peak sits near rest; AUC ≈ 0.55;
+   screen F kills offline (good: no seed spent).
+2. **Drive is load.** Subthreshold drive tracks a line's writer count, so history_rank
+   matches graded within 0.05 on seed 123: E6's hot-line marginal again; the co-occurrence
+   claim dies even if C2 rises.
+3. **Independent perturbation.** The graded rule changes veto-free episodes; independent C1
+   or C3 slips past 0.03.
+4. **The floor.** The early-member and other-family classes (about 2.4 per cue) leave C2 at
+   .82-.87: a second informative fail, read as a second attempt at P2-E7's screen.
+5. **P2-R3 splits.** The oracle raster rises while gate_off at F10/500 stays near .30, or the
+   scramble lands within 0.05 of the branch store (plain dilution).
+
+### 6. Deferred, and why
+
+- **B-013** waits on its screen F (firing-curve validation out of sample against all seven
+  recorded F10/1,000 arms) and on owner question (a); never combined with P2-E8 without a
+  third contract.
+- **Twin-store teacher** closes when its one-line offline record (gate_off coverage over
+  101-500 against its own kill) is appended by screen F.
+- **A gated content contract from P2-R3** needs the owner to accept the reordering against
+  ruling 3 and to extend question (a) to reconstruction lines (ruling 6).
+- **B-014 responder depression** stays the in-scope fallback if P2-E8 dies offline and
+  B-013 is not admitted.
+
 ## Priority order (current)
 
-1. P2-E7 error-gated forward eligibility: done on development seed 121, informative
-   FEASIBILITY FAIL (section 7). Independent results review, then checkpoint 2.
+1. Screens F and E′ (zero seed; decides P2-E8).
+2. P2-R3 branch-reconstruction replay (zero seed; decides whether content at 1,000 is
+   reconstruction-side summation).
+3. P2-E8 graded error weighting on seed 123, if screen F survives and the owner does not
+   veto question (f).
+4. B-013 screen F and owner question (a), if P2-E8 dies offline.
+5. Content contract (P2-R3's rule on fresh seeds) and the online operating point, after an
+   index mechanism passes at both loads and the owner rules on the reordering.
 2. Done 2026-10-22 (`docs/plant2/OFFLINE-SCREENS-20261022.md`, Results): the gate pre-screen
    warns that on the baseline trajectory the teacher saturates late (non-prototype predicted
    fraction crosses 0.25 in block 8 of 10; precision falls below 0.70 in block 9), so P2-E7's
@@ -359,3 +555,7 @@ The next checkpoint (section 8, pending) starts from the oracle gap.
   responder sets are not persisted (they are, in the P2-R2b raw learned checkpoints); the
   four zero-seed screens are contracted in `docs/plant2/OFFLINE-SCREENS-20261022.md` and run
   in parallel with the P2-E7 contract review. Priority order unchanged.
+- 2026-10-22, checkpoint 2 (after P2-E7 on seed 121, informative FEASIBILITY FAIL):
+  previous order was (1) P2-E7, (2) offline screens A-D, (3) B-013 if admitted, (4) content,
+  (5) online. New order: (1) screens F/E′, (2) P2-R3 replay, (3) P2-E8 on seed 123 if screen
+  F survives, (4) B-013 screen F and question (a), (5) content contract and online.

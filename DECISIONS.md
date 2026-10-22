@@ -992,3 +992,67 @@ stabiliser? (d) Does the familiarity deferral still block mismatch-gated plateau
 **Revisit when** P2-E7's development screen returns (pass: held-out 122, then the gated
 contract; structural or kill-rule death: classify the failure and move to B-013 if admitted,
 else to responder depression), or when the owner answers any of (a)-(e).
+
+
+## 2026-10-22: checkpoint 2 after P2-E7; zero-seed screens F/E′ and the P2-R3 replay selected now; P2-E8 graded error weighting selected conditionally on seed 123; owner question (f)
+
+**Provenance.** P2-E7 on development seed 121 closed as an informative FEASIBILITY FAIL with
+every number independently reproduced (`docs/plant2/RESULTS-P2-E7.md`, errata 1-12;
+`review/plant2/P2-E7/findings-results.md`). Offline screen E located the residual
+(`docs/plant2/OFFLINE-SCREENS-20261022b.md`). A second judge panel (workflow wf_d9fc89e1-dac:
+three Opus proposers, two Opus judges) produced six proposals and one recommended sequence;
+the full record is `docs/research/ROADMAP.md`, checkpoint 2.
+
+**Decisions.**
+1. The most consequential limitation is unchanged in kind and narrower in place: the
+   residual cross-talk under the error gate is a late-episode leak of prototype lines the
+   prediction misses, written at p ≈ 0.84 by the conserved budget, on top of a minor legacy
+   of the four to thirteen family members written before the veto engages; and the content
+   wall behind the index is intrusion, not missing-line recovery (D1 ≥ .955 on every seed-121
+   arm).
+2. Selected now, zero seed, in parallel, each under its own frozen contract and recorded
+   through `plant2/evidence.py` before anything cites it: **screens F and E′**
+   (`docs/plant2/OFFLINE-SCREENS-20261022c.md`: the kill-only screen for the graded rule,
+   the ramp, the counterfactual flip counts, the twin-store coverage line, and the
+   re-binning of screen E by write-time coverage) and **P2-R3**
+   (`docs/plant2/P2-R3-branch-reconstruction-replay.md`: the B-015 bounded reconstruction
+   store as an exact reported replay with K = 1 parity, a per-synapse scramble, the
+   assigned-A store under the same rule, dose arms, and the intrusion-span decomposition
+   first). Neither spends a seed; the replay is the one decision 4 of checkpoint 1 allowed.
+3. Selected conditionally as the next seed-spending contract: **P2-E8, graded
+   prediction-error weighting of the conserved flip budget** (B-016; the binary veto nested
+   as w = 0; no new constant; the P2-E7 binary rule as a same-seed comparator; graded_shuffled
+   and history_rank controls holding the exact multiset of p; gate_off integrity; the label
+   oracle; independent and mixed non-regression; surplus-only as a reported arm that decides
+   nothing). It is contracted only if screen F survives its kills (AUC ≥ 0.70 over episodes
+   501-1,000; graded/binary counterfactual prototype-flip ratio ≤ 0.6; not both a ramp ratio
+   > 0.85 and a late class concentrated in E′'s low-coverage bins).
+4. **Seed registry additions.** P2-E8: development 123, held-out 124, gated 151-155. P2-R3:
+   none (replay on seed 121's persisted evidence). Unchanged: P2-E7 121/122/131-135 (122 and
+   131-135 stay closed); B-013 107/108/141-145; replays needing a fresh raster 109.
+5. P2-E7's verdict stands; no constant is touched; seed 122 does not open.
+6. The twin-store teacher proposal is recorded in the backlog (B-017) as closed pending the
+   one-line offline record screen F appends (the baseline trajectory's own gate coverage over
+   episodes 101-500 against the proposal's own kill); B-013 keeps its zero-seed screen on the
+   list, contracted if P2-E8 dies offline.
+
+**Alternatives rejected.** Running P2-E8 on a seed without the offline kill (the judges'
+rescue concern; the screen costs nothing). Surplus-only conservation as a standalone
+contract (its author predicts C2 below the bar; the closest to a rescue). The twin-store
+teacher (the record already contradicts its key prediction; two changes in one contract).
+B-013 first (owner ruling pending; its screen needs a single-unit simulation; the error-gate
+family still has an untested, cheaper step). A gated content contract now (ruling 3 puts the
+index first; P2-R3 is a reported replay).
+
+**Questions for the owner (added to the bundle of checkpoint 1; none blocks the zero-seed
+work).** (f) Is a graded prediction-error weight, with the binary veto nested as its w = 0
+case, no new constant and the binary rule as a same-seed comparator, a different rule with a
+reason rather than a rescue of P2-E7? The orchestrator treats it so and will spend seed 123
+only after screen F survives; the owner can veto before then. (g) If P2-R3 shows that
+reconstruction-side summation limits content at 1,000, may a content contract on fresh seeds
+precede an index pass (ruling 3), and does question (a) extend to reconstruction lines
+(ruling 6)?
+
+**Revisit when** screen F returns (pass: contract P2-E8; kill: contract B-013's screen F and
+raise question (a), else B-014), or when P2-R3 returns (its step-0 decomposition decides
+whether B-015 continues), or when the owner answers (a), (f) or (g).
