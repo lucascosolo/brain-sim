@@ -355,3 +355,96 @@ def test_records_append_one_line_each(run_dir):
     osx.record_invalid(results, "B", 106, "mismatch", journal)
     lines = results.read_text().splitlines()
     assert len(lines) == 2 and lines[0] == first
+
+
+# ---------------------------------------------------------------- screen E
+
+# F=3, family of 0-based episode k is (k + 1) % 3: family 1 = {0, 3, 6}, family 2 = {1, 4, 7},
+# family 0 = {2, 5, 8}. Cell 13 sits in the plateaus of episodes 5 (family 0) and 6 (family 1).
+E_A = [arr(1, 2), arr(3, 4), arr(5, 6), arr(7, 8), arr(9, 10), arr(11, 12, 13), arr(13, 14),
+       arr(15, 16), arr(17, 18)]
+# family 1 engaged at episode 3, family 2 never, family 0 at episode 1
+E_FIRST = {1: 3, 2: None, 0: 1}
+
+
+def _e_rows():
+    return [
+        {"index_0based": 3, "kind": "half", "own50": 2, "spurious50": 3},
+        {"index_0based": 4, "kind": "half", "own50": 1, "spurious50": 3},
+    ]
+
+
+def _e_resp():
+    # cue 3 (family 1): 1 early (episode 0), 13 late (episode 6, also episode 5 of family 0), 3 other
+    # cue 4 (family 2, never engaged): 3 and 15 early, 5 other
+    return {3: arr(1, 7, 8, 3, 13), 4: arr(3, 5, 9, 15)}
+
+
+def test_spurious_classes_hand_built_toy():
+    out = osx.spurious_classes(_e_rows(), E_A, _e_resp(), E_FIRST, F=3)
+    assert out["cues"] == 2
+    assert out["spurious_per_cue"] == pytest.approx(3.0)
+    assert out["same_family_early_per_cue"] == pytest.approx(1.5)
+    assert out["same_family_late_per_cue"] == pytest.approx(0.5)
+    assert out["other_family_only_per_cue"] == pytest.approx(1.0)
+    assert out["items_before_engagement"] == 4  # episode 0 (family 1) + 3 of family 2 + none of family 0
+    assert out["early_chance"] == pytest.approx((1 / 3 + 1.0 + 0.0) / 3)
+    assert out["per_cue"] == [
+        {"cue_index": 3, "spurious": 3, "same_family_early": 1, "same_family_late": 1,
+         "other_family_only": 1},
+        {"cue_index": 4, "spurious": 3, "same_family_early": 2, "same_family_late": 0,
+         "other_family_only": 1},
+    ]
+
+
+def test_spurious_classes_never_engaged_family_counts_everything_early():
+    out = osx.spurious_classes(_e_rows()[1:], E_A, {4: _e_resp()[4]}, {1: None, 2: None, 0: None}, F=3)
+    assert out["items_before_engagement"] == 9
+    assert out["early_chance"] == pytest.approx(1.0)
+    assert out["per_cue"][0]["same_family_early"] == 2
+
+
+def test_spurious_classes_identity_check_raises_on_mismatch():
+    bad = _e_resp()
+    bad[3] = arr(1, 7, 8, 3, 13, 9)  # six responders against own50 + spurious50 = 5
+    with pytest.raises(ValueError):
+        osx.spurious_classes(_e_rows(), E_A, bad, E_FIRST, F=3)
+    # own is counted by identity with A(q): a responder set of the right size but missing an own cell
+    swapped = _e_resp()
+    swapped[3] = arr(1, 7, 3, 13, 15)  # 5 cells, only one own cell (7) instead of two
+    with pytest.raises(ValueError):
+        osx.spurious_classes(_e_rows(), E_A, swapped, E_FIRST, F=3)
+
+
+def test_spurious_classes_ignores_non_half_rows():
+    rows = _e_rows() + [
+        {"index_0based": 5, "kind": "full", "own50": 99, "spurious50": 99},
+        {"index_0based": 6, "kind": "novel", "own50": 0, "spurious50": 7},
+    ]
+    out = osx.spurious_classes(rows, E_A, _e_resp(), E_FIRST, F=3)
+    assert out["cues"] == 2
+    assert [c["cue_index"] for c in out["per_cue"]] == [3, 4]
+    assert out["spurious_per_cue"] == pytest.approx(3.0)
+
+
+def test_early_chance_arithmetic_unequal_engagement():
+    # F=2 (family of k is (k + 1) % 2): family 1 = {0, 2}, family 0 = {1, 3}; engaged at 1 and 3
+    A = [arr(1), arr(2), arr(3), arr(4)]
+    rows = [{"index_0based": 0, "kind": "half", "own50": 1, "spurious50": 0}]
+    out = osx.spurious_classes(rows, A, {0: arr(1)}, {1: 1, 0: 3}, F=2)
+    # family 1 early = {0}: 1/2; family 0 early = {1}: 1/2 -> 0.5; items before = 2
+    assert out["items_before_engagement"] == 2
+    assert out["early_chance"] == pytest.approx(0.5)
+    out2 = osx.spurious_classes(rows, A, {0: arr(1)}, {1: 2, 0: None}, F=2)
+    # family 1 (engaged at 2): only episode 0 of {0, 2} is early -> 1/2; family 0 all early -> 1.0
+    assert out2["items_before_engagement"] == 3
+    assert out2["early_chance"] == pytest.approx(0.75)
+
+
+def test_responders_from_raster_window_and_duplicates():
+    ticks = [99, 100, 101, 120, 149, 150, 160, 400]
+    cells = [arr(4), arr(5, 3), arr(3, 5), arr(7), arr(9, 9), arr(11), arr(2), arr(8)]
+    out = osx.responders_from_raster(ticks, cells, [0, 1, 2], [100, 150, 400], ["half", "half", "full"])
+    assert sorted(out) == [0, 1]  # the full cue is not a half cue
+    assert list(out[0]) == [3, 5, 7, 9]  # cell 4 (tick 99) and 11 (tick 150) fall outside [100, 150)
+    assert list(out[1]) == [2, 11]       # window [150, 200); cell 8 at tick 400 excluded
