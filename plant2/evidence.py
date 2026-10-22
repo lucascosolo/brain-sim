@@ -22,7 +22,8 @@ def _sha(b):
 
 
 def _canonical(obj):
-    return json.dumps(obj, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    """Canonical JSON for journals and plain objects; NaN/Inf are refused rather than written silently."""
+    return json.dumps(obj, sort_keys=True, ensure_ascii=False, allow_nan=False).encode("utf-8")
 
 
 def _write_all(fd, data):
