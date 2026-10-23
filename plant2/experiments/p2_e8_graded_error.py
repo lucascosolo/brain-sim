@@ -86,14 +86,20 @@ def water_filled(w, n_eligible):
     w = np.asarray(w, float)
     budget = MECH["budget_per_eligible"] * n_eligible
     p = osx.water_fill(w, budget)[0]
-    n_pos = int((w > 0).sum())
-    if n_pos == 0:
+    pos = np.flatnonzero(w > 0)
+    if pos.size == 0:
         return p, 0.0, False, 0
-    if n_pos <= budget:
+    if pos.size <= budget:
         return p, None, True, 0
-    n1 = int((p == 1.0).sum())
-    rest = float(w[(p < 1.0) & (w > 0)].sum())
-    return p, (float((budget - n1) / rest) if rest > 0 else None), False, n1
+    # lambda of water_fill's sorted search: the same order, tail sums and stopping index, checked against its p.
+    order = pos[np.argsort(-w[pos], kind="stable")]
+    sw = w[order]
+    tail = np.concatenate((np.cumsum(sw[::-1])[::-1], [0.0]))
+    lams = (budget - np.arange(order.size)) / tail[:-1]
+    stop = np.flatnonzero(lams * sw <= 1.0)
+    lam = float(lams[stop[0]]) if stop.size else None
+    require(lam is None or np.array_equal(p[order[stop[0]:]], lam * sw[stop[0]:]), "water-filling lambda disagrees with water_fill")
+    return p, lam, False, int((p == 1.0).sum())
 
 
 def graded_p(E, G, d):
@@ -176,6 +182,9 @@ class E8(e7.E7):
         k = len(self.items)
         spikes, dmax = lockstep_predict(raster, self.fb, c["m"])
         G = e7.predict_set(raster, self.fb, c["m"])
+        if not np.array_equal(spikes, G):
+            self.lockstep_failure = dict(episode=k, lockstep_size=int(len(spikes)), predict_set_size=int(G.size),
+                                         symmetric_difference=int(np.setxor1d(spikes, G).size))
         require(np.array_equal(spikes, G), f"lockstep spike set differs from predict_set at episode {k}")
         d = dmax[E]
         w = graded_weights(E, G, d)
@@ -227,7 +236,7 @@ class E8(e7.E7):
         self.gate_log.append(dict(
             E_size=int(E.size), G_size=int(G.size), V_size=int(V.size),
             applied_V_size=0 if self.arm == "gate_off" else int(V.size),
-            p=float(p[~in_G].mean()) if n_keep else 0.0, p_capped=capped, Eprime_empty=bool(E.size and not n_keep),
+            p=float(p[~in_G].mean()) if n_keep else 0.0, p_capped=capped, Eprime_empty=n_keep == 0,
             veto_proto_fraction=None if P is None or not V.size else e7._frac(np.isin(V, P).sum(), V.size),
             proto_predicted=None if P is None else e7._frac(np.isin(EP, G).sum(), EP.size),
             nonproto_predicted=None if P is None else e7._frac(np.isin(non, G).sum(), non.size),
@@ -289,20 +298,21 @@ def graded_structural_kills(fields, condition, reference_tv_1_300=None):
         if reference_tv_1_300 is None:
             raise ValueError("the independent perturbation rule needs the F10 graded tv_mean_1_300 of this run")
         tv = fields.get("tv_mean_501_1000")
-        if tv is not None and tv > reference_tv_1_300:
+        require(tv is not None, "the independent graded arm has no tv_mean_501_1000")
+        if tv > reference_tv_1_300:
             fired.append("independent perturbation")
     return fired
 
 
 # ---------------------------------------------------------------- screen
 
-def _band(invalid, structural_fired, delta, kills, failed, missing):
+def _band(invalid, structural_fired, delta, kills, failed, missing, critical_missing):
     bands = FROZEN["delta_bands"]
     if invalid:
         return "invalid_or_partial"
     if structural_fired:
         return "structural_kill"
-    if delta is None:
+    if critical_missing or delta is None:
         return "invalid_or_partial"
     if delta + 1e-12 < bands["refuted_below"]:
         return "refuted"
@@ -390,8 +400,11 @@ def screen(loads, sanity, structural, uniform, invalid=False, checkpoints=LOADS)
     failed = [k for k, ok in v.items() if not ok]
     kills = [k for k in failed if k not in bar_keys]
     fired = any(structural.get(c) for c in ("F10", "independent", "mixed"))
-    verdict = "INVALID" if invalid else "FEASIBILITY FAIL" if failed else "PARTIAL" if missing else "FEASIBILITY PASS"
-    band = _band(invalid, fired, delta, kills, failed, missing)
+    needed = [f"F10/{a}/{last}" for a in ("graded", "binary", "graded_shuffled", "history_rank", "baseline")]
+    critical = [x for x in missing if x in needed or x.startswith(("sanity/", "structural/"))]
+    verdict = ("INVALID" if invalid else "FEASIBILITY FAIL" if fired else "PARTIAL" if critical
+               else "FEASIBILITY FAIL" if failed else "PARTIAL" if missing else "FEASIBILITY PASS")
+    band = _band(invalid, fired, delta, kills, failed, missing, critical)
     return dict(verdict=verdict, failed=failed, kills=kills, missing=missing, vectors=v, complete=not missing,
                 integrity=not invalid, delta_C2_vs_binary=delta, band=band, informative=band == "informative_fail")
 
@@ -573,8 +586,13 @@ def learn_worker(spec):
         for M in spec["loads"]:
             budget.check(new_load=True)
             append("load_started", stage="learn", M=M)
-            with e6.bounded_steps(e, budget):
-                e.learn(M)
+            try:
+                with e6.bounded_steps(e, budget):
+                    e.learn(M)
+            except IntegrityError:
+                if getattr(e, "lockstep_failure", None):
+                    append("lockstep_failure", **e.lockstep_failure)
+                raise
             out["states"][str(M)] = sink.npz(cache / f"{cond}-{arm}-M{M}-state.npz", **snapshot(e))
     if arm != "baseline":
         graded = isinstance(e, E8)
@@ -657,23 +675,35 @@ def cross_arm(values, loads):
     return out, ok
 
 
+def resource_check(workers):
+    """Refuses (no record, no window file) when the machine would exceed four simulation processes."""
+    import fcntl
+    with (record.cache_dir("p2e8") / "resource-lock").open("a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        _count_processes(workers)
+
+
+def _count_processes(workers):
+    active = 0
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdigit() or int(entry.name) == os.getpid():
+            continue
+        try:
+            words = (entry / "cmdline").read_bytes().decode().split("\0")
+        except (OSError, UnicodeError):
+            continue
+        active += any(w.startswith("plant2.experiments.p2_e") or w.startswith("analysis.p2") for w in words)
+    if active + workers > FROZEN["resource"]["max_simulation_processes"]:
+        raise ResourceStop(f"{active} other simulation processes plus {workers} workers exceed the limit")
+
+
 def resource_budget(process_start, workers, attempt):
     """E6's experiment-wide clock; refuses when the machine would exceed four simulation processes."""
     import fcntl
     directory = record.cache_dir("p2e8")
     with (directory / "resource-lock").open("a+") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        active = 0
-        for entry in Path("/proc").iterdir():
-            if not entry.name.isdigit() or int(entry.name) == os.getpid():
-                continue
-            try:
-                words = (entry / "cmdline").read_bytes().decode().split("\0")
-            except (OSError, UnicodeError):
-                continue
-            active += any(w.startswith("plant2.experiments.p2_e") or w.startswith("analysis.p2") for w in words)
-        if active + workers > FROZEN["resource"]["max_simulation_processes"]:
-            raise ResourceStop(f"{active} other simulation processes plus {workers} workers exceed the limit")
+        _count_processes(workers)
         path = directory / f"resource-window-{attempt}.json"
         if not path.exists():
             evidence.write_artifact(path, r1.json_bytes(dict(start_unix=process_start, start=record.now(), first_pid=os.getpid())))
@@ -717,6 +747,8 @@ def run_seed(seed, results_path=RESULTS, evidence_dir=EVIDENCE, cfg=None, loads=
     attempt = attempt or f"seed{seed}-{time.time_ns()}-{uuid.uuid4().hex[:8]}"
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", attempt):
         raise ValueError("attempt must be a filename component")
+    if full:
+        resource_check(workers)
     cache, evidence_dir = record.cache_dir("p2e8", attempt), Path(evidence_dir)
     evidence_dir.mkdir(parents=True, exist_ok=True)
     meta = dict(experiment="P2-E8", schema=1, attempt=attempt, seed=seed, source=source, git_commit=source["commit"],
@@ -773,7 +805,8 @@ def run_seed(seed, results_path=RESULTS, evidence_dir=EVIDENCE, cfg=None, loads=
                     trajectories[(res["condition"], res["arm"])] = res
                     sinks[res["worker"]] = (res["manifest"], res["journal"])
                 if errors:
-                    raise errors[0]
+                    integrity = [x for x in errors if isinstance(x, (IntegrityError, evidence.EvidenceError))]
+                    raise (integrity or errors)[0]
                 persisted = {r["condition"]: r["gate"] for r in read_records(results_path)
                              if r.get("attempt") == attempt and r.get("kind") == "structural_check" and r.get("arm") == "graded"}
                 for cond in ("independent", "mixed"):
