@@ -374,3 +374,15 @@ failures kept without rescue.
                  "independent_delta_max": 0.03, "mixed_independent_subset_delta_cues_max": 3,
                  "most_likely_failure": "the ramp floor: a second informative FEASIBILITY FAIL with the delta over binary held"}}
 ```
+
+## Notes appended before the development run (2026-10-23, after the driver's architecture review)
+
+Append-only clarifications; no bar, margin, threshold or prediction changes.
+
+1. **Driver and pins.** The driver `plant2/experiments/p2_e8_graded_error.py`, its tests and `analysis/p2e8_riders.py` were added at edc6102 and corrected at 6ad44f8 (6ad44f897d7517bd5669475bcf31e5be7a1380a3); the `self` pin group names that commit. `FROZEN_JSON_COMMIT` is 42be1fd4d0d0efba3d8321a534a563e4d5b0f7bf. The review verdict was RUN AFTER THE LISTED FIXES; the fixes: the four-process count runs before `seed_started` so a resource refusal writes no record and keeps the attempt; an IntegrityError or EvidenceError from any worker outranks a resource stop and leaves a `lockstep_failure` record; a missing final-load control, sanity check or structural condition gives PARTIAL with the band `invalid_or_partial` and no `informative` tag, except that a fired structural kill keeps its own band (the contract's structural-kill row); λ is logged from the water-filling search; `Eprime_empty` follows E7 (empty E counts); the independent-perturbation rule refuses a None TV.
+
+2. **Feasibility (the required timing note).** Lockstep cost measured read-only on 50 persisted episodes of the P2-E7 seed-121 candidate state: 8.13 ms per episode (predict_set 7.83 ms; 0 spike-set mismatches), 8.13 s per 1,000-episode trajectory; eight lockstep trajectories plus the binary arm's reported counterfactual (about 47.5 s) on top of P2-E7's 610.6 s give a worst-case serial sum of about 723 s against the 3,600 s window (about 645 s spread over four workers). Small rehearsals (seed 123, loads 8 and 16, two workers) ran all three stages, every arm, the sanity loads, verification, the screen with its band, the riders and the screen-E classes, with the lockstep assertion holding on every episode.
+
+3. **Processes.** During stage 2 the coordinator process is idle while up to four workers simulate, so five processes exist and at most four simulate, as in P2-E7.
+
+4. **Acceptance.** A full-size start without `docs/plant2/P2-E8-acceptance.json` is refused before any record or directory is written (verified: `ValueError: full-size seeds stay closed: … absent (no recorded owner yes to question (f))`).
