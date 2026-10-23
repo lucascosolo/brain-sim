@@ -451,7 +451,7 @@ def test_graded_structural_fields_window_means_and_counts():
 
 def good_fields(**kw):
     base = dict(mean_V_1_500=1.0, mean_V_501_1000=25.0, veto_precision_501_1000=.9, proto_predicted_501_1000=.6,
-                nonproto_predicted_501_1000=.05, veto_episode_fraction=.5, veto_episode_fraction_501_1000=.5,
+                nonproto_predicted_501_1000=.05, veto_episode_fraction=.04, veto_episode_fraction_501_1000=.04,
                 veto_episode_fraction_independent_subset=None, veto_episode_fraction_independent_subset_501_1000=None,
                 max_V=40, empty_Eprime_episodes=[], p_capped_episodes=0, first_engagement_by_family={},
                 expected_proto_flips_1_300=4.0, expected_proto_flips_binary_cf_1_300=5.0,
